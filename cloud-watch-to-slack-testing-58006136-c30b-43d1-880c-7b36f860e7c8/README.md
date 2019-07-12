@@ -1,0 +1,1 @@
+This lambda handles relaying messages from AWS CloudWatch Alarms and Alerts into Slack. This lambda thus understands both events and alert SNS messages and with testing may replace serverlessrepo-cloudwatch-a-cloudwatchalarmtoslack-60UO1LIXCS1Y
