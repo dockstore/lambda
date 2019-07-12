@@ -26,7 +26,7 @@ Resources:
             Method: ANY
       Environment:
         Variables:
-          SECRET_TOKEN: foozball
+          SECRET_TOKEN: <fill me in>
           kmsEncryptedHookUrl: >-
             AQICAHicSBs6aaXy8Lb+IjLRg6DV8EoauPSVsU5VmBT+1qT9lQHKPbWX5JBpfWlEh2zlYjcHAAAApzCBpAYJKoZIhvcNAQcGoIGWMIGTAgEAMIGNBgkqhkiG9w0BBwEwHgYJYIZIAWUDBAEuMBEEDNtuoG7RbaBP332pFwIBEIBgqMNMDsjI3Thu1pVmjMVFNZ8fo81XwU2mDyN2VxOayuJDHpdnItbj2KIFYn4AXLSF/JSjikYjik2QX79+Pm1XFo01zN46+vWOav989cJFh0MMQsRku9+aO3ksinrz5VYB
           slackChannel: dockstore-testing
