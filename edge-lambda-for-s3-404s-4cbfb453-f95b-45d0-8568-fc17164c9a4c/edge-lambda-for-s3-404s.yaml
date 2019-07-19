@@ -1,0 +1,15 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: 'Supports deployment of Dockstore via CloudFront, processing 404s'
+Resources:
+  edgelambdafors3404s:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs10.x
+      CodeUri: .
+      Description: 'Supports deployment of Dockstore via CloudFront, processing 404s'
+      MemorySize: 128
+      Timeout: 3
+      Role: >-
+        arn:aws:iam::312767926603:role/service-role/edge-lambda-for-s3-404s-role-t2r9lwiv
