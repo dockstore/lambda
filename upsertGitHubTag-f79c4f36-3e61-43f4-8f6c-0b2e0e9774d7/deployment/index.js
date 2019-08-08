@@ -25,8 +25,9 @@ const verifyGitHub = (req) => {
 
 // Makes a POST request to the given path
 function callEndpoint(path, postBody, callback) {
-    console.log('Calling the path ' + path);
-    console.log(qs.stringify(postBody))
+    console.log('POST ' + path);
+    console.log(qs.stringify(postBody));
+    
     const options = url.parse(path);
     options.method = 'POST';
     options.headers = {
@@ -36,16 +37,19 @@ function callEndpoint(path, postBody, callback) {
 
     const req = https.request(options, (res) => {
         var chunks = [];
+        var bodyString = '';
         
         res.on("data", function (chunk) {
             chunks.push(chunk);
+            bodyString += chunk.toString()
         });
 
        res.on('end', function() {
            if (callback) {
+               var responseMessage = res.statusCode == 418 ? bodyString : res.statusMessage;
                callback({
                    statusCode: res.statusCode,
-                   statusMessage: res.statusMessage
+                   statusMessage: responseMessage
                });
            }
        });
@@ -65,45 +69,47 @@ function processEvent(event, callback) {
         console.log('GitHub could not be verified');
         callback(null, {"statusCode": 403, "body": "something is wrong, github secret does not match"});
         return;
+    } else {
+        console.log('GitHub is verified');
     }
     
     // The payload is encoded in base64
     var buff = new Buffer(requestBody.payload, 'base64');
     const body = JSON.parse(buff.toString('ascii'));
 
-    console.log('past encoding');
+    console.log('GitHub Payload');
     console.log(body);
     
     const action = body.action;
-    console.log('action determined');
-    console.log(action);
     
     if (action != null) {
-        var path = "https://staging.dockstore.org/api/";
+        console.log('action is ' + action);
+        var path = process.env.API_URL;
         if (action === 'added') {
             if ('repositories_added' in body) {
                 // App has been installed on n repositories
                 const username = body.installation.account.login;
                 const installationId = body.installation.id;
+                path += "workflows/path/service";
                 
+                // If one of the calls fail, will retry all calls
                 for (var i = 0; i < body.repositories_added.length; i++) {
-                    var postBody = {
+                    var addPostBody = {
                        "username": username,
                        "installationId": installationId,
                        "repository": body.repositories_added[i].full_name
                     };
-                    path += "workflows/path/service";
-                    console.log("sending postbody with");
-                    console.log(postBody);
-                    callEndpoint(path, postBody, (response) => {
+                    callEndpoint(path, addPostBody, (response) => {
+                        console.log(response);
                         if (response.statusCode < 400) {
                             console.info('Service added successfully');
                         } else if (response.statusCode < 500) {
+                            // Client error, don't retry
                             console.error(`Error updating workflow: ${response.statusCode} - ${response.statusMessage}`);
                         } else {
-                            // Let Lambda retry
+                            // Server error, retry
                             console.info('Retrying call');
-                            callback(`Server error when processing message: ${response.statusCode} - ${response.statusMessage}`);
+                            callback({ "statusCode": response.statusCode, "statusMessage": response.statusMessage });
                         }
                     });   
                 }
@@ -117,24 +123,26 @@ function processEvent(event, callback) {
                 const gitReference = body.release.tag_name;
                 const installationId = body.installation.id;
                 
-                var postBody = {
+                var releasePostBody = {
                        "gitReference": gitReference,
                        "installationId": installationId,
                        "repository": repository,
                        "username": username
                     };
                 path += "workflows/path/service/upsertVersion";
-                callEndpoint(path, postBody, (response) => {
+                callEndpoint(path, releasePostBody, (response) => {
+                    console.log(response);
                     if (response.statusCode < 400) {
                         console.info('Service ' + repository + ' updated successfully');
                         callback(null);
                     } else if (response.statusCode < 500) {
+                        // Client error, don't retry
                         console.error(`Error updating workflow: ${response.statusCode} - ${response.statusMessage}`);
                         callback(null);
                     } else {
-                        // Let Lambda retry
+                        // Server error, retry
                         console.info('Retrying call');
-                        callback(`Server error when processing message: ${response.statusCode} - ${response.statusMessage}`);
+                        callback({ "statusCode": response.statusCode, "statusMessage": response.statusMessage });
                     }
                 });   
             }
