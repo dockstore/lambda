@@ -46,8 +46,6 @@ function callEndpoint(path, postBody, callback) {
 
        res.on('end', function() {
            if (callback) {
-               console.log(res.headers);
-               console.log(res.headers['content-type']);
                var contentType = res.headers['content-type'];
                
                var responseMessage = contentType.includes('text/plain') ? bodyString : res.statusMessage;
