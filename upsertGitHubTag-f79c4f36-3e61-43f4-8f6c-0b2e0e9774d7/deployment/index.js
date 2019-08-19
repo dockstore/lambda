@@ -46,8 +46,8 @@ function callEndpoint(path, postBody, callback) {
 
        res.on('end', function() {
            if (callback) {
+               // If content-type is text/plain, the body contains the message, else the message is found in the JSON object
                var contentType = res.headers['content-type'];
-               
                var responseMessage = contentType.includes('text/plain') ? bodyString : res.statusMessage;
                callback({
                    statusCode: res.statusCode,
@@ -64,7 +64,7 @@ function callEndpoint(path, postBody, callback) {
 // Performs an action based on the event type (action)
 function processEvent(event, callback) {
     // Usually returns array of records, however it is fixed to only return 1 record
-    console.log(event);
+    console.log(JSON.stringify(event));
     var loneEvent = event.Records[0];
     var requestBody = JSON.parse(loneEvent.body);
     if (! verifyGitHub(requestBody)) {
@@ -80,7 +80,7 @@ function processEvent(event, callback) {
     const body = JSON.parse(buff.toString('ascii'));
 
     console.log('GitHub Payload');
-    console.log(body);
+    console.log(JSON.stringify(body));
     
     const action = body.action;
     
@@ -132,6 +132,7 @@ function processEvent(event, callback) {
                        "username": username
                     };
                 path += "workflows/path/service/upsertVersion";
+                
                 callEndpoint(path, releasePostBody, (response) => {
                     console.log(response);
                     if (response.statusCode < 400) {
