@@ -61,6 +61,34 @@ function callEndpoint(path, postBody, callback) {
     req.end();
 }
 
+function processRepoAddition(repositories, username, installationId, path, callback) {
+    // If one of the calls fail, will retry all calls
+    for (var i = 0; i < repositories.length; i++) {
+        var addPostBody = {
+            "username": username,
+            "installationId": installationId,
+            "repository": repositories[i].full_name
+        };
+        console.log('calling endpoint with');
+        console.log(JSON.stringify(addPostBody));
+        callEndpoint(path, addPostBody, (response) => {
+            console.log(response);
+            if (response.statusCode < 400) {
+                console.info('Service added successfully');
+            }
+            else if (response.statusCode < 500) {
+                // Client error, don't retry
+                console.error(`Error updating workflow: ${response.statusCode} - ${response.statusMessage}`);
+            }
+            else {
+                // Server error, retry
+                console.info(`Retrying call:  ${response.statusCode} - ${response.statusMessage}`);
+                callback({ "statusCode": response.statusCode, "statusMessage": response.statusMessage });
+            }
+        });
+    }
+}
+
 // Performs an action based on the event type (action)
 function processEvent(event, callback) {
     // Usually returns array of records, however it is fixed to only return 1 record
@@ -87,37 +115,27 @@ function processEvent(event, callback) {
     if (action != null) {
         console.log('action is ' + action);
         var path = process.env.API_URL;
-        if (action === 'added') {
-            if ('repositories_added' in body) {
+        if (action === 'added' || (action === 'created' && body.installation.repository_selection)) {
+            console.log('action is proceeding as new repository');
+            if (action === 'added' && 'repositories_added' in body) {
                 // App has been installed on n repositories
+                //TODO: sender username seems odd/incorrect, will test later
                 const username = body.installation.account.login;
                 const installationId = body.installation.id;
                 path += "workflows/path/service";
-                
-                // If one of the calls fail, will retry all calls
-                for (var i = 0; i < body.repositories_added.length; i++) {
-                    var addPostBody = {
-                       "username": username,
-                       "installationId": installationId,
-                       "repository": body.repositories_added[i].full_name
-                    };
-                    callEndpoint(path, addPostBody, (response) => {
-                        console.log(response);
-                        if (response.statusCode < 400) {
-                            console.info('Service added successfully');
-                        } else if (response.statusCode < 500) {
-                            // Client error, don't retry
-                            console.error(`Error updating workflow: ${response.statusCode} - ${response.statusMessage}`);
-                        } else {
-                            // Server error, retry
-                            console.info('Retrying call');
-                            callback({ "statusCode": response.statusCode, "statusMessage": response.statusMessage });
-                        }
-                    });   
-                }
+                processRepoAddition(body.repositories_added, username, installationId, path, callback);
+            }
+            if (action === 'created' && 'repositories' in body) {
+                // App has been installed on n repositories
+                // sender username seems incorrect
+                const username = body.sender.login;
+                const installationId = body.installation.id;
+                path += "workflows/path/service";
+                processRepoAddition(body.repositories, username, installationId, path, callback);
             }
             
         } else if (action === 'created') {
+            console.log('action is proceeding as new release');
             if ('release' in body) {
                 // A release has been created for some repository
                 const repository = body.repository.full_name;
