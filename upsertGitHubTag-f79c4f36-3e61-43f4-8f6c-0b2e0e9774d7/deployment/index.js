@@ -117,19 +117,15 @@ function processEvent(event, callback) {
         var path = process.env.API_URL;
         if (action === 'added' || (action === 'created' && body.installation.repository_selection)) {
             console.log('action is proceeding as new repository');
+            const username = body.sender.login;
+            const installationId = body.installation.id;
+            path += "workflows/path/service";
             if (action === 'added' && 'repositories_added' in body) {
-                // App has been installed on n repositories
-                //TODO: sender username seems odd/incorrect, will test later
-                const username = body.installation.account.login;
-                const installationId = body.installation.id;
-                path += "workflows/path/service";
+                // App has been automatically added as a "future" repository when the app is installed to the organization as a whole
                 processRepoAddition(body.repositories_added, username, installationId, path, callback);
             }
             if (action === 'created' && 'repositories' in body) {
-                // App has been installed on n repositories
-                const username = body.sender.login;
-                const installationId = body.installation.id;
-                path += "workflows/path/service";
+                // App has been selected to be installed to repositories
                 processRepoAddition(body.repositories, username, installationId, path, callback);
             }
             
