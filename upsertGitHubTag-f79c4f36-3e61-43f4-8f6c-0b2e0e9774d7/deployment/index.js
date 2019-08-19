@@ -127,7 +127,6 @@ function processEvent(event, callback) {
             }
             if (action === 'created' && 'repositories' in body) {
                 // App has been installed on n repositories
-                // sender username seems incorrect
                 const username = body.sender.login;
                 const installationId = body.installation.id;
                 path += "workflows/path/service";
