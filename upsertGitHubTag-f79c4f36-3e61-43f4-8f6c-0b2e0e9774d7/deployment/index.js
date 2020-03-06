@@ -61,34 +61,6 @@ function callEndpoint(path, postBody, callback) {
     req.end();
 }
 
-function processRepoAddition(repositories, username, installationId, path, callback) {
-    // If one of the calls fail, will retry all calls
-    for (var i = 0; i < repositories.length; i++) {
-        var addPostBody = {
-            "username": username,
-            "installationId": installationId,
-            "repository": repositories[i].full_name
-        };
-        console.log('calling endpoint with');
-        console.log(JSON.stringify(addPostBody));
-        callEndpoint(path, addPostBody, (response) => {
-            console.log(response);
-            if (response.statusCode < 400) {
-                console.info('Service added successfully');
-            }
-            else if (response.statusCode < 500) {
-                // Client error, don't retry
-                console.error(`Error updating workflow: ${response.statusCode} - ${response.statusMessage}`);
-            }
-            else {
-                // Server error, retry
-                console.info(`Retrying call:  ${response.statusCode} - ${response.statusMessage}`);
-                callback({ "statusCode": response.statusCode, "statusMessage": response.statusMessage });
-            }
-        });
-    }
-}
-
 // Performs an action based on the event type (action)
 function processEvent(event, callback) {
     // Usually returns array of records, however it is fixed to only return 1 record
@@ -110,60 +82,38 @@ function processEvent(event, callback) {
     console.log('GitHub Payload');
     console.log(JSON.stringify(body));
     
-    const action = body.action;
+    var path = process.env.API_URL;
+
+    // A push has been made for some repository
+    const repository = body.repository.full_name;
+    const username = body.sender.login;
+    const gitReference = body.ref;
+    const installationId = body.installation.id;
     
-    if (action != null) {
-        console.log('action is ' + action);
-        var path = process.env.API_URL;
-        if (action === 'added' || (action === 'created' && body.installation.repository_selection)) {
-            console.log('action is proceeding as new repository');
-            const username = body.sender.login;
-            const installationId = body.installation.id;
-            path += "workflows/path/service";
-            if (action === 'added' && 'repositories_added' in body) {
-                // App has been automatically added as a "future" repository when the app is installed to the organization as a whole
-                processRepoAddition(body.repositories_added, username, installationId, path, callback);
-            }
-            if (action === 'created' && 'repositories' in body) {
-                // App has been selected to be installed to repositories
-                processRepoAddition(body.repositories, username, installationId, path, callback);
-            }
-            
-        } else if (action === 'created') {
-            console.log('action is proceeding as new release');
-            if ('release' in body) {
-                // A release has been created for some repository
-                const repository = body.repository.full_name;
-                const username = body.sender.login;
-                const gitReference = body.release.tag_name;
-                const installationId = body.installation.id;
-                
-                var releasePostBody = {
-                       "gitReference": gitReference,
-                       "installationId": installationId,
-                       "repository": repository,
-                       "username": username
-                    };
-                path += "workflows/path/service/upsertVersion";
-                
-                callEndpoint(path, releasePostBody, (response) => {
-                    console.log(response);
-                    if (response.statusCode < 400) {
-                        console.info('Service ' + repository + ' updated successfully');
-                        callback(null);
-                    } else if (response.statusCode < 500) {
-                        // Client error, don't retry
-                        console.error(`Error updating workflow: ${response.statusCode} - ${response.statusMessage}`);
-                        callback(null);
-                    } else {
-                        // Server error, retry
-                        console.info('Retrying call');
-                        callback({ "statusCode": response.statusCode, "statusMessage": response.statusMessage });
-                    }
-                });   
-            }
+    var pushPostBody = {
+            "gitReference": gitReference,
+            "installationId": installationId,
+            "repository": repository,
+            "username": username
+        };
+
+    path += "workflows/github/release";
+    
+    callEndpoint(path, pushPostBody, (response) => {
+        console.log(response);
+        if (response.statusCode < 400) {
+            console.info('The associated entries on Dockstore for repository ' + repository + ' with version ' + gitReference + ' have been updated');
+            callback(null);
+        } else if (response.statusCode < 500) {
+            // Client error, don't retry
+            console.error(`Error handling GitHub webhook, will not retry: ${response.statusCode} - ${response.statusMessage}`);
+            callback(null);
+        } else {
+            // Server error, retry
+            console.info('Server error, retrying call');
+            callback({ "statusCode": response.statusCode, "statusMessage": response.statusMessage });
         }
-    }
+    }); 
     
     callback(null, {"statusCode": 200, "body": "results"});
 }
