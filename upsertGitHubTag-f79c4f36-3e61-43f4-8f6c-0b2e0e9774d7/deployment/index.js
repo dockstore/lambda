@@ -84,36 +84,41 @@ function processEvent(event, callback) {
     
     var path = process.env.API_URL;
 
-    // A push has been made for some repository
-    const repository = body.repository.full_name;
-    const username = body.sender.login;
-    const gitReference = body.ref;
-    const installationId = body.installation.id;
-    
-    var pushPostBody = {
-            "gitReference": gitReference,
-            "installationId": installationId,
-            "repository": repository,
-            "username": username
-        };
+    // A push has been made for some repository (ignore pushes that are deletes)
+    if (!body.deleted) {
+        console.log('Valid push event')
+        const repository = body.repository.full_name;
+        const username = body.sender.login;
+        const gitReference = body.ref;
+        const installationId = body.installation.id;
+        
+        var pushPostBody = {
+                "gitReference": gitReference,
+                "installationId": installationId,
+                "repository": repository,
+                "username": username
+            };
 
-    path += "workflows/github/release";
-    
-    callEndpoint(path, pushPostBody, (response) => {
-        console.log(response);
-        if (response.statusCode < 400) {
-            console.info('The associated entries on Dockstore for repository ' + repository + ' with version ' + gitReference + ' have been updated');
-            callback(null);
-        } else if (response.statusCode < 500) {
-            // Client error, don't retry
-            console.error(`Error handling GitHub webhook, will not retry: ${response.statusCode} - ${response.statusMessage}`);
-            callback(null);
-        } else {
-            // Server error, retry
-            console.info('Server error, retrying call');
-            callback({ "statusCode": response.statusCode, "statusMessage": response.statusMessage });
-        }
-    }); 
+        path += "workflows/github/release";
+        
+        callEndpoint(path, pushPostBody, (response) => {
+            console.log(response);
+            if (response.statusCode < 400) {
+                console.info('The associated entries on Dockstore for repository ' + repository + ' with version ' + gitReference + ' have been updated');
+                callback(null);
+            } else if (response.statusCode < 500) {
+                // Client error, don't retry
+                console.error(`Error handling GitHub webhook, will not retry: ${response.statusCode} - ${response.statusMessage}`);
+                callback(null);
+            } else {
+                // Server error, retry
+                console.info('Server error, retrying call');
+                callback({ "statusCode": response.statusCode, "statusMessage": response.statusMessage });
+            }
+        });
+    } else {
+        console.log('Ignoring deletion push event')
+    }
     
     callback(null, {"statusCode": 200, "body": "results"});
 }
