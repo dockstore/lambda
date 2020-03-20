@@ -64,39 +64,31 @@ function postEndpoint(path, postBody, callback) {
 // Makes a DELETE request to the given path
 function deleteEndpoint(path, repository, reference, callback) {
     console.log('DELETE ' + path);
+
+    path += '?gitReference=' + reference + "&repository=" + repository;
     
     const options = url.parse(path);
     options.method = 'DELETE';
     options.headers = {
-        'Content-Type': 'application/x-www-form-urlencoded',
         'Authorization': 'Bearer ' + process.env.DOCKSTORE_TOKEN
-    };
-    options.qs = {
-        'gitReference': reference,
-        'repository': repository
     };
 
     const req = https.request(options, (res) => {
         var chunks = [];
-        var bodyString = '';
         
         res.on("data", function (chunk) {
             chunks.push(chunk);
-            bodyString += chunk.toString()
         });
 
        res.on('end', function() {
            if (callback) {
-               // If content-type is text/plain, the body contains the message, else the message is found in the JSON object
-               var contentType = res.headers['content-type'];
-               var responseMessage = contentType.includes('text/plain') ? bodyString : res.statusMessage;
+               var responseMessage = res.statusMessage;
                callback({
                    statusCode: res.statusCode,
                    statusMessage: responseMessage
                });
            }
        });
-       return res;
     });
     req.end();
 }
