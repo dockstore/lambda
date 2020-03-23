@@ -82,10 +82,9 @@ function deleteEndpoint(path, repository, reference, callback) {
 
        res.on('end', function() {
            if (callback) {
-               var responseMessage = res.statusMessage;
                callback({
                    statusCode: res.statusCode,
-                   statusMessage: responseMessage
+                   statusMessage: res.statusMessage
                });
            }
        });
