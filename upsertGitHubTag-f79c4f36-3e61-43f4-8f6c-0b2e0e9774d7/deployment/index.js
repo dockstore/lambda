@@ -133,19 +133,8 @@ function processEvent(event, callback) {
         path += "workflows/github/release";
         
         postEndpoint(path, pushPostBody, (response) => {
-            console.log(response);
-            if (response.statusCode < 400) {
-                console.info('The associated entries on Dockstore for repository ' + repository + ' with version ' + gitReference + ' have been updated');
-                callback(null);
-            } else if (response.statusCode < 500) {
-                // Client error, don't retry
-                console.error(`Error handling GitHub webhook, will not retry: ${response.statusCode} - ${response.statusMessage}`);
-                callback(null);
-            } else {
-                // Server error, retry
-                console.info('Server error, retrying call');
-                callback({ "statusCode": response.statusCode, "statusMessage": response.statusMessage });
-            }
+            const successMessage = 'The associated entries on Dockstore for repository ' + repository + ' with version ' + gitReference + ' have been updated';
+            handleCallback(response, successMessage);
         });
     } else {
         console.log('Valid push event (delete)');
@@ -155,23 +144,29 @@ function processEvent(event, callback) {
         path += "workflows/github";
         
         deleteEndpoint(path, repository, gitReference, (response) => {
-            console.log(response);
-            if (response.statusCode < 400) {
-                console.info('The associated versions on Dockstore for repository ' + repository + ' with version ' + gitReference + ' have been deleted');
-                callback(null);
-            } else if (response.statusCode < 500) {
-                // Client error, don't retry
-                console.error(`Error handling GitHub webhook, will not retry: ${response.statusCode} - ${response.statusMessage}`);
-                callback(null);
-            } else {
-                // Server error, retry
-                console.info('Server error, retrying call');
-                callback({ "statusCode": response.statusCode, "statusMessage": response.statusMessage });
-            }
+            const successMessage = 'The associated versions on Dockstore for repository ' + repository + ' with version ' + gitReference + ' have been deleted';
+            handleCallback(response, successMessage);
         });
     }
     
     callback(null, {"statusCode": 200, "body": "results"});
+}
+
+// Handle response from Dockstore webservice
+function handleCallback(response, successMessage) {
+    console.log(response);
+    if (response.statusCode < 400) {
+        console.info(successMessage);
+        callback(null);
+    } else if (response.statusCode < 500) {
+        // Client error, don't retry
+        console.error(`Error handling GitHub webhook, will not retry: ${response.statusCode} - ${response.statusMessage}`);
+        callback(null);
+    } else {
+        // Server error, retry
+        console.info('Server error, retrying call');
+        callback({ "statusCode": response.statusCode, "statusMessage": response.statusMessage });
+    }
 }
 
 
