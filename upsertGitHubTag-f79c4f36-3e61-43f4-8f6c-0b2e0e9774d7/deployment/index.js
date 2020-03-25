@@ -24,7 +24,7 @@ const verifyGitHub = (req) => {
 };
 
 // Makes a POST request to the given path
-function callEndpoint(path, postBody, callback) {
+function postEndpoint(path, postBody, callback) {
     console.log('POST ' + path);
     console.log(qs.stringify(postBody));
     
@@ -61,6 +61,37 @@ function callEndpoint(path, postBody, callback) {
     req.end();
 }
 
+// Makes a DELETE request to the given path
+function deleteEndpoint(path, repository, reference, callback) {
+    console.log('DELETE ' + path);
+
+    path += '?gitReference=' + reference + "&repository=" + repository;
+    
+    const options = url.parse(path);
+    options.method = 'DELETE';
+    options.headers = {
+        'Authorization': 'Bearer ' + process.env.DOCKSTORE_TOKEN
+    };
+
+    const req = https.request(options, (res) => {
+        var chunks = [];
+        
+        res.on("data", function (chunk) {
+            chunks.push(chunk);
+        });
+
+       res.on('end', function() {
+           if (callback) {
+               callback({
+                   statusCode: res.statusCode,
+                   statusMessage: res.statusMessage
+               });
+           }
+       });
+    });
+    req.end();
+}
+
 // Performs an action based on the event type (action)
 function processEvent(event, callback) {
     // Usually returns array of records, however it is fixed to only return 1 record
@@ -86,7 +117,7 @@ function processEvent(event, callback) {
 
     // A push has been made for some repository (ignore pushes that are deletes)
     if (!body.deleted) {
-        console.log('Valid push event')
+        console.log('Valid push event');
         const repository = body.repository.full_name;
         const username = body.sender.login;
         const gitReference = body.ref;
@@ -101,26 +132,41 @@ function processEvent(event, callback) {
 
         path += "workflows/github/release";
         
-        callEndpoint(path, pushPostBody, (response) => {
-            console.log(response);
-            if (response.statusCode < 400) {
-                console.info('The associated entries on Dockstore for repository ' + repository + ' with version ' + gitReference + ' have been updated');
-                callback(null);
-            } else if (response.statusCode < 500) {
-                // Client error, don't retry
-                console.error(`Error handling GitHub webhook, will not retry: ${response.statusCode} - ${response.statusMessage}`);
-                callback(null);
-            } else {
-                // Server error, retry
-                console.info('Server error, retrying call');
-                callback({ "statusCode": response.statusCode, "statusMessage": response.statusMessage });
-            }
+        postEndpoint(path, pushPostBody, (response) => {
+            const successMessage = 'The associated entries on Dockstore for repository ' + repository + ' with version ' + gitReference + ' have been updated';
+            handleCallback(response, successMessage);
         });
     } else {
-        console.log('Ignoring deletion push event')
+        console.log('Valid push event (delete)');
+        const repository = body.repository.full_name;
+        const gitReference = body.ref;
+
+        path += "workflows/github";
+        
+        deleteEndpoint(path, repository, gitReference, (response) => {
+            const successMessage = 'The associated versions on Dockstore for repository ' + repository + ' with version ' + gitReference + ' have been deleted';
+            handleCallback(response, successMessage);
+        });
     }
     
     callback(null, {"statusCode": 200, "body": "results"});
+}
+
+// Handle response from Dockstore webservice
+function handleCallback(response, successMessage) {
+    console.log(response);
+    if (response.statusCode < 400) {
+        console.info(successMessage);
+        callback(null);
+    } else if (response.statusCode < 500) {
+        // Client error, don't retry
+        console.error(`Error handling GitHub webhook, will not retry: ${response.statusCode} - ${response.statusMessage}`);
+        callback(null);
+    } else {
+        // Server error, retry
+        console.info('Server error, retrying call');
+        callback({ "statusCode": response.statusCode, "statusMessage": response.statusMessage });
+    }
 }
 
 
