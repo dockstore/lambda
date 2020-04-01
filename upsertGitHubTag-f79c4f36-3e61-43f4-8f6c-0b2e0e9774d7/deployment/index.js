@@ -134,7 +134,7 @@ function processEvent(event, callback) {
         
         postEndpoint(path, pushPostBody, (response) => {
             const successMessage = 'The associated entries on Dockstore for repository ' + repository + ' with version ' + gitReference + ' have been updated';
-            handleCallback(response, successMessage);
+            handleCallback(response, successMessage, callback);
         });
     } else {
         console.log('Valid push event (delete)');
@@ -145,7 +145,7 @@ function processEvent(event, callback) {
         
         deleteEndpoint(path, repository, gitReference, (response) => {
             const successMessage = 'The associated versions on Dockstore for repository ' + repository + ' with version ' + gitReference + ' have been deleted';
-            handleCallback(response, successMessage);
+            handleCallback(response, successMessage, callback);
         });
     }
     
@@ -153,7 +153,7 @@ function processEvent(event, callback) {
 }
 
 // Handle response from Dockstore webservice
-function handleCallback(response, successMessage) {
+function handleCallback(response, successMessage, callback) {
     console.log(response);
     if (response.statusCode < 400) {
         console.info(successMessage);
