@@ -15,11 +15,47 @@ jobs:
                 steps:
                     - checkout
                     - run:
-                        name: Create deployment zip
+                        name: Create deployment zip for cloudwatch to slack testing
+                        command: zip cloud-watch-to-slack-testing-58006136-c30b-43d1-880c-7b36f860e7c8/deployment/function.zip cloud-watch-to-slack-testing-58006136-c30b-43d1-880c-7b36f860e7c8/deployment/index.js
+                        when: always
+                    - aws-s3/copy:
+                        from: cloud-watch-to-slack-testing-58006136-c30b-43d1-880c-7b36f860e7c8/deployment/function.zip
+                        to: 's3://${AWS_BUCKET}/$(echo ${CIRCLE_TAG-$CIRCLE_BRANCH} | sed "s/\//_/g")-$(echo $CIRCLE_SHA1 | cut -c -7)/cloudWatchToSlackTesting/function.zip'
+                        arguments: |
+                            --cache-control max-age=0
+                    - run:
+                        name: Create deployment zip for edge lambda for s3 404s
+                        command: zip edge-lambda-for-s3-404s-4cbfb453-f95b-45d0-8568-fc17164c9a4c/deployment/function.zip edge-lambda-for-s3-404s-4cbfb453-f95b-45d0-8568-fc17164c9a4c/deployment/index.js
+                        when: always
+                    - aws-s3/copy:
+                        from: edge-lambda-for-s3-404s-4cbfb453-f95b-45d0-8568-fc17164c9a4c/deployment/function.zip
+                        to: 's3://${AWS_BUCKET}/$(echo ${CIRCLE_TAG-$CIRCLE_BRANCH} | sed "s/\//_/g")-$(echo $CIRCLE_SHA1 | cut -c -7)/edgeLambdaForS3404s/function.zip'
+                        arguments: |
+                            --cache-control max-age=0
+                    - run:
+                        name: Create deployment zip for serverless repo cloudwatch alarm to slack
+                        command: zip serverlessrepo-cloudwatch-a-cloudwatchalarmtoslack-60UO1LIXCS1Y-5885aaa7-b2bf-4619-9a72-f63a06b9fd4d/deployment/function.zip serverlessrepo-cloudwatch-a-cloudwatchalarmtoslack-60UO1LIXCS1Y-5885aaa7-b2bf-4619-9a72-f63a06b9fd4d/deployment/index.js
+                        when: always
+                    - aws-s3/copy:
+                        from: serverlessrepo-cloudwatch-a-cloudwatchalarmtoslack-60UO1LIXCS1Y-5885aaa7-b2bf-4619-9a72-f63a06b9fd4d/deployment/function.zip
+                        to: 's3://${AWS_BUCKET}/$(echo ${CIRCLE_TAG-$CIRCLE_BRANCH} | sed "s/\//_/g")-$(echo $CIRCLE_SHA1 | cut -c -7)/serverlessRepoCloudwatchAlarmToSlack/function.zip'
+                        arguments: |
+                            --cache-control max-age=0
+                    - run:
+                        name: Create deployment zip for upsert github tag
                         command: zip upsertGitHubTag-f79c4f36-3e61-43f4-8f6c-0b2e0e9774d7/deployment/function.zip upsertGitHubTag-f79c4f36-3e61-43f4-8f6c-0b2e0e9774d7/deployment/index.js
                         when: always
                     - aws-s3/copy:
                         from: upsertGitHubTag-f79c4f36-3e61-43f4-8f6c-0b2e0e9774d7/deployment/function.zip
-                        to: 's3://${AWS_BUCKET}/$(echo ${CIRCLE_TAG-$CIRCLE_BRANCH} | sed "s/\//_/g")-$(echo $CIRCLE_SHA1 | cut -c -7)/handleGitHubPushEvent/function.zip'
+                        to: 's3://${AWS_BUCKET}/$(echo ${CIRCLE_TAG-$CIRCLE_BRANCH} | sed "s/\//_/g")-$(echo $CIRCLE_SHA1 | cut -c -7)/upsertGitHubTag/function.zip'
+                        arguments: |
+                            --cache-control max-age=0
+                    - run:
+                        name: Create deployment zip for webhook testing
+                        command: zip webhook-testing-bdf90c40-b8ea-409b-951a-3ee800a00dda/deployment/function.zip webhook-testing-bdf90c40-b8ea-409b-951a-3ee800a00dda/deployment/index.js
+                        when: always
+                    - aws-s3/copy:
+                        from: webhook-testing-bdf90c40-b8ea-409b-951a-3ee800a00dda/deployment/function.zip
+                        to: 's3://${AWS_BUCKET}/$(echo ${CIRCLE_TAG-$CIRCLE_BRANCH} | sed "s/\//_/g")-$(echo $CIRCLE_SHA1 | cut -c -7)/webhookTesting/function.zip'
                         arguments: |
                             --cache-control max-age=0
