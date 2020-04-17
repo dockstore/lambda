@@ -22,4 +22,4 @@ jobs:
                         from: upsertGitHubTag-f79c4f36-3e61-43f4-8f6c-0b2e0e9774d7/deployment/function.zip
                         to: 's3://${AWS_BUCKET}/${CIRCLE_TAG-$CIRCLE_BRANCH}-$(echo $CIRCLE_SHA1 | cut -c -7)/handleGitHubPushEvent/index.js'
                         arguments: |
-                        --cache-control max-age=0
+                            --cache-control max-age=0
