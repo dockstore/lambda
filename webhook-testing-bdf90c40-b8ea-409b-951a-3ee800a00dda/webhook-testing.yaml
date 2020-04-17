@@ -1,0 +1,34 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: An undefined trigger that sends GitHub App notifications to Slack.
+Resources:
+  webhooktesting:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs8.10
+      CodeUri: .
+      Description: An undefined trigger that sends GitHub App notifications to Slack.
+      MemorySize: 128
+      Timeout: 3
+      Role: >-
+        arn:aws:iam::312767926603:role/serverlessrepo-cloudwatch-cloudwatchalarmtoslackRo-1MWUBBKPY1IYG
+      Events:
+        Api1:
+          Type: Api
+          Properties:
+            Path: /helloworld
+            Method: ANY
+        Api2:
+          Type: Api
+          Properties:
+            Path: /foobar
+            Method: ANY
+      Environment:
+        Variables:
+          SECRET_TOKEN: <fill me in>
+          kmsEncryptedHookUrl: >-
+            AQICAHicSBs6aaXy8Lb+IjLRg6DV8EoauPSVsU5VmBT+1qT9lQHKPbWX5JBpfWlEh2zlYjcHAAAApzCBpAYJKoZIhvcNAQcGoIGWMIGTAgEAMIGNBgkqhkiG9w0BBwEwHgYJYIZIAWUDBAEuMBEEDNtuoG7RbaBP332pFwIBEIBgqMNMDsjI3Thu1pVmjMVFNZ8fo81XwU2mDyN2VxOayuJDHpdnItbj2KIFYn4AXLSF/JSjikYjik2QX79+Pm1XFo01zN46+vWOav989cJFh0MMQsRku9+aO3ksinrz5VYB
+          slackChannel: dockstore-testing
+      KmsKeyArn: >-
+        arn:aws:kms:us-east-1:312767926603:key/0a1d7811-1366-448c-a31d-ce61effcbf92
