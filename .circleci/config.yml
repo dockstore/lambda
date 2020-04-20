@@ -1,6 +1,7 @@
 version: 2.1
 orbs:
   aws-s3: circleci/aws-s3@1.0.0
+  node: circleci/node@2.0.2
 jobs:
     build:
         docker:
@@ -10,6 +11,9 @@ jobs:
                 type: string
                 default: "${AWS_BUCKET}"
         steps:
+            - node/install:
+              install-yarn: true
+              node-version: latest
             - when:
                 condition: <<parameters.aws_bucket>>
                 steps:
@@ -39,7 +43,10 @@ commands:
                 type: string
         steps:
             - run:
-                name: Create deployment zip for cloudwatch to slack testing
+                name: Validate index.js
+                command: node --check << parameters.lambdaFolder >>/index.js
+            - run:
+                name: Create deployment zip
                 command: zip << parameters.lambdaFolder >>/function.zip << parameters.lambdaFolder >>/index.js
                 when: always
             - aws-s3/copy:
