@@ -12,8 +12,8 @@ jobs:
                 default: "${AWS_BUCKET}"
         steps:
             - node/install:
-              install-yarn: true
-              node-version: latest
+                install-yarn: false
+                node-version: latest
             - when:
                 condition: <<parameters.aws_bucket>>
                 steps:
