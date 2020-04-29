@@ -121,7 +121,7 @@ function processEvent(event, callback) {
      * 
      * If an event is deemed not supported, we will return a success and print a message saying the event is not supported.
      */
-    if (!('repository' in body) || !('ref' in body) || !('created' in body) || !('deleted' in body) || !('pusher' in body)) {
+    if (!('repository' in body && 'ref' in body && 'created' in body && 'deleted' in body && 'pusher' in body)) {
         console.log('Event is not supported')
         callback(null, {"statusCode": 200, "body": "Currently, this lambda does not support this event type from GitHub."});
     }
