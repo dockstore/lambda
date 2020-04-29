@@ -115,6 +115,11 @@ function processEvent(event, callback) {
     
     var path = process.env.API_URL;
 
+    if (!('repository' in body) || !('ref' in body)) {
+        console.log('Event is not supported')
+        callback(null, {"statusCode": 200, "body": "Currently, this lambda does not support this event type from GitHub."});
+    }
+
     // A push has been made for some repository (ignore pushes that are deletes)
     if (!body.deleted) {
         console.log('Valid push event');
