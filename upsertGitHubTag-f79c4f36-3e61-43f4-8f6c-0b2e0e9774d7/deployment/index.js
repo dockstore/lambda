@@ -115,6 +115,17 @@ function processEvent(event, callback) {
     
     var path = process.env.API_URL;
 
+    /**
+     * We only handle push events, of which there are many subtypes. Unfortunately, the only way to differentiate between them is to look
+     * for expected fields. There are no enums for push events subtypes.
+     * 
+     * If an event is deemed not supported, we will return a success and print a message saying the event is not supported.
+     */
+    if (['repository', 'ref', 'created', 'deleted', 'pusher'].some(str => !(str in body))) {
+        console.log('Event is not supported')
+        callback(null, {"statusCode": 200, "body": "Currently, this lambda does not support this event type from GitHub."});
+    }
+
     // A push has been made for some repository (ignore pushes that are deletes)
     if (!body.deleted) {
         console.log('Valid push event');
