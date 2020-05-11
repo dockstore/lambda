@@ -46,17 +46,8 @@ commands:
                 name: Validate index.js
                 command: node --check << parameters.lambdaFolder >>/index.js
             - run:
-                name: Change to index.js dir
-                command: cd << parameters.lambdaFolder >>
-            - run:
-                name: list content of dir
-                command: ls
-            - run:
                 name: Create deployment zip
-                command: zip function.zip index.js
-            - run:
-                name: Return to previous dir
-                command: cd $CIRCLE_WORKING_DIRECTORY
+                command: cd << parameters.lambdaFolder >> && zip function.zip index.js
             - aws-s3/copy:
                 from: << parameters.lambdaFolder >>/function.zip
                 to: 's3://${AWS_BUCKET}/$(echo ${CIRCLE_TAG-$CIRCLE_BRANCH} | sed "s/\//_/g")-$(echo $CIRCLE_SHA1 | cut -c -7)/<< parameters.s3BucketFolder >>/function.zip'
