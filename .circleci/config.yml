@@ -49,6 +49,9 @@ commands:
                 name: Change to index.js dir
                 command: cd << parameters.lambdaFolder >>
             - run:
+                name: list content of dir
+                command: ls
+            - run:
                 name: Create deployment zip
                 command: zip function.zip index.js
             - run:
