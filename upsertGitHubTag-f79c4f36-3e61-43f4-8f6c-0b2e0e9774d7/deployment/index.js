@@ -62,10 +62,10 @@ function postEndpoint(path, postBody, callback) {
 }
 
 // Makes a DELETE request to the given path
-function deleteEndpoint(path, repository, reference, callback) {
+function deleteEndpoint(path, repository, reference, username, callback) {
     console.log('DELETE ' + path);
 
-    path += '?gitReference=' + reference + "&repository=" + repository;
+    path += '?gitReference=' + reference + "&repository=" + repository + "&username=" + username;
     
     const options = url.parse(path);
     options.method = 'DELETE';
@@ -151,10 +151,11 @@ function processEvent(event, callback) {
         console.log('Valid push event (delete)');
         const repository = body.repository.full_name;
         const gitReference = body.ref;
+        const username = body.sender.login;
 
         path += "workflows/github";
         
-        deleteEndpoint(path, repository, gitReference, (response) => {
+        deleteEndpoint(path, repository, gitReference, username, (response) => {
             const successMessage = 'The associated versions on Dockstore for repository ' + repository + ' with version ' + gitReference + ' have been deleted';
             handleCallback(response, successMessage, callback);
         });
