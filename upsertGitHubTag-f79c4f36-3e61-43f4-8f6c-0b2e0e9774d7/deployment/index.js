@@ -115,50 +115,73 @@ function processEvent(event, callback) {
     
     var path = process.env.API_URL;
 
-    /**
-     * We only handle push events, of which there are many subtypes. Unfortunately, the only way to differentiate between them is to look
-     * for expected fields. There are no enums for push events subtypes.
-     * 
-     * If an event is deemed not supported, we will return a success and print a message saying the event is not supported.
-     */
-    if (['repository', 'ref', 'created', 'deleted', 'pusher'].some(str => !(str in body))) {
-        console.log('Event is not supported')
-        callback(null, {"statusCode": 200, "body": "Currently, this lambda does not support this event type from GitHub."});
-    }
-
-    // A push has been made for some repository (ignore pushes that are deletes)
-    if (!body.deleted) {
-        console.log('Valid push event');
+    // Handle installation events
+    var githupEventType = event.headers["X-GitHub-Event"]
+    if (githubEventType === "installation") {
+        console.log('Valid installation event');
         const repository = body.repository.full_name;
         const username = body.sender.login;
-        const gitReference = body.ref;
         const installationId = body.installation.id;
-        
         var pushPostBody = {
-                "gitReference": gitReference,
-                "installationId": installationId,
-                "repository": repository,
-                "username": username
-            };
-
-        path += "workflows/github/release";
-        
+            "installationId": installationId,
+            "repository": repository,
+            "username": username
+        };
+        path += "workflows/github/install";
+            
         postEndpoint(path, pushPostBody, (response) => {
-            const successMessage = 'The associated entries on Dockstore for repository ' + repository + ' with version ' + gitReference + ' have been updated';
+            const successMessage = 'The GitHub app was successfully installed on repository ' + repository;
             handleCallback(response, successMessage, callback);
         });
-    } else {
-        console.log('Valid push event (delete)');
-        const repository = body.repository.full_name;
-        const gitReference = body.ref;
-        const username = body.sender.login;
+    } else if (githubEventType === "push") {
+        /**
+         * We only handle push events, of which there are many subtypes. Unfortunately, the only way to differentiate between them is to look
+         * for expected fields. There are no enums for push events subtypes.
+         * 
+         * If an event is deemed not supported, we will return a success and print a message saying the event is not supported.
+         */
+        if (['repository', 'ref', 'created', 'deleted', 'pusher'].some(str => !(str in body))) {
+            console.log('Event is not supported')
+            callback(null, {"statusCode": 200, "body": "Currently, this lambda does not support this event type from GitHub."});
+        }
 
-        path += "workflows/github";
-        
-        deleteEndpoint(path, repository, gitReference, username, (response) => {
-            const successMessage = 'The associated versions on Dockstore for repository ' + repository + ' with version ' + gitReference + ' have been deleted';
-            handleCallback(response, successMessage, callback);
-        });
+        // A push has been made for some repository (ignore pushes that are deletes)
+        if (!body.deleted) {
+            console.log('Valid push event');
+            const repository = body.repository.full_name;
+            const username = body.sender.login;
+            const gitReference = body.ref;
+            const installationId = body.installation.id;
+            
+            var pushPostBody = {
+                    "gitReference": gitReference,
+                    "installationId": installationId,
+                    "repository": repository,
+                    "username": username
+                };
+
+            path += "workflows/github/release";
+            
+            postEndpoint(path, pushPostBody, (response) => {
+                const successMessage = 'The associated entries on Dockstore for repository ' + repository + ' with version ' + gitReference + ' have been updated';
+                handleCallback(response, successMessage, callback);
+            });
+        } else {
+            console.log('Valid push event (delete)');
+            const repository = body.repository.full_name;
+            const gitReference = body.ref;
+            const username = body.sender.login;
+
+            path += "workflows/github";
+            
+            deleteEndpoint(path, repository, gitReference, username, (response) => {
+                const successMessage = 'The associated versions on Dockstore for repository ' + repository + ' with version ' + gitReference + ' have been deleted';
+                handleCallback(response, successMessage, callback);
+            });
+        }
+    } else {
+        console.log('Event ' + githupEventType + ' is not supported')
+        callback(null, {"statusCode": 200, "body": "Currently, this lambda does not support the event type" + githupEventType + " from GitHub."});
     }
     
     callback(null, {"statusCode": 200, "body": "results"});
