@@ -62,10 +62,10 @@ function postEndpoint(path, postBody, callback) {
 }
 
 // Makes a DELETE request to the given path
-function deleteEndpoint(path, repository, reference, username, callback) {
+function deleteEndpoint(path, repository, reference, username, installationId, callback) {
     console.log('DELETE ' + path);
 
-    path += '?gitReference=' + reference + "&repository=" + repository + "&username=" + username;
+    path += '?gitReference=' + reference + "&repository=" + repository + "&username=" + username + "&installationId=" + installationId;
     
     const options = url.parse(path);
     options.method = 'DELETE';
@@ -117,15 +117,20 @@ function processEvent(event, callback) {
 
     // Handle installation events
     var githupEventType = event.headers["X-GitHub-Event"]
-    if (githubEventType === "installation") {
+    if (githubEventType === "installation_repositories") {
         console.log('Valid installation event');
-        const repository = body.repository.full_name;
         const username = body.sender.login;
         const installationId = body.installation.id;
+        const repositoriesAdded = body.repositories_added;
+        var repositories = [];
+        repositoriesAdded.forEach((repo) => {
+            repositories.push(repo.full_name);
+        });
+
         var pushPostBody = {
             "installationId": installationId,
-            "repository": repository,
-            "username": username
+            "username": username,
+            "repositories": repositories.join(",")
         };
         path += "workflows/github/install";
             
@@ -171,10 +176,11 @@ function processEvent(event, callback) {
             const repository = body.repository.full_name;
             const gitReference = body.ref;
             const username = body.sender.login;
+            const installationId = body.installation.id;
 
             path += "workflows/github";
             
-            deleteEndpoint(path, repository, gitReference, username, (response) => {
+            deleteEndpoint(path, repository, gitReference, username, installationId, (response) => {
                 const successMessage = 'The associated versions on Dockstore for repository ' + repository + ' with version ' + gitReference + ' have been deleted';
                 handleCallback(response, successMessage, callback);
             });
