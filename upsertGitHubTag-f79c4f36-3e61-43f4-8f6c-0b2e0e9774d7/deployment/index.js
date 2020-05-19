@@ -65,11 +65,11 @@ function postEndpoint(path, postBody, callback) {
 function deleteEndpoint(path, repository, reference, username, installationId, callback) {
     console.log('DELETE ' + path);
 
-    const urlWithParams = new URL(path)
-    urlWithParams.searchParams.append("gitReference", reference)
-    urlWithParams.searchParams.append("repository", repository)
-    urlWithParams.searchParams.append("username", username)
-    urlWithParams.searchParams.append("installationId", installationId)
+    const urlWithParams = new URL(path);
+    urlWithParams.searchParams.append("gitReference", reference);
+    urlWithParams.searchParams.append("repository", repository);
+    urlWithParams.searchParams.append("username", username);
+    urlWithParams.searchParams.append("installationId", installationId);
     
     const options = url.parse(urlWithParams.href);
     options.method = 'DELETE';
