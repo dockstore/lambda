@@ -120,7 +120,7 @@ function processEvent(event, callback) {
     var path = process.env.API_URL;
 
     // Handle installation events
-    var githupEventType = event.headers["X-GitHub-Event"]
+    var githupEventType = requestBody['X-GitHub-Event']
     if (githubEventType === "installation_repositories") {
         console.log('Valid installation event');
         const username = body.sender.login;
