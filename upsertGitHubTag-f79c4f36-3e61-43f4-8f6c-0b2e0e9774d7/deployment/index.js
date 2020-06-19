@@ -120,7 +120,7 @@ function processEvent(event, callback) {
     var path = process.env.API_URL;
 
     // Handle installation events
-    var githupEventType = requestBody['X-GitHub-Event']
+    var githubEventType = requestBody['X-GitHub-Event']
     if (githubEventType === "installation_repositories") {
         console.log('Valid installation event');
         const username = body.sender.login;
@@ -190,8 +190,8 @@ function processEvent(event, callback) {
             });
         }
     } else {
-        console.log('Event ' + githupEventType + ' is not supported')
-        callback(null, {"statusCode": 200, "body": "Currently, this lambda does not support the event type" + githupEventType + " from GitHub."});
+        console.log('Event ' + githubEventType + ' is not supported')
+        callback(null, {"statusCode": 200, "body": "Currently, this lambda does not support the event type" + githubEventType + " from GitHub."});
     }
     
     callback(null, {"statusCode": 200, "body": "results"});
