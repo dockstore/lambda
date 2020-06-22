@@ -111,7 +111,7 @@ function processEvent(event, callback) {
     }
     
     // The payload is encoded in base64
-    var buff = Buffer.from(requestBody.payload, 'base64')
+    const buff = Buffer.from(requestBody.payload, 'base64');
     const body = JSON.parse(buff.toString('ascii'));
 
     console.log('GitHub Payload');
