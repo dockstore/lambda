@@ -10,6 +10,9 @@ jobs:
             aws_bucket:
                 type: string
                 default: "${AWS_BUCKET}"
+        filters:
+            tags:
+                only: /.*/
         steps:
             - when:
                 condition: <<parameters.aws_bucket>>
