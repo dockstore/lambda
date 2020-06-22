@@ -3,6 +3,9 @@ orbs:
   aws-s3: circleci/aws-s3@1.0.0
   node: circleci/node@2.0.2
 jobs:
+    filters:
+        tags:
+            only: /.*/
     build:
         docker:
             - image: circleci/python:3.7
@@ -10,9 +13,6 @@ jobs:
             aws_bucket:
                 type: string
                 default: "${AWS_BUCKET}"
-        filters:
-            tags:
-                only: /.*/
         steps:
             - when:
                 condition: <<parameters.aws_bucket>>
