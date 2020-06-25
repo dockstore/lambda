@@ -62,12 +62,16 @@ function postEndpoint(path, postBody, callback) {
 }
 
 // Makes a DELETE request to the given path
-function deleteEndpoint(path, repository, reference, callback) {
+function deleteEndpoint(path, repository, reference, username, installationId, callback) {
     console.log('DELETE ' + path);
 
-    path += '?gitReference=' + reference + "&repository=" + repository;
+    const urlWithParams = new URL(path);
+    urlWithParams.searchParams.append("gitReference", reference);
+    urlWithParams.searchParams.append("repository", repository);
+    urlWithParams.searchParams.append("username", username);
+    urlWithParams.searchParams.append("installationId", installationId);
     
-    const options = url.parse(path);
+    const options = url.parse(urlWithParams.href);
     options.method = 'DELETE';
     options.headers = {
         'Authorization': 'Bearer ' + process.env.DOCKSTORE_TOKEN
@@ -107,7 +111,7 @@ function processEvent(event, callback) {
     }
     
     // The payload is encoded in base64
-    var buff = new Buffer(requestBody.payload, 'base64');
+    const buff = Buffer.from(requestBody.payload, 'base64');
     const body = JSON.parse(buff.toString('ascii'));
 
     console.log('GitHub Payload');
@@ -115,38 +119,79 @@ function processEvent(event, callback) {
     
     var path = process.env.API_URL;
 
-    // A push has been made for some repository (ignore pushes that are deletes)
-    if (!body.deleted) {
-        console.log('Valid push event');
-        const repository = body.repository.full_name;
+    // Handle installation events
+    var githubEventType = requestBody['X-GitHub-Event']
+    if (githubEventType === "installation_repositories") {
+        console.log('Valid installation event');
         const username = body.sender.login;
-        const gitReference = body.ref;
         const installationId = body.installation.id;
-        
+        const repositoriesAdded = body.repositories_added;
+        var repositories = [];
+        repositoriesAdded.forEach((repo) => {
+            repositories.push(repo.full_name);
+        });
+
         var pushPostBody = {
-                "gitReference": gitReference,
-                "installationId": installationId,
-                "repository": repository,
-                "username": username
-            };
-
-        path += "workflows/github/release";
-        
+            "installationId": installationId,
+            "username": username,
+            "repositories": repositories.join(",")
+        };
+        path += "workflows/github/install";
+            
         postEndpoint(path, pushPostBody, (response) => {
-            const successMessage = 'The associated entries on Dockstore for repository ' + repository + ' with version ' + gitReference + ' have been updated';
+            const successMessage = 'The GitHub app was successfully installed on repository ' + repository;
             handleCallback(response, successMessage, callback);
         });
-    } else {
-        console.log('Valid push event (delete)');
-        const repository = body.repository.full_name;
-        const gitReference = body.ref;
+    } else if (githubEventType === "push") {
+        /**
+         * We only handle push events, of which there are many subtypes. Unfortunately, the only way to differentiate between them is to look
+         * for expected fields. There are no enums for push events subtypes.
+         * 
+         * If an event is deemed not supported, we will return a success and print a message saying the event is not supported.
+         */
+        if (['repository', 'ref', 'created', 'deleted', 'pusher'].some(str => !(str in body))) {
+            console.log('Event is not supported')
+            callback(null, {"statusCode": 200, "body": "Currently, this lambda does not support this event type from GitHub."});
+        }
 
-        path += "workflows/github";
-        
-        deleteEndpoint(path, repository, gitReference, (response) => {
-            const successMessage = 'The associated versions on Dockstore for repository ' + repository + ' with version ' + gitReference + ' have been deleted';
-            handleCallback(response, successMessage, callback);
-        });
+        // A push has been made for some repository (ignore pushes that are deletes)
+        if (!body.deleted) {
+            console.log('Valid push event');
+            const repository = body.repository.full_name;
+            const username = body.sender.login;
+            const gitReference = body.ref;
+            const installationId = body.installation.id;
+            
+            var pushPostBody = {
+                    "gitReference": gitReference,
+                    "installationId": installationId,
+                    "repository": repository,
+                    "username": username
+                };
+
+            path += "workflows/github/release";
+            
+            postEndpoint(path, pushPostBody, (response) => {
+                const successMessage = 'The associated entries on Dockstore for repository ' + repository + ' with version ' + gitReference + ' have been updated';
+                handleCallback(response, successMessage, callback);
+            });
+        } else {
+            console.log('Valid push event (delete)');
+            const repository = body.repository.full_name;
+            const gitReference = body.ref;
+            const username = body.sender.login;
+            const installationId = body.installation.id;
+
+            path += "workflows/github";
+            
+            deleteEndpoint(path, repository, gitReference, username, installationId, (response) => {
+                const successMessage = 'The associated versions on Dockstore for repository ' + repository + ' with version ' + gitReference + ' have been deleted';
+                handleCallback(response, successMessage, callback);
+            });
+        }
+    } else {
+        console.log('Event ' + githubEventType + ' is not supported')
+        callback(null, {"statusCode": 200, "body": "Currently, this lambda does not support the event type" + githubEventType + " from GitHub."});
     }
     
     callback(null, {"statusCode": 200, "body": "results"});

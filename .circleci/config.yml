@@ -1,0 +1,63 @@
+version: 2.1
+orbs:
+  aws-s3: circleci/aws-s3@1.0.0
+  node: circleci/node@2.0.2
+jobs:
+    build:
+        docker:
+            - image: circleci/python:3.7
+        parameters:
+            aws_bucket:
+                type: string
+                default: "${AWS_BUCKET}"
+        steps:
+            - when:
+                condition: <<parameters.aws_bucket>>
+                steps:
+                    - checkout
+                    - node/install:
+                        install-yarn: false
+                        node-version: latest
+                    - create_zip_upload_to_s3:
+                        lambdaFolder: "cloud-watch-to-slack-testing-58006136-c30b-43d1-880c-7b36f860e7c8/deployment"
+                        s3BucketFolder: "cloudWatchToSlackTesting"
+                    - create_zip_upload_to_s3:
+                        lambdaFolder: "edge-lambda-for-s3-404s-4cbfb453-f95b-45d0-8568-fc17164c9a4c/deployment"
+                        s3BucketFolder: "edgeLambdaForS3404s"
+                    - create_zip_upload_to_s3:
+                        lambdaFolder: "serverlessrepo-cloudwatch-a-cloudwatchalarmtoslack-60UO1LIXCS1Y-5885aaa7-b2bf-4619-9a72-f63a06b9fd4d/deployment"
+                        s3BucketFolder: "serverlessRepoCloudwatchAlarmToSlack"
+                    - create_zip_upload_to_s3:
+                        lambdaFolder: "upsertGitHubTag-f79c4f36-3e61-43f4-8f6c-0b2e0e9774d7/deployment"
+                        s3BucketFolder: "upsertGitHubTag"
+                    - create_zip_upload_to_s3:
+                        lambdaFolder: "webhook-testing-bdf90c40-b8ea-409b-951a-3ee800a00dda/deployment"
+                        s3BucketFolder: "webhookTesting"
+commands:
+    create_zip_upload_to_s3:
+        description: "Creates a deployment zip for a lambda and uploads to S3"
+        parameters:
+            lambdaFolder:
+                type: string
+            s3BucketFolder:
+                type: string
+        steps:
+            - run:
+                name: Validate index.js
+                command: node --check << parameters.lambdaFolder >>/index.js
+            - run:
+                name: Create deployment zip
+                command: cd << parameters.lambdaFolder >> && zip function.zip index.js
+            - aws-s3/copy:
+                from: << parameters.lambdaFolder >>/function.zip
+                to: 's3://${AWS_BUCKET}/$(echo ${CIRCLE_TAG-$CIRCLE_BRANCH} | sed "s/\//_/g")-$(echo $CIRCLE_SHA1 | cut -c -7)/<< parameters.s3BucketFolder >>/function.zip'
+                arguments: |
+                    --cache-control max-age=0
+workflows:
+    version: 2
+    build:
+        jobs:
+            - build:
+                filters:
+                    tags:
+                        only: /.*/
