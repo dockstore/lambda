@@ -6,7 +6,7 @@ name: Java CI with Maven
 on: [push, pull_request]
 defaults:
   run:
-    workflow-directory: ./wdl-parsing/WDLParsingFunction
+    working-directory: ./wdl-parsing/WDLParsingFunction
 jobs:
   build:
     runs-on: ubuntu-latest
