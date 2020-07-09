@@ -30,6 +30,8 @@ jobs:
          pip install aws-sam-cli
      - name: Test with SAM CLI
        working-directory: ./wdl-parsing
-       run: sam local invoke -e events/event.json   
+       run: |
+         sam build
+         sam local invoke -e events/event.json   
 
 
