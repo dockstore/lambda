@@ -1,5 +1,5 @@
 {
-    "body": "{\"message\": \"hello world\"}",
+    "body": "{\"uri\":\"https:\/\/github.com\/briandoconnor\/dockstore-tool-md5sum.git\",\"branch\":\"1.0.4\",\"descriptorRelativePathInGit\":\"Dockstore.wdl\"}",
     "resource": "/{proxy+}",
     "path": "/path/to/resource",
     "httpMethod": "POST",
