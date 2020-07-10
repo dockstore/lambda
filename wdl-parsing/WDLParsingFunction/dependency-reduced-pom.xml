@@ -91,7 +91,7 @@
   </dependencies>
   <properties>
     <maven.compiler.target>1.8</maven.compiler.target>
-    <cromwell.version>41</cromwell.version>
+    <cromwell.version>51</cromwell.version>
     <maven.compiler.source>1.8</maven.compiler.source>
   </properties>
 </project>

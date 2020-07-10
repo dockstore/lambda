@@ -33,4 +33,26 @@ public class AppTest {
     assertTrue(response.getClonedRepositoryAbsolutePath().contains("/tmp"));
     System.out.println(response.getClonedRepositoryAbsolutePath());
   }
+
+  @Test
+  public void successfulResponseOfComplexWorkflow() throws JsonProcessingException {
+    ObjectMapper objectMapper = new ObjectMapper();
+    Request request = new Request();
+    request.setBranch("dockstore-test");
+    request.setUri("https://github.com/dockstore-testing/gatk-sv-clinical.git");
+    request.setDescriptorRelativePathInGit("GATKSVPipelineClinical.wdl");
+    App app = new App();
+    APIGatewayProxyRequestEvent requestEvent = new APIGatewayProxyRequestEvent();
+    requestEvent.setBody(objectMapper.writeValueAsString(request));
+    APIGatewayProxyResponseEvent result = app.handleRequest(requestEvent, null);
+    assertEquals(HttpURLConnection.HTTP_OK, result.getStatusCode().intValue());
+    assertEquals(result.getHeaders().get("Content-Type"), "application/json");
+    String content = result.getBody();
+    assertNotNull(content);
+    Response response = objectMapper.readValue(content, Response.class);
+    assertTrue(response.isValid());
+    assertTrue(response.getClonedRepositoryAbsolutePath().contains("/tmp"));
+    System.out.println(response.getClonedRepositoryAbsolutePath());
+  }
+
 }

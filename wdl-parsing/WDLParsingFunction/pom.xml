@@ -9,7 +9,7 @@
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <cromwell.version>41</cromwell.version>
+        <cromwell.version>51</cromwell.version>
     </properties>
     <repositories>
     <repository>
@@ -192,6 +192,11 @@
         <dependency>
             <groupId>org.broadinstitute</groupId>
             <artifactId>cromwell-wom_2.12</artifactId>
+            <version>${cromwell.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.broadinstitute</groupId>
+            <artifactId>womtool_2.12</artifactId>
             <version>${cromwell.version}</version>
         </dependency>
         <dependency>
