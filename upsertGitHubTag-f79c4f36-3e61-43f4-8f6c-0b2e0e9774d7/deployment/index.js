@@ -16,7 +16,7 @@ const verifyGitHub = (req) => {
   const theirSignature = req['X-Hub-Signature'];
   
   // Need to decode base64 encoded payload
-  var buff = new Buffer(req.payload, 'base64');
+  var buff = Buffer.from(req.payload, 'base64');
   const payload = buff.toString('utf-8');
   const secret = process.env.SECRET_TOKEN; 
   const ourSignature = `sha1=${crypto.createHmac('sha1', secret).update(payload).digest('hex')}`;
