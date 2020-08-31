@@ -86,21 +86,32 @@ function postMessage(message, callback) {
 function processEvent(event, callback) {
     console.log(event);
     const message = JSON.parse(event.Records[0].Sns.Message);
-    
-    var messageText;
+
+    let messageText;
     if (message.source == 'aws.config') {
         const alarmName = message.detail.configRuleName;
         const newState = message.detail.newEvaluationResult.complianceType;
         messageText = `${alarmName} state is now ${newState}`
+    } else if (message.source == 'aws.ssm') {
+        const eventName = message.detail.eventName;
+        const userName = message.detail.userIdentity.userName;
+        const sourceIPAddress = message.detail.sourceIPAddress;
+        messageText = `${userName} initiated AWS Systems Manager (SSM) event ${eventName} from IP ${sourceIPAddress}`;
+        if (message.detail.hasOwnProperty("requestParameters")) {
+          if (message.detail.requestParameters.hasOwnProperty("target")) {
+            const targetInstance = message.detail.requestParameters.target;
+            messageText = messageText + ` to target: ${targetInstance}`;
+          }
+        }
     } else {
         const alarmName = message.AlarmName;
         const newState = message.NewStateValue;
         const reason = message.NewStateReason;
         messageText = `${alarmName} state is now ${newState}: ${reason}`;
     }
-    
+
     // this is now for message that cloudwatch gets from aws config and sends to SNS
-    
+
 
     const slackMessage = {
         channel: slackChannel,
