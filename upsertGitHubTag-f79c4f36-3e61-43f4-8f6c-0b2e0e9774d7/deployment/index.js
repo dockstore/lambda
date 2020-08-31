@@ -7,18 +7,14 @@ const crypto = require('crypto');
 const qs = require('querystring');
 
 // Verification function to check if it is actually GitHub who is POSTing here
-const verifyGitHub = (req) => {
+const verifyGitHub = (req, payload) => {
   if (!req['user-agent'].includes('GitHub-Hookshot')) {
       return false;
   }
   // Compare their hmac signature to our hmac signature
   // (hmac = hash-based message authentication code)
   const theirSignature = req['X-Hub-Signature'];
-  
-  // Need to decode base64 encoded payload
-  var buff = new Buffer(req.payload, 'base64');
-  const payload = buff.toString('ascii');
-  const secret = process.env.SECRET_TOKEN; 
+  const secret = process.env.SECRET_TOKEN;
   const ourSignature = `sha1=${crypto.createHmac('sha1', secret).update(payload).digest('hex')}`;
   return crypto.timingSafeEqual(Buffer.from(theirSignature), Buffer.from(ourSignature));
 };
@@ -102,21 +98,23 @@ function processEvent(event, callback) {
     console.log(JSON.stringify(event));
     var loneEvent = event.Records[0];
     var requestBody = JSON.parse(loneEvent.body);
-    if (! verifyGitHub(requestBody)) {
+
+    // The payload is URI-encoded and encoded in base64
+    const uriDecoded = decodeURIComponent(requestBody.payload);
+    const buff = Buffer.from(uriDecoded, 'base64');
+    const body = JSON.parse(buff.toString('utf8'));
+
+    console.log('GitHub Payload');
+    console.log(JSON.stringify(body));
+
+    if (! verifyGitHub(requestBody, body)) {
         console.log('GitHub could not be verified');
         callback(null, {"statusCode": 403, "body": "something is wrong, github secret does not match"});
         return;
     } else {
         console.log('GitHub is verified');
     }
-    
-    // The payload is encoded in base64
-    const buff = Buffer.from(requestBody.payload, 'base64');
-    const body = JSON.parse(buff.toString('ascii'));
 
-    console.log('GitHub Payload');
-    console.log(JSON.stringify(body));
-    
     var path = process.env.API_URL;
 
     // Handle installation events
