@@ -16,8 +16,8 @@ const verifyGitHub = (req) => {
   const theirSignature = req['X-Hub-Signature'];
   
   // Need to decode base64 encoded payload
-  var buff = new Buffer(req.payload, 'base64');
-  const payload = buff.toString('ascii');
+  var buff = Buffer.from(req.payload, 'base64');
+  const payload = buff.toString('utf8');
   const secret = process.env.SECRET_TOKEN; 
   const ourSignature = `sha1=${crypto.createHmac('sha1', secret).update(payload).digest('hex')}`;
   return crypto.timingSafeEqual(Buffer.from(theirSignature), Buffer.from(ourSignature));
@@ -48,7 +48,7 @@ function postEndpoint(path, postBody, callback) {
            if (callback) {
                // If content-type is text/plain, the body contains the message, else the message is found in the JSON object
                var contentType = res.headers['content-type'];
-               var responseMessage = contentType && contentType.includes('text/plain') ? bodyString : res.statusMessage;
+               var responseMessage = contentType.includes('text/plain') ? bodyString : res.statusMessage;
                callback({
                    statusCode: res.statusCode,
                    statusMessage: responseMessage
@@ -112,7 +112,7 @@ function processEvent(event, callback) {
     
     // The payload is encoded in base64
     const buff = Buffer.from(requestBody.payload, 'base64');
-    const body = JSON.parse(buff.toString('ascii'));
+    const body = JSON.parse(buff.toString('utf8'));
 
     console.log('GitHub Payload');
     console.log(JSON.stringify(body));
