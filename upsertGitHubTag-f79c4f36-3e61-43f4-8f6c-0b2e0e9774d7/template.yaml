@@ -3,7 +3,7 @@ Transform: AWS::Serverless-2016-10-31
 Description: >
   potato
 
-  Sample SAM Template for potato
+  Sample SAM Template for potato. This is for SAM CLI testing only, do not use this anywhere else.
   
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
