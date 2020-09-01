@@ -99,9 +99,8 @@ function processEvent(event, callback) {
     var loneEvent = event.Records[0];
     var requestBody = JSON.parse(loneEvent.body);
 
-    // The payload is URI-encoded and encoded in base64
-    const uriDecoded = decodeURIComponent(requestBody.payload);
-    const buff = Buffer.from(uriDecoded, 'base64');
+    // The payload is encoded in base64
+    const buff = Buffer.from(requestBody.payload, 'base64');
     const bodyDecoded = buff.toString('utf8');
     const body = JSON.parse(bodyDecoded);
 
