@@ -102,13 +102,13 @@ function processEvent(event, callback) {
     // The payload is URI-encoded and encoded in base64
     const uriDecoded = decodeURIComponent(requestBody.payload);
     const buff = Buffer.from(uriDecoded, 'base64');
-    const body = JSON.parse(buff.toString('utf8'));
+    const bodyDecoded = buff.toString('utf8');
+    const body = JSON.parse(bodyDecoded);
 
-    console.log('GitHub Payload');
-    console.log(JSON.stringify(body));
-
-    if (! verifyGitHub(requestBody, body)) {
+    if (! verifyGitHub(requestBody, bodyDecoded)) {
         console.log('GitHub could not be verified');
+        console.log('GitHub Payload');
+        console.log(JSON.stringify(body));
         callback(null, {"statusCode": 403, "body": "something is wrong, github secret does not match"});
         return;
     } else {
