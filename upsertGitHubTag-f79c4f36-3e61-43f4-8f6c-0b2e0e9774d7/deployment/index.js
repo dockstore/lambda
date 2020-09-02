@@ -104,7 +104,7 @@ function processEvent(event, callback) {
     const bodyDecoded = buff.toString('utf8');
     const body = JSON.parse(bodyDecoded);
 
-    if (! verifyGitHub(requestBody, bodyDecoded)) {
+    if (!verifyGitHub(requestBody, bodyDecoded)) {
         console.log('GitHub could not be verified');
         console.log('GitHub Payload');
         console.log(JSON.stringify(body));
