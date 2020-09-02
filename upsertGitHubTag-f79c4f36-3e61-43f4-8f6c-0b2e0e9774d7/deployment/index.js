@@ -44,7 +44,7 @@ function postEndpoint(path, postBody, callback) {
            if (callback) {
                // If content-type is text/plain, the body contains the message, else the message is found in the JSON object
                var contentType = res.headers['content-type'];
-               var responseMessage = contentType.includes('text/plain') ? bodyString : res.statusMessage;
+               var responseMessage = contentType && contentType.includes('text/plain') ? bodyString : res.statusMessage;
                callback({
                    statusCode: res.statusCode,
                    statusMessage: responseMessage
