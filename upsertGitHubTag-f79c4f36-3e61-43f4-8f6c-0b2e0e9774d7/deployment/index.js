@@ -128,15 +128,16 @@ function processEvent(event, callback) {
             repositories.push(repo.full_name);
         });
 
+        const reposString = repositories.join(",");
         var pushPostBody = {
             "installationId": installationId,
             "username": username,
-            "repositories": repositories.join(",")
+            "repositories": reposString
         };
         path += "workflows/github/install";
             
         postEndpoint(path, pushPostBody, (response) => {
-            const successMessage = 'The GitHub app was successfully installed on repository ' + repository;
+            const successMessage = 'The GitHub app was successfully installed on repositories ' + reposString;
             handleCallback(response, successMessage, callback);
         });
     } else if (githubEventType === "push") {
