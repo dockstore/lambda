@@ -1,6 +1,5 @@
 'use strict';
 
-const AWS = require('aws-sdk');
 const url = require('url');
 const https = require('https');
 const crypto = require('crypto');
@@ -159,7 +158,7 @@ function processEvent(event, callback) {
             const gitReference = body.ref;
             const installationId = body.installation.id;
             
-            var pushPostBody = {
+            pushPostBody = {
                     "gitReference": gitReference,
                     "installationId": installationId,
                     "repository": repository,
