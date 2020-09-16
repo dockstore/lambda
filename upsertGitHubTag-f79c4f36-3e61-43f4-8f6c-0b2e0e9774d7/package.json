@@ -1,0 +1,14 @@
+{
+  "name": "upsertgithubtag-f79c4f36-3e61-43f4-8f6c-0b2e0e9774d7",
+  "version": "1.0.0",
+  "description": "This lambda handles relaying messages from AWS API Gateway to SQS to Lambda into the Dockstore webservice",
+  "main": "deployment/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "eslint": "^7.8.1"
+  }
+}
