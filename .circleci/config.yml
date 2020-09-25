@@ -18,6 +18,7 @@ jobs:
                     - node/install:
                         install-yarn: false
                         node-version: latest
+                    - check-git-secrets
                     - create_zip_upload_to_s3:
                         lambdaFolder: "cloud-watch-to-slack-testing-58006136-c30b-43d1-880c-7b36f860e7c8/deployment"
                         s3BucketFolder: "cloudWatchToSlackTesting"
@@ -53,6 +54,15 @@ commands:
                 to: 's3://${AWS_BUCKET}/$(echo ${CIRCLE_TAG-$CIRCLE_BRANCH} | sed "s/\//_/g")-$(echo $CIRCLE_SHA1 | cut -c -7)/<< parameters.s3BucketFolder >>/function.zip'
                 arguments: |
                     --cache-control max-age=0
+    check-git-secrets:
+        desccription: "Installs git-secrets and scan repository to check for secrets"
+        steps:
+            - run:
+                  name: install npm packages
+                  command: npm install
+            - run:
+                  name: install and check for secrets
+                  command: npm run install-git-secrets
 workflows:
     version: 2
     build:
