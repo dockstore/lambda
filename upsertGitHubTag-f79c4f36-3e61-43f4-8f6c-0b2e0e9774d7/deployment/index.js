@@ -202,7 +202,7 @@ function handleCallback(response, successMessage, callback) {
         callback(null);
     } else if (response.statusCode < 500) {
         // Client error, don't retry
-        console.error(`Error handling GitHub webhook, will not retry: ${response.statusCode} - ${response.statusMessage}`);
+        console.info(`Error handling GitHub webhook, will not retry: ${response.statusCode} - ${response.statusMessage}`);
         callback(null);
     } else {
         // Server error, retry
