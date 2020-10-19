@@ -8,7 +8,7 @@ To install and check for git secrets:
 
 ```
 npm ci
-npm run install-git secrets
+npm run install-git-secrets
 ```
  
 This should install git secrets into your local repository and perform a scan. 
