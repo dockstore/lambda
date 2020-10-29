@@ -118,27 +118,32 @@ function processEvent(event, callback) {
     // Handle installation events
     var githubEventType = requestBody['X-GitHub-Event']
     if (githubEventType === "installation_repositories") {
-        console.log('Valid installation event');
-        const username = body.sender.login;
-        const installationId = body.installation.id;
-        const repositoriesAdded = body.repositories_added;
-        var repositories = [];
-        repositoriesAdded.forEach((repo) => {
-            repositories.push(repo.full_name);
-        });
+        // Currently ignoring uninstall events, only calling the endpoint if we are adding an installation.
+        if (body.action === "added") {
+            console.log('Valid installation event');
+            const username = body.sender.login;
+            const installationId = body.installation.id;
+            const repositoriesAdded = body.repositories_added;
+            var repositories = [];
+            repositoriesAdded.forEach((repo) => {
+                repositories.push(repo.full_name);
+            });
 
-        const reposString = repositories.join(",");
-        var pushPostBody = {
-            "installationId": installationId,
-            "username": username,
-            "repositories": reposString
-        };
-        path += "workflows/github/install";
-            
-        postEndpoint(path, pushPostBody, (response) => {
-            const successMessage = 'The GitHub app was successfully installed on repositories ' + reposString;
-            handleCallback(response, successMessage, callback);
-        });
+            const reposString = repositories.join(",");
+            var pushPostBody = {
+                "installationId": installationId,
+                "username": username,
+                "repositories": reposString
+            };
+            path += "workflows/github/install";
+
+            postEndpoint(path, pushPostBody, (response) => {
+                const successMessage = 'The GitHub app was successfully installed on repositories ' + reposString;
+                handleCallback(response, successMessage, callback);
+            });
+        } else {
+            console.log('Valid uninstall event');
+        }
     } else if (githubEventType === "push") {
         /**
          * We only handle push events, of which there are many subtypes. Unfortunately, the only way to differentiate between them is to look
