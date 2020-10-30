@@ -118,7 +118,7 @@ function processEvent(event, callback) {
     // Handle installation events
     var githubEventType = requestBody['X-GitHub-Event']
     if (githubEventType === "installation_repositories") {
-        // Currently ignoring uninstall events, only calling the endpoint if we are adding an installation.
+        // Currently ignoring repository removal events, only calling the endpoint if we are adding a repository.
         if (body.action === "added") {
             console.log('Valid installation event');
             const username = body.sender.login;
