@@ -142,7 +142,7 @@ function processEvent(event, callback) {
                 handleCallback(response, successMessage, callback);
             });
         } else {
-            console.log('Valid uninstall event');
+            console.log('installation_repositories event ignored "' + body.action + '" action');
         }
     } else if (githubEventType === "push") {
         /**
