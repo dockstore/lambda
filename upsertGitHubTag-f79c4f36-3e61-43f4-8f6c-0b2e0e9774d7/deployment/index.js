@@ -222,11 +222,10 @@ function handleCallback(response, successMessage, callback) {
     }
 }
 
-
-exports.handler = (event, context, callback) => {
-    processEvent(event, callback);
-};
-
 module.exports = {
     handleInstallationRepositoriesEvent,
 }
+
+module.exports.handler = (event, context, callback) => {
+    processEvent(event, callback);
+};
