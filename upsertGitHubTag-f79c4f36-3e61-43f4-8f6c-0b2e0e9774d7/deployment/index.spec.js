@@ -2,7 +2,9 @@ const lambda = require("./index.js")
 
 describe("Hello World Test", function() {
     it("should return null for random input",function() {
-        expect(lambda.handleInstallationRepositoriesEvent("fake body")).toEqual(null);
+        const [postBody,response] = lambda.handleInstallationRepositoriesEvent("fake body")
+        expect(postBody).toEqual(null);
+        expect(response).toEqual(null);
     });
 
     it("should return valid post body",function() {
@@ -13,10 +15,11 @@ describe("Hello World Test", function() {
             "installation":{"id":"123456"},
             "repositories_added": repositories_added
         }
-        const postBody = lambda.handleInstallationRepositoriesEvent(fake_payload_body)
+        const [postBody,response] = lambda.handleInstallationRepositoriesEvent(fake_payload_body)
 
         expect(postBody.installationId).toEqual("123456")
         expect(postBody.username).toEqual("myinfo")
+        expect(response).toEqual("repo1,repo2,repo3")
 
         // there should be three repositories
         const repos = postBody.repositories.split(",")
@@ -34,8 +37,9 @@ describe("Hello World Test", function() {
             "installation":{"id":"123456"},
             "repositories_added": repositories_added
         }
-        const postBody = lambda.handleInstallationRepositoriesEvent(fake_payload_body)
+        const [postBody,response] = lambda.handleInstallationRepositoriesEvent(fake_payload_body)
         expect(postBody).toEqual(null)
+        expect(response).toEqual(null)
     });
 
 });

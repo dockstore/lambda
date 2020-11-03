@@ -110,10 +110,10 @@ function handleInstallationRepositoriesEvent(body) {
             "username": username,
             "repositories": reposString
         };
-        return pushPostBody;
+        return [pushPostBody, reposString];
     } else {
         console.log('installation_repositories event ignored "' + body.action + '" action');
-        return null;
+        return [null,null];
     }
 }
 
@@ -144,7 +144,7 @@ function processEvent(event, callback) {
     // Handle installation events
     var githubEventType = requestBody['X-GitHub-Event']
     if (githubEventType === "installation_repositories") {
-        const pushPostBody = handleInstallationRepositoriesEvent(body)
+        const [pushPostBody,reposString] = handleInstallationRepositoriesEvent(body)
         path += "workflows/github/install";
         postEndpoint(path, pushPostBody, (response) => {
             const successMessage = 'The GitHub app was successfully installed on repositories ' + reposString;
