@@ -1,10 +1,10 @@
 {
-  "spec_dir": "*/deployment",
+  "spec_dir": "",
   "spec_files": [
-    "**/*.[sS]pec.js"
+    "**/deployment/*.[sS]pec.js"
   ],
   "helpers": [
-    "../../spec/helpers/**/*.js"
+    "spec/helpers/**/*.js"
   ],
   "stopSpecOnExpectationFailure": false,
   "random": true
