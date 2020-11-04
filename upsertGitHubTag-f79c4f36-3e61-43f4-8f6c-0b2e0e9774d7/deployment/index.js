@@ -91,7 +91,13 @@ function deleteEndpoint(path, repository, reference, username, installationId, c
     req.end();
 }
 
-// handles the installation_repositories event
+/**
+ * Handles github apps payload parsing for the 'installation_repositories' event type and creates a JSON to call the post endpoint.
+ * Currently, if the payload's action is not 'added', we return null, as we don't want to call the endpoint.
+ * 
+ * @param body - JSON payload body
+ * @returns {null|{repositories: *, installationId: string, username: *}}
+ */
 function handleInstallationRepositoriesEvent(body) {
     // Currently ignoring repository removal events, only calling the endpoint if we are adding a repository.
     if (body.action === "added") {
@@ -104,16 +110,14 @@ function handleInstallationRepositoriesEvent(body) {
             repositories.push(repo.full_name);
         });
 
-        const reposString = repositories.join(",");
-        const pushPostBody = {
+        return {
             "installationId": installationId,
             "username": username,
-            "repositories": reposString
+            "repositories": repositories.join(",")
         };
-        return [pushPostBody, reposString];
     } else {
         console.log('installation_repositories event ignored "' + body.action + '" action');
-        return [null,null];
+        return null;
     }
 }
 
@@ -144,12 +148,15 @@ function processEvent(event, callback) {
     // Handle installation events
     var githubEventType = requestBody['X-GitHub-Event']
     if (githubEventType === "installation_repositories") {
-        const [pushPostBody,reposString] = handleInstallationRepositoriesEvent(body)
+        const pushPostBody = handleInstallationRepositoriesEvent(body)
         path += "workflows/github/install";
-        postEndpoint(path, pushPostBody, (response) => {
-            const successMessage = 'The GitHub app was successfully installed on repositories ' + reposString;
-            handleCallback(response, successMessage, callback);
-        });
+
+        if (pushPostBody != null) {
+            postEndpoint(path, pushPostBody, (response) => {
+                const successMessage = 'The GitHub app was successfully installed on repositories ' + pushPostBody.repositories;
+                handleCallback(response, successMessage, callback);
+            });
+        }
     } else if (githubEventType === "push") {
         /**
          * We only handle push events, of which there are many subtypes. Unfortunately, the only way to differentiate between them is to look
