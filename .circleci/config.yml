@@ -34,6 +34,13 @@ jobs:
                     - create_zip_upload_to_s3:
                         lambdaFolder: "webhook-testing-bdf90c40-b8ea-409b-951a-3ee800a00dda/deployment"
                         s3BucketFolder: "webhookTesting"
+    tests:
+        docker:
+            - image: circleci/buildpack-deps:18.04-browsers
+        steps:
+            - checkout
+            - install_container_dependencies
+            - unit_tests
 commands:
     create_zip_upload_to_s3:
         description: "Creates a deployment zip for a lambda and uploads to S3"
@@ -54,6 +61,7 @@ commands:
                 to: 's3://${AWS_BUCKET}/$(echo ${CIRCLE_TAG-$CIRCLE_BRANCH} | sed "s/\//_/g")-$(echo $CIRCLE_SHA1 | cut -c -7)/<< parameters.s3BucketFolder >>/function.zip'
                 arguments: |
                     --cache-control max-age=0
+
     check_git_secrets:
         description: "Installs git-secrets and scan repository to check for secrets"
         steps:
@@ -63,20 +71,33 @@ commands:
             - run:
                 name: install and check for secrets
                 command: npm run install-git-secrets
+
+    install_container_dependencies:
+        steps:
+            - run:
+                  name: Install npm
+                  command: |
+                      wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
+                      bash -i -c 'nvm install'
+
     unit_tests:
         description: "Run all unit tests"
         steps:
             - run:
                   name: install npm packages
-                  command: npm install
+                  command: bash -i -c 'npm ci'
             - run:
                   name: run unit tests
-                  command: npm run test
+                  command: bash -i -c 'npm run test'
 workflows:
     version: 2
-    build:
+    everything:
         jobs:
             - build:
+                filters:
+                    tags:
+                        only: /.*/
+            - tests:
                 filters:
                     tags:
                         only: /.*/

@@ -17,6 +17,7 @@
     }
   },
   "devDependencies": {
+    "eslint": "^7.12.1",
     "jasmine": "^3.6.3",
     "jasmine-spec-reporter": "^6.0.0"
   }
