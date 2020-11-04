@@ -41,5 +41,4 @@ describe("Hello World Test", function() {
         expect(postBody).toEqual(null)
         expect(response).toEqual(null)
     });
-
 });
