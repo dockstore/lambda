@@ -91,6 +91,36 @@ function deleteEndpoint(path, repository, reference, username, installationId, c
     req.end();
 }
 
+/**
+ * Handles github apps payload parsing for the 'installation_repositories' event type and creates a JSON to call the post endpoint.
+ * Currently, if the payload's action is not 'added', we return null, as we don't want to call the endpoint.
+ * 
+ * @param body - JSON payload body
+ * @returns {null|{repositories: *, installationId: string, username: *}}
+ */
+function handleInstallationRepositoriesEvent(body) {
+    // Currently ignoring repository removal events, only calling the endpoint if we are adding a repository.
+    if (body.action === "added") {
+        console.log('Valid installation event');
+        const username = body.sender.login;
+        const installationId = body.installation.id;
+        const repositoriesAdded = body.repositories_added;
+        const repositories = [];
+        repositoriesAdded.forEach((repo) => {
+            repositories.push(repo.full_name);
+        });
+
+        return {
+            "installationId": installationId,
+            "username": username,
+            "repositories": repositories.join(",")
+        };
+    } else {
+        console.log('installation_repositories event ignored "' + body.action + '" action');
+        return null;
+    }
+}
+
 // Performs an action based on the event type (action)
 function processEvent(event, callback) {
     // Usually returns array of records, however it is fixed to only return 1 record
@@ -118,27 +148,15 @@ function processEvent(event, callback) {
     // Handle installation events
     var githubEventType = requestBody['X-GitHub-Event']
     if (githubEventType === "installation_repositories") {
-        console.log('Valid installation event');
-        const username = body.sender.login;
-        const installationId = body.installation.id;
-        const repositoriesAdded = body.repositories_added;
-        var repositories = [];
-        repositoriesAdded.forEach((repo) => {
-            repositories.push(repo.full_name);
-        });
-
-        const reposString = repositories.join(",");
-        var pushPostBody = {
-            "installationId": installationId,
-            "username": username,
-            "repositories": reposString
-        };
+        const pushPostBody = handleInstallationRepositoriesEvent(body)
         path += "workflows/github/install";
-            
-        postEndpoint(path, pushPostBody, (response) => {
-            const successMessage = 'The GitHub app was successfully installed on repositories ' + reposString;
-            handleCallback(response, successMessage, callback);
-        });
+
+        if (pushPostBody != null) {
+            postEndpoint(path, pushPostBody, (response) => {
+                const successMessage = 'The GitHub app was successfully installed on repositories ' + pushPostBody.repositories;
+                handleCallback(response, successMessage, callback);
+            });
+        }
     } else if (githubEventType === "push") {
         /**
          * We only handle push events, of which there are many subtypes. Unfortunately, the only way to differentiate between them is to look
@@ -158,8 +176,8 @@ function processEvent(event, callback) {
             const username = body.sender.login;
             const gitReference = body.ref;
             const installationId = body.installation.id;
-            
-            pushPostBody = {
+
+            const pushPostBody = {
                     "gitReference": gitReference,
                     "installationId": installationId,
                     "repository": repository,
@@ -211,7 +229,10 @@ function handleCallback(response, successMessage, callback) {
     }
 }
 
+module.exports = {
+    handleInstallationRepositoriesEvent,
+}
 
-exports.handler = (event, context, callback) => {
+module.exports.handler = (event, context, callback) => {
     processEvent(event, callback);
 };
