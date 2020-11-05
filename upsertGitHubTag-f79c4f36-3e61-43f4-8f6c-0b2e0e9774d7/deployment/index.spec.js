@@ -2,8 +2,9 @@ const lambda = require("./index.js")
 
 describe("installation_repositories event handling", function() {
     it("should return null for random input",function() {
-        const postBody = lambda.handleInstallationRepositoriesEvent("fake body")
+        const postBody = lambda.handleInstallationRepositoriesEvent("fake body");
         expect(postBody).toEqual(null);
+        postBody = potato;
     });
 
     it("should return valid post body",function() {
