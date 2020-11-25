@@ -1,0 +1,8 @@
+## Each line is a regular expression against the output of git-secrets
+## swagger-java-bitbucket-client/swagger.yaml:.*
+## Can match on the content of the string
+#
+upsertGitHubTag-f79c4f36-3e61-43f4-8f6c-0b2e0e9774d7/events/event.json:.*body
+cloud-watch-to-slack-testing-58006136-c30b-43d1-880c-7b36f860e7c8/deployment/output-template.yaml:.*CodeUri
+serverlessrepo-cloudwatch-a-cloudwatchalarmtoslack-60UO1LIXCS1Y-5885aaa7-b2bf-4619-9a72-f63a06b9fd4d/deployment/output-template.yaml:15:.*CodeUri
+webhook-testing-bdf90c40-b8ea-409b-951a-3ee800a00dda/deployment/output-template.yaml:15:.*CodeUri
