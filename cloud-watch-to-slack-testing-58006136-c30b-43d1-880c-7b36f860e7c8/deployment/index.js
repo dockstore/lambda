@@ -5,53 +5,26 @@
  *
  *   1. Navigate to https://<your-team-domain>.slack.com/services/new
  *
- *   2. Search for and select "Incoming WebHooks".
+ *   2. To send a message to an existing webhook select "Manage" then
+ *      "Custom Integrations" then "Incoming WebHooks" then edit the configuration.
+ *      To create a new webhook click "Add to Slack"
  *
- *   3. Choose the default channel where messages will be sent and click "Add Incoming WebHooks Integration".
+ *   4. Copy the webhook URL from the setup instructions (e.g. "https://hooks.slack.com/services/abc123").
  *
- *   4. Copy the webhook URL from the setup instructions and use it in the next section.
+ *   5. On the Lambda console window click Edit the environment variable section and environment
+ *      variable "slackChannel" and add for the value the channel name, e.g. "#dockstore-dev-testing".
+ *      Add the environment variable "hookUrl" and for the value use the webhook URL
  *
- *
- * To encrypt your secrets use the following steps:
- *
- *  1. Create or use an existing KMS Key - http://docs.aws.amazon.com/kms/latest/developerguide/create-keys.html
- *
- *  2. Click the "Enable Encryption Helpers" checkbox
- *
- *  3. Paste <SLACK_HOOK_URL> into the kmsEncryptedHookUrl environment variable and click encrypt
- *
- *  Note: You must exclude the protocol from the URL (e.g. "hooks.slack.com/services/abc123").
- *
- *  4. Give your function's role permission for the kms:Decrypt action.
- *      Example:
-
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Sid": "Stmt1443036478000",
-            "Effect": "Allow",
-            "Action": [
-                "kms:Decrypt"
-            ],
-            "Resource": [
-                "<your KMS key ARN>"
-            ]
-        }
-    ]
-}
-
  */
 
 const AWS = require('aws-sdk');
 const url = require('url');
 const https = require('https');
 
-// The base-64 encoded, encrypted key (CiphertextBlob) stored in the kmsEncryptedHookUrl environment variable
-const kmsEncryptedHookUrl = process.env.kmsEncryptedHookUrl;
+// The Slack URL to send the message to
+const hookUrl = process.env.hookUrl;
 // The Slack channel to send a message to stored in the slackChannel environment variable
 const slackChannel = process.env.slackChannel;
-let hookUrl;
 
 
 function postMessage(message, callback) {
@@ -88,10 +61,25 @@ function processEvent(event, callback) {
     const message = JSON.parse(event.Records[0].Sns.Message);
 
     let messageText;
-    if (message.source == 'aws.config') {
+    var attachments = null;
+
+    if (message.hasOwnProperty('mail')) {
+        const source = message.mail.commonHeaders.from.join();
+        const destination = message.mail.destination.join();
+        const subject = message.mail.commonHeaders.subject;
+        console.log(message.content);
+        messageText = `email from ${source} to ${destination} with subject of ${subject}`;
+        attachments = [
+            {
+             fallback: 'foo',
+             title: 'email content',
+             text: message.content
+            }
+        ];
+    } else if (message.source == 'aws.config') {
         const alarmName = message.detail.configRuleName;
         const newState = message.detail.newEvaluationResult.complianceType;
-        messageText = `${alarmName} state is now ${newState}`
+        messageText = `${alarmName} state is now ${newState}`;
     } else if (message.source == 'aws.ssm') {
         const eventName = message.detail.eventName;
         const userName = message.detail.userIdentity.userName;
@@ -102,7 +90,8 @@ function processEvent(event, callback) {
             const targetInstance = message.detail.requestParameters.target;
             messageText = messageText + ` to target: ${targetInstance}`;
           }
-        }
+       }
+       messageText = messageText + ` in region: ` + message.region;
     } else {
         const alarmName = message.AlarmName;
         const newState = message.NewStateValue;
@@ -110,13 +99,14 @@ function processEvent(event, callback) {
         messageText = `${alarmName} state is now ${newState}: ${reason}`;
     }
 
-    // this is now for message that cloudwatch gets from aws config and sends to SNS
-
-
     const slackMessage = {
         channel: slackChannel,
         text: messageText,
     };
+
+    if (attachments !== null) {
+        slackMessage.attachments = attachments;
+    }
 
     postMessage(slackMessage, (response) => {
         if (response.statusCode < 400) {
@@ -134,23 +124,13 @@ function processEvent(event, callback) {
 
 
 exports.handler = (event, context, callback) => {
+    // Uncomment the folling line to see the event in the CloudWatch logs
+    //console.info("cloud-watch-to-slack-testing EVENT\n" + JSON.stringify(event, null, 2));
     if (hookUrl) {
-        // Container reuse, simply process the event with the key in memory
         processEvent(event, callback);
-    } else if (kmsEncryptedHookUrl && kmsEncryptedHookUrl !== '<kmsEncryptedHookUrl>') {
-        const encryptedBuf = new Buffer(kmsEncryptedHookUrl, 'base64');
-        const cipherText = { CiphertextBlob: encryptedBuf };
-
-        const kms = new AWS.KMS();
-        kms.decrypt(cipherText, (err, data) => {
-            if (err) {
-                console.log('Decrypt error:', err);
-                return callback(err);
-            }
-            hookUrl = `https://${data.Plaintext.toString('ascii')}`;
-            processEvent(event, callback);
-        });
     } else {
         callback('Hook URL has not been set.');
     }
 };
+
+
