@@ -17,7 +17,6 @@
  *
  */
 
-const AWS = require('aws-sdk');
 const url = require('url');
 const https = require('https');
 
