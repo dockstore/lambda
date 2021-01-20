@@ -60,22 +60,8 @@ function processEvent(event, callback) {
     const message = JSON.parse(event.Records[0].Sns.Message);
 
     let messageText;
-    var attachments = null;
 
-    if (message.hasOwnProperty('mail')) {
-        const source = message.mail.commonHeaders.from.join();
-        const destination = message.mail.destination.join();
-        const subject = message.mail.commonHeaders.subject;
-        console.log(message.content);
-        messageText = `email from ${source} to ${destination} with subject of ${subject}`;
-        attachments = [
-            {
-             fallback: 'foo',
-             title: 'email content',
-             text: message.content
-            }
-        ];
-    } else if (message.source == 'aws.config') {
+    if (message.source == 'aws.config') {
         const alarmName = message.detail.configRuleName;
         const newState = message.detail.newEvaluationResult.complianceType;
         messageText = `${alarmName} state is now ${newState}`;
@@ -103,10 +89,6 @@ function processEvent(event, callback) {
         text: messageText,
     };
 
-    if (attachments !== null) {
-        slackMessage.attachments = attachments;
-    }
-
     postMessage(slackMessage, (response) => {
         if (response.statusCode < 400) {
             console.info('Message posted successfully on Slack');
@@ -123,8 +105,8 @@ function processEvent(event, callback) {
 
 
 exports.handler = (event, context, callback) => {
-    // Uncomment the folling line to see the event in the CloudWatch logs
-    //console.info("cloud-watch-to-slack-testing EVENT\n" + JSON.stringify(event, null, 2));
+    // This will record the event in the CloudWatch logs
+    console.info("cloud-watch-to-slack-testing EVENT\n" + JSON.stringify(event, null, 2));
     if (hookUrl) {
         processEvent(event, callback);
     } else {
