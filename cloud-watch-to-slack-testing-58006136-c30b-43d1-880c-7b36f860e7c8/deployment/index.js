@@ -78,11 +78,11 @@ function processEvent(event, callback) {
         }
         if (message.detail.hasOwnProperty("errorCode") && message.detail['errorCode']) {
           const errorCode = message.detail.errorCode;
-          messageText = messageText + ` but received error code ` + ${errorCode};
+          messageText = messageText + ` but received error code: ${errorCode}`;
         }
         if (message.detail.hasOwnProperty("errorMessage") && message.detail['errorMessage']) {
           const errorMessage = message.detail.errorMessage;
-          messageText = messageText + ` with error message ` + ${errorMessage};
+          messageText = messageText + ` with error message: ${errorMessage}`;
         }
         messageText = messageText + ` in region: ` + message.region;
     } else {
