@@ -70,13 +70,21 @@ function processEvent(event, callback) {
         const userName = message.detail.userIdentity.userName;
         const sourceIPAddress = message.detail.sourceIPAddress;
         messageText = `${userName} initiated AWS Systems Manager (SSM) event ${eventName} from IP ${sourceIPAddress}`;
-        if (message.detail.hasOwnProperty("requestParameters")) {
+        if (message.detail.hasOwnProperty("requestParameters") && message.detail['requestParameters']) {
           if (message.detail.requestParameters.hasOwnProperty("target")) {
             const targetInstance = message.detail.requestParameters.target;
             messageText = messageText + ` to target: ${targetInstance}`;
           }
-       }
-       messageText = messageText + ` in region: ` + message.region;
+        }
+        if (message.detail.hasOwnProperty("errorCode") && message.detail['errorCode']) {
+          const errorCode = message.detail.errorCode;
+          messageText = messageText + ` but received error code ` + ${errorCode};
+        }
+        if (message.detail.hasOwnProperty("errorMessage") && message.detail['errorMessage']) {
+          const errorMessage = message.detail.errorMessage;
+          messageText = messageText + ` with error message ` + ${errorMessage};
+        }
+        messageText = messageText + ` in region: ` + message.region;
     } else {
         const alarmName = message.AlarmName;
         const newState = message.NewStateValue;
