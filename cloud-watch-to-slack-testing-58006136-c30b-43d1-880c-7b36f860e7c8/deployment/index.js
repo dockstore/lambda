@@ -19,12 +19,43 @@
 
 const url = require('url');
 const https = require('https');
+var AWS = require("aws-sdk");
 
 // The Slack URL to send the message to
 const hookUrl = process.env.hookUrl;
 // The Slack channel to send a message to stored in the slackChannel environment variable
 const slackChannel = process.env.slackChannel;
+const dockstoreEnvironment = process.env.dockstoreEnvironment;
 
+function getInstanceName(myInstanceId, callback) {
+  var ec2 = new AWS.EC2();
+
+  ec2.describeInstances(function(err, result) {
+    if (err)
+      console.log(err); // Logs error message.
+    else {
+      var instanceName = 'unknown';
+      for (var i = 0; i < result.Reservations.length; i++) {
+        var res = result.Reservations[i];
+        var instances = res.Instances;
+        for (var j = 0; j < instances.length; j++) {
+          var instanceID = instances[j].InstanceId;
+          if ( instanceID == myInstanceId ) {
+            var tags = instances[j].Tags;
+            for (var k = 0; k < tags.length; k++) {
+              if (tags[k].Key == 'Name') {
+                instanceName = tags[k].Value;
+                return instanceName;
+              }
+            }
+            return 'unknown';
+          }
+        }
+      }
+    }
+    return 'unknown'
+ });
+}
 
 function postMessage(message, callback) {
     const body = JSON.stringify(message);
@@ -73,18 +104,19 @@ function processEvent(event, callback) {
         if (message.detail.hasOwnProperty("requestParameters") && message.detail['requestParameters']) {
           if (message.detail.requestParameters.hasOwnProperty("target")) {
             const targetInstance = message.detail.requestParameters.target;
-            messageText = messageText + ` to target: ${targetInstance}`;
+            const targetInstanceName = getInstanceName(targetInstance, callback);
+            messageText = messageText + ` to target: ${targetInstanceName} (${targetInstance})`;
           }
         }
         if (message.detail.hasOwnProperty("errorCode") && message.detail['errorCode']) {
           const errorCode = message.detail.errorCode;
           messageText = messageText + ` but received error code: ${errorCode}`;
         }
-        if (message.detail.hasOwnProperty("errorMessage") && message.detail['errorMessage']) {
-          const errorMessage = message.detail.errorMessage;
-          messageText = messageText + ` with error message: ${errorMessage}`;
-        }
-        messageText = messageText + ` in region: ` + message.region;
+        //if (message.detail.hasOwnProperty("errorMessage") && message.detail['errorMessage']) {
+        //  const errorMessage = message.detail.errorMessage;
+        //  messageText = messageText + ` with error message: ${errorMessage}`;
+        //}
+        messageText = messageText + ` on Dockstore ` + dockstoreEnvironment + ` in region: ` + message.region;
     } else {
         const alarmName = message.AlarmName;
         const newState = message.NewStateValue;
