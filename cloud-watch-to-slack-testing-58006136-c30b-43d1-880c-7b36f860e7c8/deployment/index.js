@@ -53,6 +53,7 @@ function getInstanceName(myInstanceId, callback) {
             console.info(`Found tag key:` + tags[k].Key);
             if (tags[k].Key == 'Name') {
               instanceName = tags[k].Value;
+              console.info(`Found target tag key:${instanceName}` );
               //return callback(instanceName);
               return;
             }
@@ -67,7 +68,8 @@ function getInstanceName(myInstanceId, callback) {
  return callback(instanceName);
 }
 
-function foundInstanceName(instanceName) {
+function foundInstanceName(instanceName) {i
+  console.info(`Found instance name:${instanceName}` );
   return instanceName;
 }
 
