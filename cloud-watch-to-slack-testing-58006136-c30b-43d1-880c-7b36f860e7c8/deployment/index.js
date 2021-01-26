@@ -50,16 +50,14 @@ function getInstanceName(myInstanceId, callback) {
           for (var k = 0; k < tags.length; k++) {
             if (tags[k].Key == 'Name') {
               instanceName = tags[k].Value;
-              callback(instanceName);
-              return;
+              return callback(instanceName);
             }
           }
-          callback(instancename);
-          return;
+          return callback(instancename);
         }
       }
     }
-    callback(instanceName)
+    return callback(instanceName)
  });
 }
 
