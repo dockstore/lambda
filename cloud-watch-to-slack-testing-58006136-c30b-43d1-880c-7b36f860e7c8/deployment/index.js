@@ -27,34 +27,44 @@ const hookUrl = process.env.hookUrl;
 const slackChannel = process.env.slackChannel;
 const dockstoreEnvironment = process.env.dockstoreEnvironment;
 
+// Enumerate all the AWS instances in the current region
+// and find the one with the instance ID in question.
+// Then go through all the tags on that instance and
+// find the one with the key 'Name', whose value
+// is the name displayed on the console of the instance,
+// and return that name.
 function getInstanceName(myInstanceId, callback) {
   var ec2 = new AWS.EC2();
+  var instanceName = 'unknown';
 
   ec2.describeInstances(function(err, result) {
     if (err)
       console.log(err); // Logs error message.
-    else {
-      var instanceName = 'unknown';
-      for (var i = 0; i < result.Reservations.length; i++) {
-        var res = result.Reservations[i];
-        var instances = res.Instances;
-        for (var j = 0; j < instances.length; j++) {
-          var instanceID = instances[j].InstanceId;
-          if ( instanceID == myInstanceId ) {
-            var tags = instances[j].Tags;
-            for (var k = 0; k < tags.length; k++) {
-              if (tags[k].Key == 'Name') {
-                instanceName = tags[k].Value;
-                return instanceName;
-              }
+    for (var i = 0; i < result.Reservations.length; i++) {
+      var res = result.Reservations[i];
+      var instances = res.Instances;
+      for (var j = 0; j < instances.length; j++) {
+        var instanceID = instances[j].InstanceId;
+        if ( instanceID === myInstanceId ) {
+          var tags = instances[j].Tags;
+          for (var k = 0; k < tags.length; k++) {
+            if (tags[k].Key == 'Name') {
+              instanceName = tags[k].Value;
+              callback(instanceName);
+              return;
             }
-            return 'unknown';
           }
+          callback(instancename);
+          return;
         }
       }
     }
-    return 'unknown'
+    callback(instanceName)
  });
+}
+
+function foundInstanceName(instanceName) {
+  return instanceName;
 }
 
 function postMessage(message, callback) {
@@ -104,7 +114,7 @@ function processEvent(event, callback) {
         if (message.detail.hasOwnProperty("requestParameters") && message.detail['requestParameters']) {
           if (message.detail.requestParameters.hasOwnProperty("target")) {
             const targetInstance = message.detail.requestParameters.target;
-            const targetInstanceName = getInstanceName(targetInstance, callback);
+            const targetInstanceName = getInstanceName(targetInstance, foundInstanceName);
             messageText = messageText + ` to target: ${targetInstanceName} (${targetInstance})`;
           }
         }
