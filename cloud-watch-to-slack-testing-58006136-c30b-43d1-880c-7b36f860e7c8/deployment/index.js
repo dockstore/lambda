@@ -37,7 +37,7 @@ function getInstanceName(myInstanceId, callback) {
   var ec2 = new AWS.EC2();
   var instanceName = 'unknown';
 
-  console.info('My instance ID:${myInstanceId}');
+  console.info(`My instance ID:${myInstanceId}`);
   ec2.describeInstances(function(err, result) {
     if (err)
       console.log(err); // Logs error message.
@@ -46,11 +46,11 @@ function getInstanceName(myInstanceId, callback) {
       var instances = res.Instances;
       for (var j = 0; j < instances.length; j++) {
         var instanceID = instances[j].InstanceId;
-        console.info('Found instance ID:${instanceID}');
+        console.info(`Found instance ID:${instanceID}`);
         if ( instanceID === myInstanceId ) {
           var tags = instances[j].Tags;
           for (var k = 0; k < tags.length; k++) {
-            console.info('Found tag key:' + tags[k].Key);
+            console.info(`Found tag key:` + tags[k].Key);
             if (tags[k].Key == 'Name') {
               instanceName = tags[k].Value;
               //return callback(instanceName);
