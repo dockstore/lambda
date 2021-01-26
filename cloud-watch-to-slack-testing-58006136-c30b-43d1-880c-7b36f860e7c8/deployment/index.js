@@ -68,7 +68,7 @@ function getInstanceName(myInstanceId, callback) {
  return callback(instanceName);
 }
 
-function foundInstanceName(instanceName) {i
+function foundInstanceName(instanceName) {
   console.info(`Found instance name:${instanceName}` );
   return instanceName;
 }
