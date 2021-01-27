@@ -33,9 +33,7 @@ const dockstoreEnvironment = process.env.dockstoreEnvironment;
 // and find the one with the instance ID in question.
 // Then go through all the tags on that instance and
 // find the one with the key 'Name', whose value
-// is the name displayed on the console of the instance,
-// and return that name.
-
+// is the name displayed on the console of the instance.
 function getInstanceNameAndSendMsgToSlack(targetInstanceId, messageText, processEventCallback, callback) {
 //function getInstanceName(myInstanceId, callback) {
   var ec2 = new AWS.EC2();
@@ -74,7 +72,6 @@ function constructMsgAndSendToSlack(messageText, targetInstanceName, targetInsta
   messageText = messageText + ` to target: ${targetInstanceName} (${targetInstanceId})`;
 
   sendMessageToSlack(messageText, callback)
-  //return targetInstanceName;
 }
 
 function postMessage(message, callback) {
@@ -136,7 +133,7 @@ function processEvent(event, callback) {
         const alarmName = message.detail.configRuleName;
         const newState = message.detail.newEvaluationResult.complianceType;
         messageText = `${alarmName} state is now ${newState}`;
-        sendMessageToSlack(message, callback)
+        sendMessageToSlack(messageText, callback)
     } else if (message.source == 'aws.ssm') {
         const eventName = message.detail.eventName;
         const userName = message.detail.userIdentity.userName;
@@ -147,55 +144,25 @@ function processEvent(event, callback) {
           const errorCode = message.detail.errorCode;
           messageText = messageText + ` but received error code: ${errorCode}`;
         }
-        messageText = messageText + ` on Dockstore ` + dockstoreEnvironment + ` in region: ` + message.region;
 
-        messageText = messageText + `Event was initiated from IP ${sourceIPAddress}`;
+        messageText = messageText + ` on Dockstore ` + dockstoreEnvironment + ` in region: ` + message.region + `.`;
+        messageText = messageText + ` Event was initiated from IP ${sourceIPAddress}`;
 
         if (message.detail.hasOwnProperty("requestParameters") && message.detail['requestParameters']) {
           if (message.detail.requestParameters.hasOwnProperty("target")) {
             const targetInstanceId = message.detail.requestParameters.target;
             getInstanceNameAndSendMsgToSlack(targetInstanceId, messageText, callback, constructMsgAndSendToSlack);
-            //messageText = messageText + ` to target: ${targetInstanceName} (${targetInstance})`;
           }
         } else {
-          sendMessageToSlack(message, callback);
+          sendMessageToSlack(messageText, callback);
         }
-
-        //if (message.detail.hasOwnProperty("errorCode") && message.detail['errorCode']) {
-        //  const errorCode = message.detail.errorCode;
-        //  messageText = messageText + ` but received error code: ${errorCode}`;
-        //}
-
-        //if (message.detail.hasOwnProperty("errorMessage") && message.detail['errorMessage']) {
-        //  const errorMessage = message.detail.errorMessage;
-        //  messageText = messageText + ` with error message: ${errorMessage}`;
-        //}
-        //messageText = messageText + ` on Dockstore ` + dockstoreEnvironment + ` in region: ` + message.region;
     } else {
         const alarmName = message.AlarmName;
         const newState = message.NewStateValue;
         const reason = message.NewStateReason;
         messageText = `${alarmName} state is now ${newState}: ${reason}`;
-        sendMessageToSlack(message, callback);
+        sendMessageToSlack(messageText, callback);
     }
-
-    //const slackMessage = {
-    //    channel: slackChannel,
-    //    text: messageText,
-    //};
-
-    //postMessage(slackMessage, (response) => {
-    //    if (response.statusCode < 400) {
-    //        console.info('Message posted successfully on Slack');
-    //        callback(null);
-    //    } else if (response.statusCode < 500) {
-    //        console.error(`Error posting message to Slack API: ${response.statusCode} - ${response.statusMessage}`);
-    //        callback(null);  // Don't retry because the error is due to a problem with the request
-    //    } else {
-    //        // Let Lambda retry
-    //        callback(`Server error when processing message: ${response.statusCode} - ${response.statusMessage}`);
-    //    }
-    //});
 }
 
 
