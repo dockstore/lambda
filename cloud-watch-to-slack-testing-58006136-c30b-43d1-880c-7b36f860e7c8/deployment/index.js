@@ -21,6 +21,8 @@ const url = require('url');
 const https = require('https');
 var AWS = require("aws-sdk");
 
+var targetInstanceName = 'unknown';
+
 // The Slack URL to send the message to
 const hookUrl = process.env.hookUrl;
 // The Slack channel to send a message to stored in the slackChannel environment variable
@@ -33,9 +35,10 @@ const dockstoreEnvironment = process.env.dockstoreEnvironment;
 // find the one with the key 'Name', whose value
 // is the name displayed on the console of the instance,
 // and return that name.
+
 function getInstanceName(myInstanceId, callback) {
   var ec2 = new AWS.EC2();
-  var instanceName = 'unknown';
+  var tagInstanceName = 'unknown';
 
   console.info(`My instance ID:${myInstanceId}`);
   ec2.describeInstances(function(err, result) {
@@ -52,25 +55,23 @@ function getInstanceName(myInstanceId, callback) {
           for (var k = 0; k < tags.length; k++) {
             console.info(`Found tag key:` + tags[k].Key);
             if (tags[k].Key == 'Name') {
-              instanceName = tags[k].Value;
-              console.info(`Found target tag key:${instanceName}` );
-              //return callback(instanceName);
-              return;
+              tagInstanceName = tags[k].Value;
+              console.info(`Found target tag key:${tagInstanceName}`);
+              return callback(tagInstanceName);
             }
           }
-          //return callback(instancename);
-          return;
+          return callback(tagInstanceName);
         }
       }
     }
-    //return callback(instanceName)
+    return callback(tagInstanceName)
  });
- return callback(instanceName);
 }
 
-function foundInstanceName(instanceName) {
-  console.info(`Found instance name:${instanceName}` );
-  return instanceName;
+function setTargetInstanceName(newInstanceName) {
+  console.info(`Found instance name:${newInstanceName}` );
+  targetInstanceName = newInstanceName;
+  return targetInstanceName;
 }
 
 function postMessage(message, callback) {
@@ -120,7 +121,7 @@ function processEvent(event, callback) {
         if (message.detail.hasOwnProperty("requestParameters") && message.detail['requestParameters']) {
           if (message.detail.requestParameters.hasOwnProperty("target")) {
             const targetInstance = message.detail.requestParameters.target;
-            const targetInstanceName = getInstanceName(targetInstance, foundInstanceName);
+            getInstanceName(targetInstance, setTargetInstanceName);
             messageText = messageText + ` to target: ${targetInstanceName} (${targetInstance})`;
           }
         }
