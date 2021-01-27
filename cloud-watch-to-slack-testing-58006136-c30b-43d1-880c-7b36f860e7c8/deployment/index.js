@@ -41,7 +41,7 @@ function getInstanceNameAndSendMsgToSlack(targetInstance, messageText, processEv
   var ec2 = new AWS.EC2();
   var tagInstanceName = 'unknown';
 
-  console.info(`My instance ID:${myInstanceId}`);
+  console.info(`My instance ID:${targetInstance}`);
   ec2.describeInstances(function(err, result) {
     if (err)
       console.log(err); // Logs error message.
