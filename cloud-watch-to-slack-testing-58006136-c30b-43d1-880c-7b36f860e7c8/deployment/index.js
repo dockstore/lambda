@@ -155,7 +155,7 @@ function processEvent(event, callback) {
         if (message.detail.hasOwnProperty("requestParameters") && message.detail['requestParameters']) {
           if (message.detail.requestParameters.hasOwnProperty("target")) {
             const targetInstance = message.detail.requestParameters.target;
-            getInstanceNameAndSendMsgToSlack(targetInstance, messageText, callback, constructMsgAndSendToSlack);\
+            getInstanceNameAndSendMsgToSlack(targetInstance, messageText, callback, constructMsgAndSendToSlack);
             //messageText = messageText + ` to target: ${targetInstanceName} (${targetInstance})`;
           }
         } else {
