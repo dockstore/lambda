@@ -36,12 +36,12 @@ const dockstoreEnvironment = process.env.dockstoreEnvironment;
 // is the name displayed on the console of the instance,
 // and return that name.
 
-function getInstanceNameAndSendMsgToSlack(targetInstance, messageText, processEventCallback, callback) {
+function getInstanceNameAndSendMsgToSlack(targetInstanceId, messageText, processEventCallback, callback) {
 //function getInstanceName(myInstanceId, callback) {
   var ec2 = new AWS.EC2();
   var tagInstanceName = 'unknown';
 
-  console.info(`My instance ID:${targetInstance}`);
+  console.info(`My instance ID:${targetInstanceId}`);
   ec2.describeInstances(function(err, result) {
     if (err)
       console.log(err); // Logs error message.
@@ -50,29 +50,28 @@ function getInstanceNameAndSendMsgToSlack(targetInstance, messageText, processEv
       var instances = res.Instances;
       for (var j = 0; j < instances.length; j++) {
         var instanceID = instances[j].InstanceId;
-        console.info(`Found instance ID:${instanceID}`);
-        if ( instanceID === myInstanceId ) {
+        console.info(`Found instance ID:${targetInstanceId}`);
+        if ( instanceID === targetInstanceId ) {
           var tags = instances[j].Tags;
           for (var k = 0; k < tags.length; k++) {
             console.info(`Found tag key:` + tags[k].Key);
             if (tags[k].Key == 'Name') {
               tagInstanceName = tags[k].Value;
               console.info(`Found target tag key:${tagInstanceName}`);
-              return callback(messageText, tagInstanceName, processEventCallback );
+              return callback(messageText, tagInstanceName, targetInstanceId, processEventCallback );
             }
           }
-          return callback(messageText, tagInstanceName, processEventCallback);
+          return callback(messageText, tagInstanceName, targetInstanceId, processEventCallback);
         }
       }
     }
-    return callback(messageText, tagInstanceName, processEventCallback)
+    return callback(messageText, tagInstanceName, targetInstanceId, processEventCallback)
  });
 }
 
-function constructMsgAndSendToSlack(messageText, newInstanceName, callback) {
-  console.info(`Found instance name:${newInstanceName}` );
-  targetInstanceName = newInstanceName;
-  messageText = messageText + ` to target: ${targetInstanceName} (${targetInstance})`;
+function constructMsgAndSendToSlack(messageText, targetInstanceName, targetInstanceId, callback) {
+  console.info(`Found instance name:${targetInstanceName}` );
+  messageText = messageText + ` to target: ${targetInstanceName} (${targetInstanceId})`;
 
   sendMessageToSlack(messageText, callback)
   //return targetInstanceName;
@@ -154,8 +153,8 @@ function processEvent(event, callback) {
 
         if (message.detail.hasOwnProperty("requestParameters") && message.detail['requestParameters']) {
           if (message.detail.requestParameters.hasOwnProperty("target")) {
-            const targetInstance = message.detail.requestParameters.target;
-            getInstanceNameAndSendMsgToSlack(targetInstance, messageText, callback, constructMsgAndSendToSlack);
+            const targetInstanceId = message.detail.requestParameters.target;
+            getInstanceNameAndSendMsgToSlack(targetInstanceId, messageText, callback, constructMsgAndSendToSlack);
             //messageText = messageText + ` to target: ${targetInstanceName} (${targetInstance})`;
           }
         } else {
