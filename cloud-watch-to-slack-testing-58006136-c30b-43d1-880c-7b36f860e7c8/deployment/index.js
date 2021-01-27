@@ -21,8 +21,6 @@ const url = require('url');
 const https = require('https');
 var AWS = require("aws-sdk");
 
-var targetInstanceName = 'unknown';
-
 // The Slack URL to send the message to
 const hookUrl = process.env.hookUrl;
 // The Slack channel to send a message to stored in the slackChannel environment variable
