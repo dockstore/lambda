@@ -46,8 +46,11 @@ function getInstanceNameAndSendMsgToSlack(targetInstanceId, messageText, process
         var instances = res.Instances;
 
         var instance = instances.find(instance => instance.InstanceId === targetInstanceId);
+        console.info(`Found instance ID:${instance}`);
         var tagInstanceNameKey = (instance && instance.Tags.find(tag => 'Name' === tag.Key));
+        console.info(`Found tag key:${tagInstanceNameKey}`);
         var tagInstanceName = (tagInstanceNameKey && tagInstanceNameKey.Value) || 'unknown';
+        console.info(`Found tag key value:${tagInstanceNameKey.Value}`);
         if (tagInstanceNameKey)
           return callback(messageText, tagInstanceName, targetInstanceId, processEventCallback);
       }
@@ -165,6 +168,7 @@ function processEvent(event, callback) {
           if (Object.prototype.hasOwnProperty.call(message.detail, "target")) {
           //if (message.detail.requestParameters.hasOwnProperty("target")) {
             const targetInstanceId = message.detail.requestParameters.target;
+            console.info(`Found target instance ID:${targetInstanceId}`);
             getInstanceNameAndSendMsgToSlack(targetInstanceId, messageText, callback, constructMsgAndSendToSlack);
           }
         } else {
