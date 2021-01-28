@@ -19,7 +19,7 @@
 
 const url = require('url');
 const https = require('https');
-var AWS = require("aws-sdk");
+const AWS = require("aws-sdk");
 
 // The Slack URL to send the message to
 const hookUrl = process.env.hookUrl;
@@ -33,36 +33,49 @@ const dockstoreEnvironment = process.env.dockstoreEnvironment;
 // find the one with the key 'Name', whose value
 // is the name displayed on the console of the instance.
 function getInstanceNameAndSendMsgToSlack(targetInstanceId, messageText, processEventCallback, callback) {
-//function getInstanceName(myInstanceId, callback) {
-  var ec2 = new AWS.EC2();
-  var tagInstanceName = 'unknown';
+  const ec2 = new AWS.EC2();
+  //var tagInstanceName = 'unknown';
 
   console.info(`My instance ID:${targetInstanceId}`);
   ec2.describeInstances(function(err, result) {
     if (err)
       console.log(err); // Logs error message.
-    for (var i = 0; i < result.Reservations.length; i++) {
-      var res = result.Reservations[i];
-      var instances = res.Instances;
-      for (var j = 0; j < instances.length; j++) {
-        var instanceID = instances[j].InstanceId;
-        console.info(`Found instance ID:${targetInstanceId}`);
-        if ( instanceID === targetInstanceId ) {
-          var tags = instances[j].Tags;
-          for (var k = 0; k < tags.length; k++) {
-            console.info(`Found tag key:` + tags[k].Key);
-            if (tags[k].Key == 'Name') {
-              tagInstanceName = tags[k].Value;
-              console.info(`Found target tag key:${tagInstanceName}`);
-              return callback(messageText, tagInstanceName, targetInstanceId, processEventCallback );
-            }
-          }
+    else {
+      for (var i = 0; i < result.Reservations.length; i++) {
+        var res = result.Reservations[i];
+        var instances = res.Instances;
+
+        var instance = instances.find(instance => instance.InstanceId === targetInstanceId);
+        var tagInstanceNameKey = (instance && instance.Tags.find(tag => 'Name' === tag.Key));
+        var tagInstanceName = (tagInstanceNameKey && tagInstanceNameKey.Value) || 'unknown';
+        if (tagInstanceNameKey)
           return callback(messageText, tagInstanceName, targetInstanceId, processEventCallback);
-        }
       }
     }
-    return callback(messageText, tagInstanceName, targetInstanceId, processEventCallback)
- });
+
+
+    //for (var i = 0; i < result.Reservations.length; i++) {
+    //  var res = result.Reservations[i];
+    //  var instances = res.Instances;
+    //  for (var j = 0; j < instances.length; j++) {
+    //    var instanceID = instances[j].InstanceId;
+    //    console.info(`Found instance ID:${targetInstanceId}`);
+    //    if ( instanceID === targetInstanceId ) {
+    //      var tags = instances[j].Tags;
+    //      for (var k = 0; k < tags.length; k++) {
+    //        console.info(`Found tag key:` + tags[k].Key);
+    //        if (tags[k].Key == 'Name') {
+    //          tagInstanceName = tags[k].Value;
+    //          console.info(`Found target tag key:${tagInstanceName}`);
+    //          return callback(messageText, tagInstanceName, targetInstanceId, processEventCallback );
+    //        }
+    //      }
+    //      return callback(messageText, tagInstanceName, targetInstanceId, processEventCallback);
+    //    }
+    //  }
+    //}
+    //return callback(messageText, tagInstanceName, targetInstanceId, processEventCallback)
+  });
 }
 
 function constructMsgAndSendToSlack(messageText, targetInstanceName, targetInstanceId, callback) {
@@ -138,7 +151,8 @@ function processEvent(event, callback) {
         const sourceIPAddress = message.detail.sourceIPAddress;
         messageText = `${userName} initiated AWS Systems Manager (SSM) event ${eventName}`;
 
-        if (message.detail.hasOwnProperty("errorCode") && message.detail['errorCode']) {
+        if (Object.prototype.hasOwnProperty.call(message.detail, "errorCode") && message.detail['errorCode']) {
+        //if (message.detail.hasOwnProperty("errorCode") && message.detail['errorCode']) {
           const errorCode = message.detail.errorCode;
           messageText = messageText + ` but received error code: ${errorCode}`;
         }
@@ -146,8 +160,10 @@ function processEvent(event, callback) {
         messageText = messageText + ` on Dockstore ` + dockstoreEnvironment + ` in region: ` + message.region + `.`;
         messageText = messageText + ` Event was initiated from IP ${sourceIPAddress}`;
 
-        if (message.detail.hasOwnProperty("requestParameters") && message.detail['requestParameters']) {
-          if (message.detail.requestParameters.hasOwnProperty("target")) {
+        if (Object.prototype.hasOwnProperty.call(message.detail, "requestParameters") && message.detail['requestParameters']) {
+        //if (message.detail.hasOwnProperty("requestParameters") && message.detail['requestParameters']) {
+          if (Object.prototype.hasOwnProperty.call(message.detail, "target")) {
+          //if (message.detail.requestParameters.hasOwnProperty("target")) {
             const targetInstanceId = message.detail.requestParameters.target;
             getInstanceNameAndSendMsgToSlack(targetInstanceId, messageText, callback, constructMsgAndSendToSlack);
           }
