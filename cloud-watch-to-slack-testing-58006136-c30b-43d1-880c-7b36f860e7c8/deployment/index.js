@@ -50,7 +50,8 @@ function getInstanceNameAndSendMsgToSlack(targetInstanceId, messageText, process
         var tagInstanceNameKey = (instance && instance.Tags.find(tag => 'Name' === tag.Key));
         console.info(`Found tag key:${tagInstanceNameKey}`);
         var tagInstanceName = (tagInstanceNameKey && tagInstanceNameKey.Value) || 'unknown';
-        console.info(`Found tag key value:${tagInstanceNameKey.Value}`);
+        if (tagInstanceNameKey)
+          console.info(`Found tag key value:${tagInstanceNameKey.Value}`);
         if (tagInstanceNameKey)
           return callback(messageText, tagInstanceName, targetInstanceId, processEventCallback);
       }
