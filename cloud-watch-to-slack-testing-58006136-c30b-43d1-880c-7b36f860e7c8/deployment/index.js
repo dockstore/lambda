@@ -165,7 +165,7 @@ function processEvent(event, callback) {
 
         if (Object.prototype.hasOwnProperty.call(message.detail, "requestParameters") && message.detail['requestParameters']) {
         //if (message.detail.hasOwnProperty("requestParameters") && message.detail['requestParameters']) {
-          if (Object.prototype.hasOwnProperty.call(message.detail, "target")) {
+          if (Object.prototype.hasOwnProperty.call(message.detail.requestParameters, "target")) {
           //if (message.detail.requestParameters.hasOwnProperty("target")) {
             const targetInstanceId = message.detail.requestParameters.target;
             console.info(`Found target instance ID:${targetInstanceId}`);
