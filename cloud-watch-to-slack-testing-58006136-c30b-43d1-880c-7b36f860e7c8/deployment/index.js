@@ -139,7 +139,7 @@ function processEvent(event, callback) {
         messageText = messageText + ` on Dockstore ` + dockstoreEnvironment + ` in region: ` + message.region + `.`;
         messageText = messageText + ` Event was initiated from IP ${sourceIPAddress}`;
 
-        if (Object.prototype.hasOwnProperty.call(message.detail, "requestParameters")
+        if (Object.prototype.hasOwnProperty.call(message.detail, "requestParameters") && message.detail['requestParameters']
             && Object.prototype.hasOwnProperty.call(message.detail.requestParameters, "target")) {
             const targetInstanceId = message.detail.requestParameters.target;
             getInstanceNameAndSendMsgToSlack(targetInstanceId, messageText, callback, constructMsgAndSendToSlack);
