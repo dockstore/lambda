@@ -36,11 +36,11 @@ function getInstanceNameAndSendMsgToSlack(targetInstanceId, messageText, process
   const ec2 = new AWS.EC2();
 
   ec2.describeInstances(function(err, result) {
-    if (err)
+    if (err) {
       console.log(err); // Log the error message.
       // Send the error message to Slack
       return callback(err, tagInstanceName, targetInstanceId, processEventCallback);
-    else {
+    } else {
       for (var i = 0; i < result.Reservations.length; i++) {
         var res = result.Reservations[i];
         var instances = res.Instances;
