@@ -37,7 +37,9 @@ function getInstanceNameAndSendMsgToSlack(targetInstanceId, messageText, process
 
   ec2.describeInstances(function(err, result) {
     if (err)
-      console.log(err); // Logs error message.
+      console.log(err); // Log the error message.
+      // Send the error message to Slack
+      return callback(err, tagInstanceName, targetInstanceId, processEventCallback);
     else {
       for (var i = 0; i < result.Reservations.length; i++) {
         var res = result.Reservations[i];
@@ -45,8 +47,8 @@ function getInstanceNameAndSendMsgToSlack(targetInstanceId, messageText, process
 
         var instance = instances.find(instance => instance.InstanceId === targetInstanceId);
         var tagInstanceNameKey = (instance && instance.Tags.find(tag => 'Name' === tag.Key));
-        var tagInstanceName = (tagInstanceNameKey && tagInstanceNameKey.Value) || 'unknown';
         if (tagInstanceNameKey) {
+          var tagInstanceName = (tagInstanceNameKey.Value) || 'unknown';
           return callback(messageText, tagInstanceName, targetInstanceId, processEventCallback);
         }
       }
@@ -135,11 +137,10 @@ function processEvent(event, callback) {
         messageText = messageText + ` on Dockstore ` + dockstoreEnvironment + ` in region: ` + message.region + `.`;
         messageText = messageText + ` Event was initiated from IP ${sourceIPAddress}`;
 
-        if (Object.prototype.hasOwnProperty.call(message.detail, "requestParameters") && message.detail['requestParameters']) {
-          if (Object.prototype.hasOwnProperty.call(message.detail.requestParameters, "target")) {
+        if (Object.prototype.hasOwnProperty.call(message.detail, "requestParameters")
+            && Object.prototype.hasOwnProperty.call(message.detail.requestParameters, "target")) {
             const targetInstanceId = message.detail.requestParameters.target;
             getInstanceNameAndSendMsgToSlack(targetInstanceId, messageText, callback, constructMsgAndSendToSlack);
-          }
         } else {
           sendMessageToSlack(messageText, callback);
         }
