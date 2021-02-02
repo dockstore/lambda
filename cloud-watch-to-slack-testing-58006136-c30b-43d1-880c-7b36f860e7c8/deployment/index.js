@@ -36,15 +36,14 @@ function getInstanceNameAndSendMsgToSlack(targetInstanceId, messageText, process
   const ec2 = new AWS.EC2();
 
   ec2.describeInstances(function(err, result) {
-    if (err) {
+    if (err)
       console.log(err); // Log the error message.
-      // Send the error message to Slack
-      return callback(err, tagInstanceName, targetInstanceId, processEventCallback);
-    } else {
+    else {
       for (var i = 0; i < result.Reservations.length; i++) {
         var res = result.Reservations[i];
         var instances = res.Instances;
 
+        // Try to get the user friendly name of the EC2 target instance
         var instance = instances.find(instance => instance.InstanceId === targetInstanceId);
         var tagInstanceNameKey = (instance && instance.Tags.find(tag => 'Name' === tag.Key));
         if (tagInstanceNameKey) {
@@ -53,6 +52,9 @@ function getInstanceNameAndSendMsgToSlack(targetInstanceId, messageText, process
         }
       }
     }
+    // If there was an error or the user friendly name was not found just send the
+    // message to Slack with a default name for the target
+    return callback(messageText, 'unknown', targetInstanceId, processEventCallback);
   });
 }
 
