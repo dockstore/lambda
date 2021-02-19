@@ -10,13 +10,15 @@ from abc import ABC, abstractmethod
 _logger = logging.getLogger("inventory.mappers")
 _logger.setLevel(os.environ.get("LOG_LEVEL", logging.INFO))
 
+
 def _get_tag_value(tags: dict, tag_name: str) -> str:
     return next((tag["value"] for tag in tags if tag["key"].casefold() == tag_name.casefold()), '')
 
+
 class InventoryData:
-    def __init__(self, *, asset_type = None, unique_id = None, ip_address = None, location = None, is_virtual = None, 
-                authenticated_scan_planned = None, dns_name = None, mac_address = None, baseline_config = None, hardware_model = None, 
-                is_public = None, network_id = None, owner = None, software_product_name = None, software_vendor = None):
+    def __init__(self, *, asset_type=None, unique_id=None, ip_address=None, location=None, is_virtual=None,
+                 authenticated_scan_planned=None, dns_name=None, mac_address=None, baseline_config=None, hardware_model=None,
+                 is_public=None, network_id=None, owner=None, software_product_name=None, software_vendor=None, comments=None):
         self.asset_type = asset_type
         self.unique_id = unique_id
         self.ip_address = ip_address
@@ -32,6 +34,8 @@ class InventoryData:
         self.owner = owner
         self.software_product_name = software_product_name
         self.software_vendor = software_vendor
+        self.comments = comments
+
 
 class DataMapper(ABC):
     @abstractmethod
@@ -47,7 +51,7 @@ class DataMapper(ABC):
 
     def map(self, config_resource: dict) -> List[InventoryData]:
         if not self.can_map(config_resource["resourceType"]):
-            return[]
+            return []
 
         mapped_data = []
 
@@ -57,7 +61,8 @@ class DataMapper(ABC):
 
         _logger.debug(f"mapping resulted in a total of {len(mapped_data)} rows")
 
-        return mapped_data    
+        return mapped_data
+
 
 class EC2DataMapper(DataMapper):
     def _get_supported_resource_type(self) -> List[str]:
@@ -68,16 +73,16 @@ class EC2DataMapper(DataMapper):
 
         for nic in config_resource["configuration"]["networkInterfaces"]:
             for ipAddress in nic["privateIpAddresses"]:
-                ec2_data = { "asset_type": "EC2",
-                             "unique_id": config_resource["configuration"]["instanceId"],
-                             "ip_address": ipAddress["privateIpAddress"],
-                             "is_virtual": "Yes",
-                             "authenticated_scan_planned": "Yes",
-                             "mac_address": nic["macAddress"],
-                             "baseline_config": config_resource["configuration"]["imageId"],
-                             "hardware_model": config_resource["configuration"]["instanceType"],
-                             "network_id": config_resource["configuration"]["vpcId"],
-                             "owner": _get_tag_value(config_resource["tags"], "owner") }
+                ec2_data = {"asset_type": "EC2",
+                            "unique_id": config_resource["configuration"]["instanceId"],
+                            "ip_address": ipAddress["privateIpAddress"],
+                            "is_virtual": "Yes",
+                            "authenticated_scan_planned": "Yes",
+                            "mac_address": nic["macAddress"],
+                            "baseline_config": config_resource["configuration"]["imageId"],
+                            "hardware_model": config_resource["configuration"]["instanceType"],
+                            "network_id": config_resource["configuration"]["vpcId"],
+                            "owner": _get_tag_value(config_resource["tags"], "owner")}
 
                 if (public_dns_name := config_resource["configuration"].get("publicDnsName")):
                     ec2_data["dns_name"] = public_dns_name
@@ -97,6 +102,7 @@ class EC2DataMapper(DataMapper):
 
         return ec2_data_list
 
+
 class ElbDataMapper(DataMapper):
     def _get_supported_resource_type(self) -> List[str]:
         return ["AWS::ElasticLoadBalancing::LoadBalancer", "AWS::ElasticLoadBalancingV2::LoadBalancer"]
@@ -112,7 +118,8 @@ class ElbDataMapper(DataMapper):
 
         for availabilityZone in availabilityZones:
             if load_balancer_addresses := availabilityZone.get("loadBalancerAddresses"):
-                for load_balancer_address in (load_balancer_address for load_balancer_address in load_balancer_addresses if "ipAddress" in load_balancer_address):
+                for load_balancer_address in (load_balancer_address for load_balancer_address in load_balancer_addresses if
+                                              "ipAddress" in load_balancer_address):
                     ip_addresses.append(load_balancer_address["ipAddress"])
 
         return ip_addresses
@@ -120,14 +127,15 @@ class ElbDataMapper(DataMapper):
     def _do_mapping(self, config_resource: dict) -> List[InventoryData]:
         data_list: List[InventoryData] = []
 
-        data = { "asset_type": self._get_asset_type_name(config_resource),
-                 "unique_id": config_resource["arn"],
-                 "is_virtual": "Yes",
-                 "authenticated_scan_planned": "Yes",
-                 "is_public": "Yes" if config_resource["configuration"]["scheme"] == "internet-facing" else "No",
-                 # Classic ELBs have key of "vpcid" while V2 ELBs have key of "vpcId"
-                 "network_id": config_resource["configuration"]["vpcId"] if "vpcId" in config_resource["configuration"] else config_resource["configuration"]["vpcid"],
-                 "owner": _get_tag_value(config_resource["tags"], "owner") }
+        data = {"asset_type": self._get_asset_type_name(config_resource),
+                "unique_id": config_resource["arn"],
+                "is_virtual": "Yes",
+                "authenticated_scan_planned": "Yes",
+                "is_public": "Yes" if config_resource["configuration"]["scheme"] == "internet-facing" else "No",
+                # Classic ELBs have key of "vpcid" while V2 ELBs have key of "vpcId"
+                "network_id": config_resource["configuration"]["vpcId"] if "vpcId" in config_resource["configuration"] else
+                config_resource["configuration"]["vpcid"],
+                "owner": _get_tag_value(config_resource["tags"], "owner")}
 
         if len(ip_addresses := self._get_ip_addresses(config_resource["configuration"]["availabilityZones"])) > 0:
             for ip_address in ip_addresses:
@@ -141,34 +149,69 @@ class ElbDataMapper(DataMapper):
 
         return data_list
 
+
 class RdsDataMapper(DataMapper):
     def _get_supported_resource_type(self) -> List[str]:
         return ["AWS::RDS::DBInstance"]
 
     def _do_mapping(self, config_resource: dict) -> List[InventoryData]:
-        data = { "asset_type": "RDS",
-                 "unique_id": config_resource["arn"],
-                 "is_virtual": "Yes",
-                 "software_vendor": "AWS",
-                 "is_public": "Yes" if config_resource["configuration"]["publiclyAccessible"] else "No",
-                 "hardware_model": config_resource["configuration"]["dBInstanceClass"],
-                 "software_product_name": f"{config_resource['configuration']['engine']}-{config_resource['configuration']['engineVersion']}",
-                 "network_id": config_resource['configuration']['dBSubnetGroup']['vpcId'] if "dBSubnetGroup" in config_resource['configuration'] else '',
-                 "owner": _get_tag_value(config_resource["tags"], "owner") }
+        data = {"asset_type": "RDS",
+                "unique_id": config_resource["arn"],
+                "is_virtual": "Yes",
+                "software_vendor": "AWS",
+                "is_public": "Yes" if config_resource["configuration"]["publiclyAccessible"] else "No",
+                "hardware_model": config_resource["configuration"]["dBInstanceClass"],
+                "software_product_name": f"{config_resource['configuration']['engine']}-{config_resource['configuration']['engineVersion']}",
+                "network_id": config_resource['configuration']['dBSubnetGroup']['vpcId'] if "dBSubnetGroup" in config_resource[
+                    'configuration'] else '',
+                "owner": _get_tag_value(config_resource["tags"], "owner")}
 
         return [InventoryData(**data)]
+
 
 class DynamoDbTableDataMapper(DataMapper):
     def _get_supported_resource_type(self) -> List[str]:
         return ["AWS::DynamoDB::Table"]
 
     def _do_mapping(self, config_resource: dict) -> List[InventoryData]:
-        data = { "asset_type": "DynamoDB",
-                 "unique_id": config_resource["arn"],
-                 "is_virtual": "Yes",
-                 "is_public": "No",
-                 "software_vendor": "AWS",
-                 "software_product_name": "DynamoDB",
-                 "owner": _get_tag_value(config_resource["tags"], "owner") }
+        data = {"asset_type": "DynamoDB",
+                "unique_id": config_resource["arn"],
+                "is_virtual": "Yes",
+                "is_public": "No",
+                "software_vendor": "AWS",
+                "software_product_name": "DynamoDB",
+                "owner": _get_tag_value(config_resource["tags"], "owner")}
 
         return [InventoryData(**data)]
+
+
+class S3DataMapper(DataMapper):
+    def _get_supported_resource_type(self) -> List[str]:
+        return ["AWS::S3::Bucket"]
+
+    def _do_mapping(self, config_resource: dict) -> List[InventoryData]:
+        return None
+
+
+class VPCDataMapper(DataMapper):
+    def _get_supported_resource_type(self) -> List[str]:
+        return ["AWS::EC2::VPC"]
+
+    def _do_mapping(self, config_resource: dict) -> List[InventoryData]:
+        return None
+
+
+class SubnetDataMapper(DataMapper):
+    def _get_supported_resource_type(self) -> List[str]:
+        return ["AWS::EC2::Subnet"]
+
+    def _do_mapping(self, config_resource: dict) -> List[InventoryData]:
+        return None
+
+
+class LambdaDataMapper(DataMapper):
+    def _get_supported_resource_type(self) -> List[str]:
+        return ["AWS::Lambda::Function"]
+
+    def _do_mapping(self, config_resource: dict) -> List[InventoryData]:
+        return None
