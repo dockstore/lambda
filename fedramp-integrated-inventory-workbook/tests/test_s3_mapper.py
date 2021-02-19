@@ -30,6 +30,15 @@ def test_given_resource_type_is_private_when_all_public_access_blocked(full_s3_c
     mapped_result = mapper.map(full_s3_config)
     assert mapped_result[0].is_public == "Yes", "After changing the sample json, the bucket is no longer blocking all public access"
 
+    # These keys may not be present, verify that mapping still works if the keys don't exist in the dictionary
+    full_s3_config["supplementaryConfiguration"].pop("PublicAccessBlockConfiguration", None)
+    mapped_result = mapper.map(full_s3_config)
+    assert mapped_result[0].is_public == "Yes", "Without PublicAccessBlockConfiguration, the bucket is public "
+
+    full_s3_config.pop("supplementaryConfiguration", None)
+    mapped_result = mapper.map(full_s3_config)
+    assert mapped_result[0].is_public == "Yes", "Without supplementaryConfiguration, the bucket is public"
+
 def test_given_resource_type_is_specified_in_region(full_s3_config):
     mapper = S3DataMapper()
 

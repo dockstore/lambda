@@ -6,7 +6,7 @@ from inventory.mappers import LambdaDataMapper
 
 @pytest.fixture()
 def full_lambda_config():
-    with open(os.path.join(os.path.dirname(__file__), "sample_config_query_results/sample_lambda.json")) as file_data:
+    with open(os.path.join(os.path.dirname(__file__), "sample_config_query_results/sample_lambda_function.json")) as file_data:
         file_contents = file_data.read()
 
     return json.loads(file_contents)
