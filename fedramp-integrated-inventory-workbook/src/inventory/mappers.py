@@ -8,11 +8,11 @@ from typing import List
 from abc import ABC, abstractmethod
 
 _logger = logging.getLogger("inventory.mappers")
-_logger.setLevel(os.environ.get("LOG_LEVEL", logging.INFO))
+_logger.setLevel(os.environ.get("LOG_LEVEL", logging.DEBUG))
 
 
 def _get_tag_value(tags: dict, tag_name: str) -> str:
-    return next((tag["value"] for tag in tags if tag["key"].casefold() == tag_name.casefold()), '')
+    return next((tag["value"] for tag in tags if "key" in tag and tag["key"].casefold() == tag_name.casefold()), '')
 
 
 class InventoryData:
@@ -56,7 +56,7 @@ class DataMapper(ABC):
         mapped_data = []
 
         _logger.debug(f"mapping {config_resource['resourceType']}")
-
+        _logger.debug(config_resource)
         mapped_data.extend(self._do_mapping(config_resource))
 
         _logger.debug(f"mapping resulted in a total of {len(mapped_data)} rows")
@@ -190,7 +190,26 @@ class S3DataMapper(DataMapper):
         return ["AWS::S3::Bucket"]
 
     def _do_mapping(self, config_resource: dict) -> List[InventoryData]:
-        return None
+
+        if "supplementaryConfiguration" in config_resource and "PublicAccessBlockConfiguration" in config_resource["supplementaryConfiguration"]:
+            # check if each of the block access config values are true, if so, then the bucket is not public
+            public_access_config = config_resource["supplementaryConfiguration"]["PublicAccessBlockConfiguration"]
+            is_public = "No" if all(public_access_config[key] for key in public_access_config) else "Yes"
+        else:
+            # if there is no PublicAccessBlockConfiguration then this bucket is public
+            is_public = "Yes"
+
+        data = {"asset_type": "S3",
+                "unique_id": config_resource["arn"],
+                "is_virtual": "Yes",
+                "software_vendor": "AWS",
+                "is_public": is_public,
+                "owner": _get_tag_value(config_resource["tags"], "owner"),
+                "comments": "Encrypted" if "ServerSideEncryptionConfiguration" in config_resource["supplementaryConfiguration"] else "Not encrypted",
+                "location": config_resource["awsRegion"]
+                }
+
+        return [InventoryData(**data)]
 
 
 class VPCDataMapper(DataMapper):
@@ -198,15 +217,20 @@ class VPCDataMapper(DataMapper):
         return ["AWS::EC2::VPC"]
 
     def _do_mapping(self, config_resource: dict) -> List[InventoryData]:
-        return None
+        data = {"asset_type": "VPC",
+                "unique_id": config_resource["arn"],
+                "ip_address": config_resource["configuration"]["cidrBlock"],
+                "is_virtual": "Yes",
+                "is_public": "Yes",
+                "authenticated_scan_planned": "Yes",
+                "software_vendor": "AWS",
+                "baseline_config": config_resource["configurationStateId"],
+                "network_id": config_resource["configuration"]["vpcId"],
+                "owner": _get_tag_value(config_resource["tags"], "owner"),
+                "location": config_resource["awsRegion"]
+                }
 
-
-class SubnetDataMapper(DataMapper):
-    def _get_supported_resource_type(self) -> List[str]:
-        return ["AWS::EC2::Subnet"]
-
-    def _do_mapping(self, config_resource: dict) -> List[InventoryData]:
-        return None
+        return [InventoryData(**data)]
 
 
 class LambdaDataMapper(DataMapper):
@@ -214,4 +238,15 @@ class LambdaDataMapper(DataMapper):
         return ["AWS::Lambda::Function"]
 
     def _do_mapping(self, config_resource: dict) -> List[InventoryData]:
-        return None
+        data = {"asset_type": "Lambda Function",
+                "unique_id": config_resource["arn"],
+                "is_virtual": "Yes",
+                "is_public": "No",
+                "baseline_config": config_resource["configuration"]["runtime"],
+                "software_vendor": "Dockstore",
+                "software_product_name": "sha256: " + config_resource["configuration"]["codeSha256"],
+                "owner": _get_tag_value(config_resource["tags"], "owner"),
+                "location": config_resource["awsRegion"]
+                }
+
+        return [InventoryData(**data)]
