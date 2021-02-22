@@ -46,7 +46,7 @@ class AwsConfigInventoryReader():
                 resources_result = config_client.select_resource_config(
                     Expression="SELECT arn, resourceType, configuration, supplementaryConfiguration, configurationStateId, tags, awsRegion "
                                "WHERE resourceType IN ('AWS::EC2::Instance', 'AWS::ElasticLoadBalancingV2::LoadBalancer', "
-                               "'AWS::ElasticLoadBalancing::LoadBalancer', 'AWS::DynamoDB::Table', 'AWS::RDS::DBInstance', "
+                               "'AWS::ElasticLoadBalancing::LoadBalancer', 'AWS::RDS::DBInstance', "
                                "'AWS::Lambda::Function', 'AWS::EC2::VPC', 'AWS::S3::Bucket')",
                     NextToken=next_token)
 
