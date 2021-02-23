@@ -250,3 +250,11 @@ class LambdaDataMapper(DataMapper):
                 }
 
         return [InventoryData(**data)]
+
+
+class RDSDataMapper(DataMapper):
+    def _get_supported_resource_type(self) -> List[str]:
+        return ["AWS::RDS::DBInstance"]
+
+    def _do_mapping(self, config_resource: dict) -> List[InventoryData]:
+        pass
