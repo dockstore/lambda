@@ -9,6 +9,7 @@ from typing import List
 import boto3
 from openpyxl import load_workbook
 from openpyxl.worksheet.worksheet import Worksheet
+from openpyxl.utils import get_column_letter
 from .mappers import InventoryData
 
 _logger = logging.getLogger("inventory.reports")
@@ -17,10 +18,17 @@ _current_dir_name = os.path.dirname(__file__)
 _workbook_template_file_name = os.path.join(_current_dir_name, "SSP-A13-FedRAMP-Integrated-Inventory-Workbook-Template.xlsx")
 _workbook_output_file_path = PurePath("/tmp/SSP-A13-FedRAMP-Integrated-Inventory.xlsx")
 DEFAULT_REPORT_WORKSHEET_FIRST_WRITEABLE_ROW_NUMBER = 6
+DEFAULT_COL_WIDTH = 10
 
 class CreateReportCommandHandler():
     def _write_cell_if_value_provided(self, worksheet: Worksheet, column:int, row: int, value: str):
         if value:
+            # Scale the size of the column with the input value if necessary. By default width is None.
+            if worksheet.column_dimensions[get_column_letter(column)].width is not None:
+                worksheet.column_dimensions[get_column_letter(column)].width = max(worksheet.column_dimensions[get_column_letter(column)].width, len(value))
+            else:
+                worksheet.column_dimensions[get_column_letter(column)].width = DEFAULT_COL_WIDTH
+
             worksheet.cell(column=column, row=row, value=value)
 
     def execute(self, inventory: List[InventoryData]) -> str:
@@ -28,7 +36,6 @@ class CreateReportCommandHandler():
         reportWorksheetName = os.environ.get("REPORT_WORKSHEET_NAME", "Inventory")
         reportWorksheet = workbook[reportWorksheetName]
         rowNumber: int = int(os.environ.get("REPORT_WORKSHEET_FIRST_WRITEABLE_ROW_NUMBER", DEFAULT_REPORT_WORKSHEET_FIRST_WRITEABLE_ROW_NUMBER))
-
         _logger.info(f"writing {len(inventory)} rows into worksheet {reportWorksheetName} starting at row {rowNumber}")
 
         for inventory_row in inventory:
