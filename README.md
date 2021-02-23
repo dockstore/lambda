@@ -15,4 +15,4 @@ This should install git secrets into your local repository and perform a scan.
 If secrets are found, the run will error and output the potential secret to stdout.
 If you believe the scan is a false-positive, add the line glob to .gitallowed.
 
-Test for replication 3
+Test for replication 4
