@@ -257,4 +257,15 @@ class RDSDataMapper(DataMapper):
         return ["AWS::RDS::DBInstance"]
 
     def _do_mapping(self, config_resource: dict) -> List[InventoryData]:
-        pass
+        data = {"asset_type": "RDS",
+                "unique_id": config_resource["configuration"]["dBInstanceIdentifier"],
+                "is_virtual": "Yes",
+                "is_public": "No",
+                "hardware_model": config_resource["configuration"]["dBInstanceClass"],
+                "software_vendor": "AWS",
+                "software_product_name": config_resource["configuration"]["engine"],
+                "owner": _get_tag_value(config_resource["tags"], "owner"),
+                "location": config_resource["awsRegion"]
+                }
+
+        return [InventoryData(**data)]
