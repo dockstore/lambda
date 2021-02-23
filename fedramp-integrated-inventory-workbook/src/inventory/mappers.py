@@ -8,7 +8,7 @@ from typing import List
 from abc import ABC, abstractmethod
 
 _logger = logging.getLogger("inventory.mappers")
-_logger.setLevel(os.environ.get("LOG_LEVEL", logging.DEBUG))
+_logger.setLevel(os.environ.get("LOG_LEVEL", logging.INFO))
 
 
 def _get_tag_value(tags: dict, tag_name: str) -> str:

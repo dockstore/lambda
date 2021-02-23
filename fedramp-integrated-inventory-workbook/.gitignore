@@ -111,3 +111,6 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# ignore zip
+fedramp-inventory-lambda.zip
