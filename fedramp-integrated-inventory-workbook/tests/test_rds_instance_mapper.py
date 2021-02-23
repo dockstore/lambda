@@ -18,7 +18,7 @@ def test_given_resource_type_is_not_rds_then_empty_array_is_returned(full_rds_co
 
     assert mapper.map(full_rds_config) == []
 
-    full_rds_config["resourceType"] = "AWS::RDS::Bucket"
+    full_rds_config["resourceType"] = "AWS::RDS::DBInstance"
     assert len(mapper.map(full_rds_config)) > 0, "Resource should have been mapped"
 
 
