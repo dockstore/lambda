@@ -56,14 +56,11 @@ Resources:
           Action:
             - "sts:AssumeRole"
       Path: "/"
-      Policies:
-        - PolicyName: LambdaAccessRole
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action: "*"
-                Resource: "*"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        - arn:aws:iam::aws:policy/service-role/AWSConfigRole
+
 
   InventoryCollectorLambda:
     Type: "AWS::Lambda::Function"
@@ -82,7 +79,7 @@ Resources:
       Environment:
         Variables:
           'ACCOUNT_LIST': !Sub '[{ "name": "${MasterAccountName}", "id": "${AWS::AccountId}" }]'
-          'CROSS_ACCOUNT_ROLE_NAME': 'InventoryCollector-for-Lambda'
+          'CROSS_ACCOUNT_ROLE_NAME': 'InventoryCollectorLambdaExecuteRole'
           'REPORT_TARGET_BUCKET_NAME': !Ref integratedinventorybucket
           'REPORT_TARGET_BUCKET_PATH': 'inventory-reports'
 
