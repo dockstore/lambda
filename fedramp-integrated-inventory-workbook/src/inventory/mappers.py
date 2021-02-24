@@ -78,6 +78,7 @@ class EC2DataMapper(DataMapper):
                             "ip_address": ipAddress["privateIpAddress"],
                             "is_virtual": "Yes",
                             "authenticated_scan_planned": "Yes",
+                            "software_vendor": "AWS",
                             "mac_address": nic["macAddress"],
                             "baseline_config": config_resource["configuration"]["imageId"],
                             "hardware_model": config_resource["configuration"]["instanceType"],
@@ -131,6 +132,7 @@ class ElbDataMapper(DataMapper):
                 "unique_id": config_resource["arn"],
                 "is_virtual": "Yes",
                 "authenticated_scan_planned": "Yes",
+                "software_vendor": "AWS",
                 "is_public": "Yes" if config_resource["configuration"]["scheme"] == "internet-facing" else "No",
                 # Classic ELBs have key of "vpcid" while V2 ELBs have key of "vpcId"
                 "network_id": config_resource["configuration"]["vpcId"] if "vpcId" in config_resource["configuration"] else
@@ -159,6 +161,7 @@ class RdsDataMapper(DataMapper):
                 "unique_id": config_resource["arn"],
                 "is_virtual": "Yes",
                 "software_vendor": "AWS",
+                "authenticated_scan_planned": "No",
                 "is_public": "Yes" if config_resource["configuration"]["publiclyAccessible"] else "No",
                 "hardware_model": config_resource["configuration"]["dBInstanceClass"],
                 "software_product_name": f"{config_resource['configuration']['engine']}-{config_resource['configuration']['engineVersion']}",
@@ -203,6 +206,7 @@ class S3DataMapper(DataMapper):
                 "unique_id": config_resource["arn"],
                 "is_virtual": "Yes",
                 "is_public": is_public,
+                "software_vendor": "AWS",
                 "owner": _get_tag_value(config_resource["tags"], "owner"),
                 "comments": "Encrypted" if "ServerSideEncryptionConfiguration" in config_resource["supplementaryConfiguration"] else "Not encrypted",
                 "location": config_resource["awsRegion"]
@@ -221,7 +225,7 @@ class VPCDataMapper(DataMapper):
                 "ip_address": config_resource["configuration"]["cidrBlock"],
                 "is_virtual": "Yes",
                 "is_public": "Yes",
-                "authenticated_scan_planned": "Yes",
+                "software_vendor": "AWS",
                 "baseline_config": config_resource["configurationStateId"],
                 "network_id": config_resource["configuration"]["vpcId"],
                 "owner": _get_tag_value(config_resource["tags"], "owner"),
