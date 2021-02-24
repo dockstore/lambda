@@ -5,7 +5,7 @@ orbs:
 jobs:
     build:
         docker:
-            - image: circleci/python:3.7
+            - image: circleci/python:3.9
         parameters:
             aws_bucket:
                 type: string
