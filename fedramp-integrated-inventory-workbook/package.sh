@@ -1,6 +1,6 @@
 rm -fr output
 mkdir output
-cp -R src/inventory output
+cp -R deployment/inventory output
 pipenv lock -r > requirements.txt
 pipenv run pip install -r requirements.txt -t output -U --no-deps
 chmod -R 755 output
