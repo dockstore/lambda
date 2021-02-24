@@ -34,6 +34,10 @@ jobs:
                     - create_zip_upload_to_s3:
                         lambdaFolder: "webhook-testing-bdf90c40-b8ea-409b-951a-3ee800a00dda/deployment"
                         s3BucketFolder: "webhookTesting"
+                    - create_fedramp_inventory_zip_upload_to_s3:
+                        lambdaFolder: "fedramp-integrated-inventory-workbook/src"
+                        lambdaRequirements: "fedramp-integrated-inventory-workbook/requirements.txt"
+                        s3BucketFolder: "fedrampInventory"
     tests:
         docker:
             - image: circleci/buildpack-deps:18.04-browsers
@@ -61,6 +65,31 @@ commands:
                 to: 's3://${AWS_BUCKET}/$(echo ${CIRCLE_TAG-$CIRCLE_BRANCH} | sed "s/\//_/g")-$(echo $CIRCLE_SHA1 | cut -c -7)/<< parameters.s3BucketFolder >>/function.zip'
                 arguments: |
                     --cache-control max-age=0
+
+    create_fedramp_inventory_zip_upload_to_s3:
+        description: "Creates a deployment zip for the fedramp inventory lambda and uploads to S3"
+        parameters:
+            lambdaFolder:
+                type: string
+            lambdaRequirements:
+                type: string
+            s3BucketFolder:
+                type: string
+        steps:
+            - run:
+                  name: make temporary directory and copy in source files
+                  command: (cd << parameters.lambdaFolder >>) && (mkdir output) && (cp -R << parameters.lambdaFolder >>/inventory output)
+            - run:
+                  name: install all requirements into the temporary directory
+                  command: (pip install -r << parameters.lambdaRequirements >> -t output -U --no-deps) && (chmod -R 755 output)
+            - run:
+                  name: zip source files alongside dependencies
+                  command: (cd output && zip -r8 ../function.zip .) && (rm -rf output)
+            - aws-s3/copy:
+                  from: << parameters.lambdaFolder >>/function.zip
+                  to: 's3://${AWS_BUCKET}/$(echo ${CIRCLE_TAG-$CIRCLE_BRANCH} | sed "s/\//_/g")-$(echo $CIRCLE_SHA1 | cut -c -7)/<< parameters.s3BucketFolder >>/function.zip'
+                  arguments: |
+                      --cache-control max-age=0
 
     check_git_secrets:
         description: "Installs git-secrets and scan repository to check for secrets"
