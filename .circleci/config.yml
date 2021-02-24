@@ -78,7 +78,7 @@ commands:
         steps:
             - run:
                   name: make temporary directory and copy in source files
-                  command: cd << parameters.lambdaFolder >> && mkdir output && cp -R << parameters.lambdaFolder >>/inventory output
+                  command: cd << parameters.lambdaFolder >> && mkdir output && cp -R inventory output
             - run:
                   name: install all requirements into the temporary directory
                   command: pip install -r << parameters.lambdaRequirements >> -t output -U --no-deps && chmod -R 755 output
