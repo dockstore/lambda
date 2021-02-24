@@ -35,7 +35,7 @@ jobs:
                         lambdaFolder: "webhook-testing-bdf90c40-b8ea-409b-951a-3ee800a00dda/deployment"
                         s3BucketFolder: "webhookTesting"
                     - create_fedramp_inventory_zip_upload_to_s3:
-                        lambdaFolder: "fedramp-integrated-inventory-workbook/src"
+                        lambdaFolder: "fedramp-integrated-inventory-workbook/deployment"
                         lambdaRequirements: "fedramp-integrated-inventory-workbook/requirements.txt"
                         s3BucketFolder: "fedrampInventory"
     tests:
