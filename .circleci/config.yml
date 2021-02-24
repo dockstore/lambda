@@ -84,7 +84,7 @@ commands:
                   command: (pip install -r << parameters.lambdaRequirements >> -t output -U --no-deps) && (chmod -R 755 output)
             - run:
                   name: zip source files alongside dependencies
-                  command: (cd output && zip -r8 ../function.zip .) && (rm -rf output)
+                  command: (zip -r8 function.zip output) && (rm -rf output) && (pwd) && (ls)
             - aws-s3/copy:
                   from: << parameters.lambdaFolder >>/function.zip
                   to: 's3://${AWS_BUCKET}/$(echo ${CIRCLE_TAG-$CIRCLE_BRANCH} | sed "s/\//_/g")-$(echo $CIRCLE_SHA1 | cut -c -7)/<< parameters.s3BucketFolder >>/function.zip'
