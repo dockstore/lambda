@@ -45,6 +45,9 @@ jobs:
             - checkout
             - install_container_dependencies
             - unit_tests
+            - python_unit_tests:
+                sourceDirectory: "fedramp-integrated-inventory-workbook/deployment"
+                dependencies: "fedramp-integrated-inventory-workbook/requirements.txt"
 commands:
     create_zip_upload_to_s3:
         description: "Creates a deployment zip for a lambda and uploads to S3"
@@ -118,6 +121,24 @@ commands:
             - run:
                   name: run unit tests
                   command: bash -i -c 'npm run test'
+
+    python_unit_tests:
+        description: "Run unit tests for the fedramp python lambda"
+        parameters:
+          sourceDirectory:
+            type: String
+          dependencies:
+            type: string
+        steps:
+          - run:
+              name: setup python test environment
+              command: python -m pip install -r << parameters.dependencies >> && python -m pip install pytest==6.2.2 callee==0.3.1
+          - run:
+              name: run python unit tests
+              # The tests require you to have access to the python package, in this case, deployment/inventory/
+              # which is why we change directories.
+              command: cd << parameters.sourceDirectory >> && python -m pytest -v -s ../tests
+
 workflows:
     version: 2
     everything:
