@@ -20,7 +20,7 @@ from inventory.mappers import RdsDataMapper
 
 @pytest.fixture()
 def full_rds_db_instance_config():
-    with open(os.path.join(os.path.dirname(__file__), "sample_config_query_results/sample_rds_db.json")) as file_data:
+    with open(os.path.join(os.path.dirname(__file__), "sample_config_query_results/sample_rds_instance.json")) as file_data:
         file_contents = file_data.read()
         
     return json.loads(file_contents)
@@ -64,3 +64,17 @@ def test_given_rds_instance_with_no_subnet_group_then_networkid_is_left_blank(fu
     
     assert len(mapped_result) == 1, "Expected one row to be mapped"
     assert mapped_result[0].network_id == "", "Instance must be marked as public if publiclyAccessible is set to True"
+
+def test_given_resource_is_mapped_to_region(full_rds_db_instance_config):
+    mapper = RdsDataMapper()
+
+    mapped_result = mapper.map(full_rds_db_instance_config)
+    assert mapped_result[0].location == "us-west-2", "Resource should be contained in us-west-2"
+
+
+def test_given_resource_configuration_contains_resource_specifications(full_rds_db_instance_config):
+    mapper = RdsDataMapper()
+
+    mapped_result = mapper.map(full_rds_db_instance_config)
+    assert mapped_result[0].hardware_model == "db.r5.large", "Resource should contain a hardware model"
+    assert mapped_result[0].software_product_name == "aurora-mysql-5.7.mysql_aurora.2.07.2", "Resource should contain database software type"
