@@ -38,16 +38,22 @@ jobs:
                         lambdaFolder: "fedramp-integrated-inventory-workbook/deployment"
                         lambdaRequirements: "fedramp-integrated-inventory-workbook/requirements.txt"
                         s3BucketFolder: "fedrampInventory"
-    tests:
+    js_tests:
         docker:
             - image: circleci/buildpack-deps:18.04-browsers
         steps:
             - checkout
             - install_container_dependencies
             - unit_tests
-            - python_unit_tests:
-                sourceDirectory: "fedramp-integrated-inventory-workbook/deployment"
-                dependencies: "fedramp-integrated-inventory-workbook/requirements.txt"
+    python_tests:
+        docker:
+          - image: circleci/python:3.8
+        steps:
+          - checkout
+          - python_unit_tests:
+              sourceDirectory: "fedramp-integrated-inventory-workbook/deployment"
+              dependencies: "fedramp-integrated-inventory-workbook/requirements.txt"
+
 commands:
     create_zip_upload_to_s3:
         description: "Creates a deployment zip for a lambda and uploads to S3"
@@ -126,13 +132,13 @@ commands:
         description: "Run unit tests for the fedramp python lambda"
         parameters:
           sourceDirectory:
-            type: String
+            type: string
           dependencies:
             type: string
         steps:
           - run:
               name: setup python test environment
-              command: python -m pip install -r << parameters.dependencies >> && python -m pip install pytest==6.2.2 callee==0.3.1
+              command: pip install -r << parameters.dependencies >> && pip install pytest==6.2.2 callee==0.3.1
           - run:
               name: run python unit tests
               # The tests require you to have access to the python package, in this case, deployment/inventory/
@@ -147,7 +153,11 @@ workflows:
                 filters:
                     tags:
                         only: /.*/
-            - tests:
+            - js_tests:
+                filters:
+                    tags:
+                        only: /.*/
+            - python_tests:
                 filters:
                     tags:
                         only: /.*/
