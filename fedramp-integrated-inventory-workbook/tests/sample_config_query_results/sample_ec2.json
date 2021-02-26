@@ -1,4 +1,5 @@
 {
+    "resourceName": "sampleEC2",
     "configuration": {
         "subnetId": "subnet-83cf26ea",
         "virtualizationType": "hvm",
