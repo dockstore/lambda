@@ -19,7 +19,7 @@ class InventoryData:
     def __init__(self, *, asset_type=None, unique_id=None, ip_address=None, location=None, is_virtual=None,
                  authenticated_scan_planned=None, dns_name=None, mac_address=None, baseline_config=None, hardware_model=None,
                  is_public=None, network_id=None, owner=None, software_product_name=None, software_vendor=None, comments=None,
-                 in_latest_scan=None, purpose=None):
+                 in_latest_scan=None, purpose=None, asset_tag=None):
         self.asset_type = asset_type
         self.unique_id = unique_id
         self.ip_address = ip_address
@@ -38,6 +38,7 @@ class InventoryData:
         self.comments = comments
         self.in_latest_scan = in_latest_scan
         self.purpose = purpose
+        self.asset_tag = asset_tag
 
 
 class DataMapper(ABC):
@@ -89,6 +90,7 @@ class EC2DataMapper(DataMapper):
                             "baseline_config": config_resource["configuration"]["imageId"],
                             "hardware_model": config_resource["configuration"]["instanceType"],
                             "network_id": config_resource["configuration"]["vpcId"],
+                            "asset_tag": config_resource["resourceName"],
                             "owner": _get_tag_value(config_resource["tags"], "owner")}
 
                 if (public_dns_name := config_resource["configuration"].get("publicDnsName")):
@@ -142,6 +144,7 @@ class ElbDataMapper(DataMapper):
                 # Classic ELBs have key of "vpcid" while V2 ELBs have key of "vpcId"
                 "network_id": config_resource["configuration"]["vpcId"] if "vpcId" in config_resource["configuration"] else
                 config_resource["configuration"]["vpcid"],
+                "asset_tag": config_resource["resourceName"],
                 "owner": _get_tag_value(config_resource["tags"], "owner")}
 
         if len(ip_addresses := self._get_ip_addresses(config_resource["configuration"]["availabilityZones"])) > 0:
@@ -173,6 +176,7 @@ class RdsDataMapper(DataMapper):
                 "software_product_name": f"{config_resource['configuration']['engine']}-{config_resource['configuration']['engineVersion']}",
                 "network_id": config_resource['configuration']['dBSubnetGroup']['vpcId'] if "dBSubnetGroup" in config_resource[
                     'configuration'] else '',
+                "asset_tag": config_resource["resourceName"],
                 "owner": _get_tag_value(config_resource["tags"], "owner"),
                 "location": config_resource["awsRegion"]}
 
@@ -190,6 +194,7 @@ class DynamoDbTableDataMapper(DataMapper):
                 "is_public": "No",
                 "software_vendor": "AWS",
                 "software_product_name": "DynamoDB",
+                "asset_tag": config_resource["resourceName"],
                 "owner": _get_tag_value(config_resource["tags"], "owner")}
 
         return [InventoryData(**data)]
@@ -214,6 +219,7 @@ class S3DataMapper(DataMapper):
                 "is_virtual": "Yes",
                 "is_public": is_public,
                 "software_vendor": "AWS",
+                "asset_tag": config_resource["resourceName"],
                 "owner": _get_tag_value(config_resource["tags"], "owner"),
                 "comments": "Encrypted" if "ServerSideEncryptionConfiguration" in config_resource["supplementaryConfiguration"] else "Not encrypted",
                 "location": config_resource["awsRegion"]
@@ -254,6 +260,7 @@ class LambdaDataMapper(DataMapper):
                 "baseline_config": config_resource["configuration"]["runtime"],
                 "software_vendor": "Dockstore",
                 "software_product_name": "sha256: " + config_resource["configuration"]["codeSha256"],
+                "asset_tag": config_resource["resourceName"],
                 "purpose": self.REQUIRES_MANUAL_INPUT,
                 "owner": _get_tag_value(config_resource["tags"], "owner"),
                 "location": config_resource["awsRegion"]

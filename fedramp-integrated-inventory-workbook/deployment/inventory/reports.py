@@ -54,6 +54,7 @@ class CreateReportCommandHandler():
             self._write_cell_if_value_provided(reportWorksheet, 16, rowNumber, inventory_row.software_product_name)
             self._write_cell_if_value_provided(reportWorksheet, 18, rowNumber, inventory_row.purpose)
             self._write_cell_if_value_provided(reportWorksheet, 19, rowNumber, inventory_row.comments)
+            self._write_cell_if_value_provided(reportWorksheet, 20, rowNumber, inventory_row.asset_tag)
             self._write_cell_if_value_provided(reportWorksheet, 21, rowNumber, inventory_row.network_id)
             self._write_cell_if_value_provided(reportWorksheet, 22, rowNumber, inventory_row.owner)
             self._write_cell_if_value_provided(reportWorksheet, 23, rowNumber, inventory_row.owner)
