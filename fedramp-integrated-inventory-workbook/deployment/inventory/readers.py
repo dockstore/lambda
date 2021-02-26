@@ -43,7 +43,7 @@ class AwsConfigInventoryReader():
             next_token: str = ''
             while True:
                 resources_result = config_client.select_resource_config(
-                    Expression="SELECT arn, resourceName, resourceType, configuration, supplementaryConfiguration, configurationStateId, tags, awsRegion "
+                    Expression="SELECT arn, resourceName, resourceId, resourceType, configuration, supplementaryConfiguration, configurationStateId, tags, awsRegion "
                                "WHERE resourceType IN ('AWS::EC2::Instance', 'AWS::ElasticLoadBalancingV2::LoadBalancer', "
                                "'AWS::ElasticLoadBalancing::LoadBalancer', 'AWS::RDS::DBInstance', "
                                "'AWS::Lambda::Function', 'AWS::EC2::VPC', 'AWS::S3::Bucket')",

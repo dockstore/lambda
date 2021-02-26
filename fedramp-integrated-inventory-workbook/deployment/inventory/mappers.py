@@ -90,7 +90,7 @@ class EC2DataMapper(DataMapper):
                             "baseline_config": config_resource["configuration"]["imageId"],
                             "hardware_model": config_resource["configuration"]["instanceType"],
                             "network_id": config_resource["configuration"]["vpcId"],
-                            "asset_tag": config_resource["resourceName"],
+                            "asset_tag": config_resource["resourceName"] if "resourceName" in config_resource else config_resource["resourceId"],
                             "owner": _get_tag_value(config_resource["tags"], "owner")}
 
                 if (public_dns_name := config_resource["configuration"].get("publicDnsName")):
@@ -144,7 +144,7 @@ class ElbDataMapper(DataMapper):
                 # Classic ELBs have key of "vpcid" while V2 ELBs have key of "vpcId"
                 "network_id": config_resource["configuration"]["vpcId"] if "vpcId" in config_resource["configuration"] else
                 config_resource["configuration"]["vpcid"],
-                "asset_tag": config_resource["resourceName"],
+                "asset_tag": config_resource["resourceName"] if "resourceName" in config_resource else config_resource["resourceId"],
                 "owner": _get_tag_value(config_resource["tags"], "owner")}
 
         if len(ip_addresses := self._get_ip_addresses(config_resource["configuration"]["availabilityZones"])) > 0:
@@ -176,7 +176,7 @@ class RdsDataMapper(DataMapper):
                 "software_product_name": f"{config_resource['configuration']['engine']}-{config_resource['configuration']['engineVersion']}",
                 "network_id": config_resource['configuration']['dBSubnetGroup']['vpcId'] if "dBSubnetGroup" in config_resource[
                     'configuration'] else '',
-                "asset_tag": config_resource["resourceName"],
+                "asset_tag": config_resource["resourceName"] if "resourceName" in config_resource else config_resource["resourceId"],
                 "owner": _get_tag_value(config_resource["tags"], "owner"),
                 "location": config_resource["awsRegion"]}
 
@@ -194,7 +194,7 @@ class DynamoDbTableDataMapper(DataMapper):
                 "is_public": "No",
                 "software_vendor": "AWS",
                 "software_product_name": "DynamoDB",
-                "asset_tag": config_resource["resourceName"],
+                "asset_tag": config_resource["resourceName"] if "resourceName" in config_resource else config_resource["resourceId"],
                 "owner": _get_tag_value(config_resource["tags"], "owner")}
 
         return [InventoryData(**data)]
@@ -219,7 +219,7 @@ class S3DataMapper(DataMapper):
                 "is_virtual": "Yes",
                 "is_public": is_public,
                 "software_vendor": "AWS",
-                "asset_tag": config_resource["resourceName"],
+                "asset_tag": config_resource["resourceName"] if "resourceName" in config_resource else config_resource["resourceId"],
                 "owner": _get_tag_value(config_resource["tags"], "owner"),
                 "comments": "Encrypted" if "ServerSideEncryptionConfiguration" in config_resource["supplementaryConfiguration"] else "Not encrypted",
                 "location": config_resource["awsRegion"]
@@ -239,6 +239,7 @@ class VPCDataMapper(DataMapper):
                 "is_virtual": "Yes",
                 "is_public": "Yes",
                 "software_vendor": "AWS",
+                "asset_tag": config_resource["resourceName"] if "resourceName" in config_resource else config_resource["resourceId"],
                 "baseline_config": config_resource["configurationStateId"],
                 "network_id": config_resource["configuration"]["vpcId"],
                 "owner": _get_tag_value(config_resource["tags"], "owner"),
@@ -260,7 +261,7 @@ class LambdaDataMapper(DataMapper):
                 "baseline_config": config_resource["configuration"]["runtime"],
                 "software_vendor": "Dockstore",
                 "software_product_name": "sha256: " + config_resource["configuration"]["codeSha256"],
-                "asset_tag": config_resource["resourceName"],
+                "asset_tag": config_resource["resourceName"] if "resourceName" in config_resource else config_resource["resourceId"],
                 "purpose": self.REQUIRES_MANUAL_INPUT,
                 "owner": _get_tag_value(config_resource["tags"], "owner"),
                 "location": config_resource["awsRegion"]
