@@ -2,8 +2,6 @@
 
 ## License
 
-This library is licensed under the MIT-0 License. See the LICENSE file.
-
 Additionally, this project installs the following software for the purposes of deploying and running the labs into the lab environment:
 
 * [openpyxl](https://openpyxl.readthedocs.io/en/stable/index.html) package. Python open source software is provided under the MIT/Expat License.
