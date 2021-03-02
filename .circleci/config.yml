@@ -34,13 +34,26 @@ jobs:
                     - create_zip_upload_to_s3:
                         lambdaFolder: "webhook-testing-bdf90c40-b8ea-409b-951a-3ee800a00dda/deployment"
                         s3BucketFolder: "webhookTesting"
-    tests:
+                    - create_fedramp_inventory_zip_upload_to_s3:
+                        lambdaFolder: "fedramp-integrated-inventory-workbook/deployment"
+                        lambdaRequirements: "fedramp-integrated-inventory-workbook/requirements.txt"
+                        s3BucketFolder: "fedrampInventory"
+    js_tests:
         docker:
             - image: circleci/buildpack-deps:18.04-browsers
         steps:
             - checkout
             - install_container_dependencies
             - unit_tests
+    python_tests:
+        docker:
+          - image: circleci/python:3.8
+        steps:
+          - checkout
+          - python_unit_tests:
+              sourceDirectory: "fedramp-integrated-inventory-workbook/deployment"
+              dependencies: "fedramp-integrated-inventory-workbook/requirements.txt"
+
 commands:
     create_zip_upload_to_s3:
         description: "Creates a deployment zip for a lambda and uploads to S3"
@@ -61,6 +74,31 @@ commands:
                 to: 's3://${AWS_BUCKET}/$(echo ${CIRCLE_TAG-$CIRCLE_BRANCH} | sed "s/\//_/g")-$(echo $CIRCLE_SHA1 | cut -c -7)/<< parameters.s3BucketFolder >>/function.zip'
                 arguments: |
                     --cache-control max-age=0
+
+    create_fedramp_inventory_zip_upload_to_s3:
+        description: "Creates a deployment zip for the fedramp inventory lambda and uploads to S3"
+        parameters:
+            lambdaFolder:
+                type: string
+            lambdaRequirements:
+                type: string
+            s3BucketFolder:
+                type: string
+        steps:
+            - run:
+                  name: make temporary directory and copy in source files
+                  command: cd << parameters.lambdaFolder >> && mkdir output && cp -R inventory output
+            - run:
+                  name: install all requirements into the temporary directory
+                  command: pip install -r << parameters.lambdaRequirements >> -t << parameters.lambdaFolder >>/output -U --no-deps && chmod -R 755 << parameters.lambdaFolder >>/output
+            - run:
+                  name: zip source files alongside dependencies
+                  command: (cd << parameters.lambdaFolder >>/output && zip -r8 ../function.zip . && cd .. && rm -rf output)
+            - aws-s3/copy:
+                  from: << parameters.lambdaFolder >>/function.zip
+                  to: 's3://${AWS_BUCKET}/$(echo ${CIRCLE_TAG-$CIRCLE_BRANCH} | sed "s/\//_/g")-$(echo $CIRCLE_SHA1 | cut -c -7)/<< parameters.s3BucketFolder >>/function.zip'
+                  arguments: |
+                      --cache-control max-age=0
 
     check_git_secrets:
         description: "Installs git-secrets and scan repository to check for secrets"
@@ -89,6 +127,24 @@ commands:
             - run:
                   name: run unit tests
                   command: bash -i -c 'npm run test'
+
+    python_unit_tests:
+        description: "Run unit tests for the fedramp python lambda"
+        parameters:
+          sourceDirectory:
+            type: string
+          dependencies:
+            type: string
+        steps:
+          - run:
+              name: setup python test environment
+              command: pip install -r << parameters.dependencies >> && pip install pytest==6.2.2 callee==0.3.1
+          - run:
+              name: run python unit tests
+              # The tests require you to have access to the python package, in this case, deployment/inventory/
+              # which is why we change directories.
+              command: cd << parameters.sourceDirectory >> && python -m pytest -v -s ../tests
+
 workflows:
     version: 2
     everything:
@@ -97,7 +153,11 @@ workflows:
                 filters:
                     tags:
                         only: /.*/
-            - tests:
+            - js_tests:
+                filters:
+                    tags:
+                        only: /.*/
+            - python_tests:
                 filters:
                     tags:
                         only: /.*/
