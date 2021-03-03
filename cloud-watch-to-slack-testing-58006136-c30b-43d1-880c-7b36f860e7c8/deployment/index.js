@@ -154,7 +154,6 @@ function processEvent(event, callback) {
     messageText = `${alarmName} state is now ${newState}`;
     sendMessageToSlack(messageText, callback);
   } else if (message.source == "aws.ssm" || message.source == "aws.signin") {
-
     const eventName = message.detail.eventName;
     const sourceIPAddress = message.detail.sourceIPAddress;
 
