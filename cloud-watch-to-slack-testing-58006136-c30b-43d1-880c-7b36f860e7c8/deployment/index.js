@@ -163,7 +163,7 @@ function processEvent(event, callback) {
       messageText = `${userName} initiated AWS Systems Manager (SSM) event ${eventName}`;
     } else if (message.source == "aws.signin") {
       const userType = message.detail.userIdentity.type;
-      messageText = `A user initiated AWS sign in event ${eventName} as ${userType}`;
+      messageText = `A user initiated AWS sign-in event ${eventName} as ${userType}`;
     }
 
     if (
