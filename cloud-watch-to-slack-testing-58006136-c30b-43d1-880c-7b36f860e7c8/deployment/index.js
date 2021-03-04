@@ -153,11 +153,18 @@ function processEvent(event, callback) {
     const newState = message.detail.newEvaluationResult.complianceType;
     messageText = `${alarmName} state is now ${newState}`;
     sendMessageToSlack(messageText, callback);
-  } else if (message.source == "aws.ssm") {
+  } else if (message.source == "aws.ssm" || message.source == "aws.signin") {
     const eventName = message.detail.eventName;
-    const userName = message.detail.userIdentity.userName;
     const sourceIPAddress = message.detail.sourceIPAddress;
-    messageText = `${userName} initiated AWS Systems Manager (SSM) event ${eventName}`;
+
+    messageText = `uninitialized message text`;
+    if (message.source == "aws.ssm") {
+      const userName = message.detail.userIdentity.userName;
+      messageText = `${userName} initiated AWS Systems Manager (SSM) event ${eventName}`;
+    } else if (message.source == "aws.signin") {
+      const userType = message.detail.userIdentity.type;
+      messageText = `A user initiated AWS sign-in event ${eventName} as ${userType}`;
+    }
 
     if (
       Object.prototype.hasOwnProperty.call(message.detail, "errorCode") &&
