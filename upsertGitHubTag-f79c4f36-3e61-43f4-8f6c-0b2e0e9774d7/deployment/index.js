@@ -34,6 +34,7 @@ function postEndpoint(path, postBody, callback) {
   options.headers = {
     "Content-Type": "application/x-www-form-urlencoded",
     Authorization: "Bearer " + process.env.DOCKSTORE_TOKEN,
+    "User-Agent": "NodeJs Dockstore Lambda",
   };
 
   const req = https.request(options, (res) => {
@@ -86,6 +87,7 @@ function deleteEndpoint(
   options.method = "DELETE";
   options.headers = {
     Authorization: "Bearer " + process.env.DOCKSTORE_TOKEN,
+    "User-Agent": "NodeJs Dockstore Lambda",
   };
 
   const req = https.request(options, (res) => {
