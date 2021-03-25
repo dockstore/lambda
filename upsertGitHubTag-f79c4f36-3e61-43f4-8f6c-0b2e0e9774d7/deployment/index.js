@@ -4,6 +4,7 @@ const url = require("url");
 const https = require("https");
 const crypto = require("crypto");
 const qs = require("querystring");
+const LAMBDA_USER_AGENT = "DockstoreLambda (NodeJs)";
 
 // Verification function to check if it is actually GitHub who is POSTing here
 const verifyGitHub = (req, payload) => {
@@ -34,6 +35,7 @@ function postEndpoint(path, postBody, callback) {
   options.headers = {
     "Content-Type": "application/x-www-form-urlencoded",
     Authorization: "Bearer " + process.env.DOCKSTORE_TOKEN,
+    "User-Agent": LAMBDA_USER_AGENT,
   };
 
   const req = https.request(options, (res) => {
@@ -86,6 +88,7 @@ function deleteEndpoint(
   options.method = "DELETE";
   options.headers = {
     Authorization: "Bearer " + process.env.DOCKSTORE_TOKEN,
+    "User-Agent": LAMBDA_USER_AGENT,
   };
 
   const req = https.request(options, (res) => {
