@@ -154,15 +154,13 @@ function processEvent(event, callback) {
     messageText = `${alarmName} state is now ${newState}`;
     sendMessageToSlack(messageText, callback);
   } else if (message.source == "aws.guardduty") {
-    messageText = `A GuardDuty Finding was reported on Dockstore ` +
+    messageText =
+      `A GuardDuty Finding was reported on Dockstore ` +
       dockstoreEnvironment +
       ` in region: ` +
       message.region +
       `.`;
-    messageText =
-      messageText +
-      ` The description is ` +
-      message.description;
+    messageText = messageText + ` The description is ` + message.description;
     sendMessageToSlack(messageText, callback);
   } else if (message.source == "aws.ssm" || message.source == "aws.signin") {
     const eventName = message.detail.eventName;
