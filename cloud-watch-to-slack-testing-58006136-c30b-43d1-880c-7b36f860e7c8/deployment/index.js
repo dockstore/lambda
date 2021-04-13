@@ -161,7 +161,7 @@ function processEvent(event, callback) {
       message.region +
       `.`;
     messageText =
-      messageText + ` The description is ` + message.detail.description;
+      messageText + ` The description is: ` + message.detail.description;
     sendMessageToSlack(messageText, callback);
   } else if (message.source == "aws.ssm" || message.source == "aws.signin") {
     const eventName = message.detail.eventName;
