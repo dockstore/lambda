@@ -153,6 +153,16 @@ function processEvent(event, callback) {
     const newState = message.detail.newEvaluationResult.complianceType;
     messageText = `${alarmName} state is now ${newState}`;
     sendMessageToSlack(messageText, callback);
+  } else if (message.source == "aws.trustedadvisor") {
+    const detail_type = message["detail-type"];
+    const msg_status = message["status"];
+    const check_name = message.detail["check-name"];
+    const check_item_details = JSON.stringify(
+      message.detail["check-item-detail"],
+      null,
+      2
+    );
+    messageText = `AWS Trusted Advisor reports: ${detail_type} with status ${msg_status} for check ${check_name}. Details are: ${check_item_details}`;
   } else if (message.source == "aws.guardduty") {
     messageText =
       `A GuardDuty Finding was reported on Dockstore ` +
