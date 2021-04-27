@@ -163,6 +163,7 @@ function processEvent(event, callback) {
       2
     );
     messageText = `AWS Trusted Advisor reports: ${detail_type} with status ${msg_status} for check ${check_name}. Details are: ${check_item_details}`;
+    sendMessageToSlack(messageText, callback);
   } else if (message.source == "aws.guardduty") {
     messageText =
       `A GuardDuty Finding was reported on Dockstore ` +
