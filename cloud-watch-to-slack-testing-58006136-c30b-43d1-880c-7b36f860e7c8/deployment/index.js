@@ -162,7 +162,7 @@ function processEvent(event, callback) {
       null,
       2
     );
-    messageText = `${detail_type} with status ${msg_status} for check ${check_name}. Details are:\n${check_item_details}`;
+    messageText = `${detail_type} with status ${msg_status} for Dockstore ${dockstoreEnvironment} in region ${message.region} for check ${check_name}. Details are:\n${check_item_details}`;
     sendMessageToSlack(messageText, callback);
   } else if (message.source == "aws.guardduty") {
     messageText =
