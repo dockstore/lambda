@@ -154,15 +154,15 @@ function processEvent(event, callback) {
     messageText = `${alarmName} state is now ${newState}`;
     sendMessageToSlack(messageText, callback);
   } else if (message.source === "aws.trustedadvisor") {
-    const detail_type = message["detail-type"];
-    const msg_status = message.detail["status"];
-    const check_name = message.detail["check-name"];
-    const check_item_details = JSON.stringify(
+    const detailType = message["detail-type"];
+    const msgStatus = message.detail["status"];
+    const checkName = message.detail["check-name"];
+    const checkItemDetails = JSON.stringify(
       message.detail["check-item-detail"],
       null,
       2
     );
-    messageText = `${detail_type} with status ${msg_status} for Dockstore ${dockstoreEnvironment} in region ${message.region} for check ${check_name}. Details are:\n${check_item_details}`;
+    messageText = `${detailType} with status ${msgStatus} for Dockstore ${dockstoreEnvironment} in region ${message.region} for check ${checkName}. Details are:\n${checkItemDetails}`;
     sendMessageToSlack(messageText, callback);
   } else if (message.source === "aws.guardduty") {
     messageText =
