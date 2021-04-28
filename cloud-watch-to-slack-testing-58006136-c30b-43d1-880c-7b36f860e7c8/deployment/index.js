@@ -148,12 +148,23 @@ function processEvent(event, callback) {
 
   let messageText;
 
-  if (message.source == "aws.config") {
+  if (message.source === "aws.config") {
     const alarmName = message.detail.configRuleName;
     const newState = message.detail.newEvaluationResult.complianceType;
     messageText = `${alarmName} state is now ${newState}`;
     sendMessageToSlack(messageText, callback);
-  } else if (message.source == "aws.guardduty") {
+  } else if (message.source === "aws.trustedadvisor") {
+    const detailType = message["detail-type"];
+    const msgStatus = message.detail["status"];
+    const checkName = message.detail["check-name"];
+    const checkItemDetails = JSON.stringify(
+      message.detail["check-item-detail"],
+      null,
+      2
+    );
+    messageText = `${detailType} with status ${msgStatus} for Dockstore ${dockstoreEnvironment} in region ${message.region} for check ${checkName}. Details are:\n${checkItemDetails}`;
+    sendMessageToSlack(messageText, callback);
+  } else if (message.source === "aws.guardduty") {
     messageText =
       `A GuardDuty Finding was reported on Dockstore ` +
       dockstoreEnvironment +
@@ -163,15 +174,15 @@ function processEvent(event, callback) {
     messageText =
       messageText + ` The description is: ` + message.detail.description;
     sendMessageToSlack(messageText, callback);
-  } else if (message.source == "aws.ssm" || message.source == "aws.signin") {
+  } else if (message.source === "aws.ssm" || message.source === "aws.signin") {
     const eventName = message.detail.eventName;
     const sourceIPAddress = message.detail.sourceIPAddress;
 
     messageText = `uninitialized message text`;
-    if (message.source == "aws.ssm") {
+    if (message.source === "aws.ssm") {
       const userName = message.detail.userIdentity.userName;
       messageText = `${userName} initiated AWS Systems Manager (SSM) event ${eventName}`;
-    } else if (message.source == "aws.signin") {
+    } else if (message.source === "aws.signin") {
       const userType = message.detail.userIdentity.type;
       messageText = `A user initiated AWS sign-in event ${eventName} as ${userType}`;
     }
