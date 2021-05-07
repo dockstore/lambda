@@ -19,6 +19,7 @@ jobs:
                         install-yarn: false
                         node-version: latest
                     - check_git_secrets
+                    - lint
                     - create_zip_upload_to_s3:
                         lambdaFolder: "cloud-watch-to-slack-testing-58006136-c30b-43d1-880c-7b36f860e7c8/deployment"
                         s3BucketFolder: "cloudWatchToSlackTesting"
@@ -109,6 +110,13 @@ commands:
             - run:
                 name: install and check for secrets
                 command: npm run install-git-secrets
+
+    lint:
+        description: "Runs lint"
+        steps:
+          - run:
+              name: lint
+              command: npm run lint
 
     install_container_dependencies:
         steps:
