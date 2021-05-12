@@ -208,7 +208,7 @@ function alarmMessageText(message) {
 }
 
 function dockstoreDeployerMessageText(message) {
-  return ""; // TODO!
+  return message.message;
 }
 
 function messageTextFromMessage(message) {
