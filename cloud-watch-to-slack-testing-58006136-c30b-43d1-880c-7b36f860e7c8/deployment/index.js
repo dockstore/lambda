@@ -144,23 +144,28 @@ function sendMessageToSlack(messageText, callback) {
 }
 
 // Set the Slack channel based on the input SNS Topic to Slack Channel map
-// in the env var
+// in the snsTopicToSlackChannel env var with format
+// {"<SNS Topic resource id>":"<slack channel name>"}
 // E.g.
 //     {"slack-low-priority-topic":"dockstore-testing",
 //     "slack-medium-priority-topic":"dockstore-dev-alerts",
-//     "slack-high-priority-topic":"dockstore-alerts"}
+//     "slack-high-priority-topic":"dockstore-alerts",
+//     "SSM-to-Slack-SNSTopicToSlack-1VI4KZW1DSADS":"dockstore-dev-testing" }
 // input: SNS topic ARN
 function setSlackChannelBasedOnSNSTopic(topicArn) {
-  for (let [topic, channel] of Object.entries(snsTopicToSlackChannelMap)) {
-     console.log(topic + " = " + channel);
+  // Get the SNS Topic resource ID from the AWS ARN
+  // https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html
+  const snsTopicResourceID = TopicArn.slice(TopicArn.lastIndexOf(':') + 1);
 
-     if (topicArn.includes(topic)) {
-       console.log("Slack channel will be " + channel);
+  for (let [topicID, channel] of Object.entries(snsTopicToSlackChannelMap)) {
+     console.info(topicID + " = " + channel);
+
+     if (snsTopicResourceID === topicID) {
        slackChannel = channel;
-       return;
+       break;
      }
   }
-  console.log("Slack channel should be default");
+  console.info("Slack channel is " + slackChannel);
 }
 
 function processEvent(event, callback) {
