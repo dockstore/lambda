@@ -91,7 +91,13 @@ function constructMsgAndSendToSlack(
 }
 
 function postMessage(message, callback) {
-  const body = JSON.stringify(message);
+  // Send the Slack message to the correct Slack channel
+  const body = JSON.stringify(`payload={"channel": "#${slackChannel}",
+      "username": "Dockstore ${dockstoreEnvironment} Notification",
+      "text": "${message}",
+      "icon_emoji": ":exclamation:"}`);
+  //const body = JSON.stringify(message);
+
   const options = url.parse(hookUrl);
   options.method = "POST";
   options.headers = {
