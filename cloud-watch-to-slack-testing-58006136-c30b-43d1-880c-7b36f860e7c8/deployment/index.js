@@ -26,7 +26,7 @@ const hookUrl = process.env.hookUrl;
 // The Slack channel to send a message to stored in the slackChannel environment variable
 let slackChannel = process.env.slackChannel;
 const dockstoreEnvironment = process.env.dockstoreEnvironment;
-const snsTopicToSlackChannelMap = process.env.snsTopicToSlackChannel;
+const snsTopicToSlackChannelJSON = process.env.snsTopicToSlackChannel;
 
 // Enumerate all the AWS instances in the current region
 // and find the one with the instance ID in question.
@@ -162,8 +162,9 @@ function setSlackChannelBasedOnSNSTopic(topicArn) {
   // Get the SNS Topic resource ID from the AWS ARN
   // https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html
   const snsTopicResourceID = topicArn.slice(topicArn.lastIndexOf(":") + 1);
+  const snsTopicToSlackChannel = JSON.parse(`${snsTopicToSlackChannelJSON}`);
 
-  for (let [topicID, channel] of Object.entries(snsTopicToSlackChannelMap)) {
+  for (let [topicID, channel] of Object.entries(snsTopicToSlackChannel)) {
     console.info(topicID + " = " + channel);
 
     if (snsTopicResourceID === topicID) {
@@ -175,6 +176,12 @@ function setSlackChannelBasedOnSNSTopic(topicArn) {
 }
 
 function processEvent(event, callback) {
+  // we only need to process the first and only record for SNS events
+  // https://stackoverflow.com/questions/33690231/when-lambda-is-invoked-by-sns-will-there-always-be-just-1-record
+  // https://aws.amazon.com/sns/faqs/
+  // however other event sources can send multiple events at in one shot
+  // and we would need to handle this for other events sources such as S3
+  // or DynamoDB
   console.log(event);
   const message = JSON.parse(event.Records[0].Sns.Message);
 
