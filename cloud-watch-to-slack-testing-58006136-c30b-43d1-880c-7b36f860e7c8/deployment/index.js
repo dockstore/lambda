@@ -24,8 +24,9 @@ const AWS = require("aws-sdk");
 // The Slack URL to send the message to
 const hookUrl = process.env.hookUrl;
 // The Slack channel to send a message to stored in the slackChannel environment variable
-const slackChannel = process.env.slackChannel;
+let slackChannel = process.env.slackChannel;
 const dockstoreEnvironment = process.env.dockstoreEnvironment;
+const snsTopicToSlackChannelMap = process.env.snsTopicToSlackChannel
 
 // Enumerate all the AWS instances in the current region
 // and find the one with the instance ID in question.
@@ -142,9 +143,32 @@ function sendMessageToSlack(messageText, callback) {
   });
 }
 
+// Set the Slack channel based on the input SNS Topic to Slack Channel map
+// in the env var
+// E.g.
+//     {"slack-low-priority-topic":"dockstore-testing",
+//     "slack-medium-priority-topic":"dockstore-dev-alerts",
+//     "slack-high-priority-topic":"dockstore-alerts"}
+// input: SNS topic ARN
+function setSlackChannelBasedOnSNSTopic(topicArn) {
+  for (let [topic, channel] of Object.entries(snsTopicToSlackChannelMap)) {
+     console.log(topic + " = " + channel);
+
+     if (topicArn.includes(topic)) {
+       console.log("Slack channel will be " + channel);
+       slackChannel = channel;
+       return;
+     }
+  }
+  console.log("Slack channel should be default");
+}
+
 function processEvent(event, callback) {
   console.log(event);
   const message = JSON.parse(event.Records[0].Sns.Message);
+
+  const topicArn = event.Records[0].Sns.TopicArn;
+  setSlackChannelBasedOnSNSTopic(topicArn);
 
   let messageText;
 
