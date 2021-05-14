@@ -96,12 +96,14 @@ function postMessage(message, callback) {
       "username": "Dockstore ${dockstoreEnvironment} Notification",
       "text": "${message}",
       "icon_emoji": ":exclamation:"}`);
+  console.info("body is:" + body);
   //const body = JSON.stringify(message);
 
   const options = url.parse(hookUrl);
   options.method = "POST";
   options.headers = {
-    "Content-Type": "application/json",
+    // "Content-Type": "application/json",
+    "Content-Type": "application/x-www-form-urlencoded",
     "Content-Length": Buffer.byteLength(body),
   };
 
@@ -165,7 +167,7 @@ function setSlackChannelBasedOnSNSTopic(topicArn) {
   const snsTopicToSlackChannel = JSON.parse(`${snsTopicToSlackChannelJSON}`);
 
   for (let [topicID, channel] of Object.entries(snsTopicToSlackChannel)) {
-    console.info(topicID + " = " + channel);
+    //console.info(topicID + " = " + channel);
 
     if (snsTopicResourceID === topicID) {
       slackChannel = channel;
