@@ -161,13 +161,8 @@ function setSlackChannelBasedOnSNSTopic(topicArn) {
   const snsTopicResourceID = topicArn.slice(topicArn.lastIndexOf(":") + 1);
   const snsTopicToSlackChannel = JSON.parse(`${snsTopicToSlackChannelJSON}`);
 
-  for (let [topicID, channel] of Object.entries(snsTopicToSlackChannel)) {
-    //console.info(topicID + " = " + channel);
-
-    if (snsTopicResourceID === topicID) {
-      slackChannel = channel;
-      break;
-    }
+  if (Object.keys(snsTopicToSlackChannel).includes(snsTopicResourceID)) {
+    slackChannel = snsTopicToSlackChannel[snsTopicResourceID];
   }
   console.info("Slack channel is " + slackChannel);
 }
