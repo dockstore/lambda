@@ -142,70 +142,94 @@ function sendMessageToSlack(messageText, callback) {
   });
 }
 
-function processEvent(event, callback) {
-  console.log(event);
-  const message = JSON.parse(event.Records[0].Sns.Message);
+function awsConfigMessageText(message) {
+  const alarmName = message.detail.configRuleName;
+  const newState = message.detail.newEvaluationResult.complianceType;
+  return `${alarmName} state is now ${newState}`;
+}
 
-  let messageText;
+function trustedAdvisorMessageText(message) {
+  const detailType = message["detail-type"];
+  const msgStatus = message.detail["status"];
+  const checkName = message.detail["check-name"];
+  const checkItemDetails = JSON.stringify(
+    message.detail["check-item-detail"],
+    null,
+    2
+  );
+  return `${detailType} with status ${msgStatus} for Dockstore ${dockstoreEnvironment} in region ${message.region} for check ${checkName}. Details are:\n${checkItemDetails}`;
+}
 
+function guardDutyMessageText(message) {
+  let messageText =
+    `A GuardDuty Finding was reported on Dockstore ` +
+    dockstoreEnvironment +
+    ` in region: ` +
+    message.region +
+    `.`;
+  return messageText + ` The description is: ` + message.detail.description;
+}
+
+function ssmOrSigninMessageText(message) {
+  const eventName = message.detail.eventName;
+  const sourceIPAddress = message.detail.sourceIPAddress;
+
+  let messageText = `uninitialized message text`;
+  if (message.source === "aws.ssm") {
+    const userName = message.detail.userIdentity.userName;
+    messageText = `${userName} initiated AWS Systems Manager (SSM) event ${eventName}`;
+  } else if (message.source === "aws.signin") {
+    const userType = message.detail.userIdentity.type;
+    messageText = `A user initiated AWS sign-in event ${eventName} as ${userType}`;
+  }
+
+  if (
+    Object.prototype.hasOwnProperty.call(message.detail, "errorCode") &&
+    message.detail["errorCode"]
+  ) {
+    const errorCode = message.detail.errorCode;
+    messageText = messageText + ` but received error code: ${errorCode}`;
+  }
+  messageText =
+    messageText +
+    ` on Dockstore ` +
+    dockstoreEnvironment +
+    ` in region: ` +
+    message.region +
+    `.`;
+  return messageText + ` Event was initiated from IP ${sourceIPAddress}`;
+}
+
+function alarmMessageText(message) {
+  const alarmName = message.AlarmName;
+  const newState = message.NewStateValue;
+  const reason = message.NewStateReason;
+  return `${alarmName} state is now ${newState}: ${reason}`;
+}
+
+function dockstoreDeployerMessageText(message) {
+  return message.message;
+}
+
+function messageTextFromMessage(message) {
   if (message.source === "aws.config") {
-    const alarmName = message.detail.configRuleName;
-    const newState = message.detail.newEvaluationResult.complianceType;
-    messageText = `${alarmName} state is now ${newState}`;
-    sendMessageToSlack(messageText, callback);
+    return awsConfigMessageText(message);
   } else if (message.source === "aws.trustedadvisor") {
-    const detailType = message["detail-type"];
-    const msgStatus = message.detail["status"];
-    const checkName = message.detail["check-name"];
-    const checkItemDetails = JSON.stringify(
-      message.detail["check-item-detail"],
-      null,
-      2
-    );
-    messageText = `${detailType} with status ${msgStatus} for Dockstore ${dockstoreEnvironment} in region ${message.region} for check ${checkName}. Details are:\n${checkItemDetails}`;
-    sendMessageToSlack(messageText, callback);
+    return trustedAdvisorMessageText(message);
   } else if (message.source === "aws.guardduty") {
-    messageText =
-      `A GuardDuty Finding was reported on Dockstore ` +
-      dockstoreEnvironment +
-      ` in region: ` +
-      message.region +
-      `.`;
-    messageText =
-      messageText + ` The description is: ` + message.detail.description;
-    sendMessageToSlack(messageText, callback);
+    return guardDutyMessageText(message);
   } else if (message.source === "aws.ssm" || message.source === "aws.signin") {
-    const eventName = message.detail.eventName;
-    const sourceIPAddress = message.detail.sourceIPAddress;
+    return ssmOrSigninMessageText(message);
+  } else if (message.source === "dockstore.deployer") {
+    return dockstoreDeployerMessageText(message);
+  } else {
+    return alarmMessageText(message);
+  }
+}
 
-    messageText = `uninitialized message text`;
-    if (message.source === "aws.ssm") {
-      const userName = message.detail.userIdentity.userName;
-      messageText = `${userName} initiated AWS Systems Manager (SSM) event ${eventName}`;
-    } else if (message.source === "aws.signin") {
-      const userType = message.detail.userIdentity.type;
-      messageText = `A user initiated AWS sign-in event ${eventName} as ${userType}`;
-    }
-
-    if (
-      Object.prototype.hasOwnProperty.call(message.detail, "errorCode") &&
-      message.detail["errorCode"]
-    ) {
-      const errorCode = message.detail.errorCode;
-      messageText = messageText + ` but received error code: ${errorCode}`;
-    }
-
-    messageText =
-      messageText +
-      ` on Dockstore ` +
-      dockstoreEnvironment +
-      ` in region: ` +
-      message.region +
-      `.`;
-    messageText =
-      messageText + ` Event was initiated from IP ${sourceIPAddress}`;
-
-    if (
+function addInstanceDetails(message) {
+  if (message.source === "aws.ssm" || message.source === "aws.signin") {
+    return (
       Object.prototype.hasOwnProperty.call(
         message.detail,
         "requestParameters"
@@ -215,22 +239,25 @@ function processEvent(event, callback) {
         message.detail.requestParameters,
         "target"
       )
-    ) {
-      const targetInstanceId = message.detail.requestParameters.target;
-      getInstanceNameAndSendMsgToSlack(
-        targetInstanceId,
-        messageText,
-        callback,
-        constructMsgAndSendToSlack
-      );
-    } else {
-      sendMessageToSlack(messageText, callback);
-    }
+    );
+  }
+  return false;
+}
+
+function processEvent(event, callback) {
+  console.log(event);
+  const message = JSON.parse(event.Records[0].Sns.Message);
+
+  const messageText = messageTextFromMessage(message);
+  if (addInstanceDetails(message)) {
+    const targetInstanceId = message.detail.requestParameters.target;
+    getInstanceNameAndSendMsgToSlack(
+      targetInstanceId,
+      messageText,
+      callback,
+      constructMsgAndSendToSlack
+    );
   } else {
-    const alarmName = message.AlarmName;
-    const newState = message.NewStateValue;
-    const reason = message.NewStateReason;
-    messageText = `${alarmName} state is now ${newState}: ${reason}`;
     sendMessageToSlack(messageText, callback);
   }
 }
