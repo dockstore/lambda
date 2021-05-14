@@ -91,19 +91,12 @@ function constructMsgAndSendToSlack(
 }
 
 function postMessage(message, callback) {
-  // Send the Slack message to the correct Slack channel
-  const body = JSON.stringify(`{"channel": "#${slackChannel}",
-      "username": "Dockstore ${dockstoreEnvironment} Notification",
-      "text": "${message}",
-      "icon_emoji": ":exclamation:"}`);
+  const body = JSON.stringify(message);
   console.info("body is:" + body);
-  //const body = JSON.stringify(message);
-
   const options = url.parse(hookUrl);
   options.method = "POST";
   options.headers = {
     "Content-Type": "application/json",
-    //"Content-Type": "application/x-www-form-urlencoded",
     "Content-Length": Buffer.byteLength(body),
   };
 
@@ -131,6 +124,8 @@ function sendMessageToSlack(messageText, callback) {
   const slackMessage = {
     channel: slackChannel,
     text: messageText,
+    username: `Dockstore ${dockstoreEnvironment} Notification`,
+    icon_emoji: ":exclamation:",
   };
 
   postMessage(slackMessage, (response) => {
