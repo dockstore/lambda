@@ -26,7 +26,7 @@ const hookUrl = process.env.hookUrl;
 // The Slack channel to send a message to stored in the slackChannel environment variable
 let slackChannel = process.env.slackChannel;
 const dockstoreEnvironment = process.env.dockstoreEnvironment;
-const snsTopicToSlackChannelJSON = process.env.snsTopicToSlackChannel;
+const snsTopicToSlackChannel = JSON.parse(process.env.snsTopicToSlackChannel);
 
 // Enumerate all the AWS instances in the current region
 // and find the one with the instance ID in question.
@@ -159,7 +159,6 @@ function setSlackChannelBasedOnSNSTopic(topicArn) {
   // Get the SNS Topic resource ID from the AWS ARN
   // https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html
   const snsTopicResourceID = topicArn.slice(topicArn.lastIndexOf(":") + 1);
-  const snsTopicToSlackChannel = JSON.parse(`${snsTopicToSlackChannelJSON}`);
 
   if (Object.keys(snsTopicToSlackChannel).includes(snsTopicResourceID)) {
     slackChannel = snsTopicToSlackChannel[snsTopicResourceID];
