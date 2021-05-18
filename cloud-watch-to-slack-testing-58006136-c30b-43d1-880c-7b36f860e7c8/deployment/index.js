@@ -24,8 +24,9 @@ const AWS = require("aws-sdk");
 // The Slack URL to send the message to
 const hookUrl = process.env.hookUrl;
 // The Slack channel to send a message to stored in the slackChannel environment variable
-const slackChannel = process.env.slackChannel;
+const defaultSlackChannel = process.env.slackChannel;
 const dockstoreEnvironment = process.env.dockstoreEnvironment;
+const snsTopicToSlackChannel = JSON.parse(process.env.snsTopicToSlackChannel);
 
 // Enumerate all the AWS instances in the current region
 // and find the one with the instance ID in question.
@@ -33,6 +34,7 @@ const dockstoreEnvironment = process.env.dockstoreEnvironment;
 // find the one with the key 'Name', whose value
 // is the name displayed on the console of the instance.
 function getInstanceNameAndSendMsgToSlack(
+  slackChannel,
   targetInstanceId,
   messageText,
   processEventCallback,
@@ -57,6 +59,7 @@ function getInstanceNameAndSendMsgToSlack(
         if (tagInstanceNameKey) {
           var tagInstanceName = tagInstanceNameKey.Value || "unknown";
           return callback(
+            slackChannel,
             messageText,
             tagInstanceName,
             targetInstanceId,
@@ -68,6 +71,7 @@ function getInstanceNameAndSendMsgToSlack(
     // If there was an error or the user friendly name was not found just send the
     // message to Slack with a default name for the target
     return callback(
+      slackChannel,
       messageText,
       "unknown",
       targetInstanceId,
@@ -77,6 +81,7 @@ function getInstanceNameAndSendMsgToSlack(
 }
 
 function constructMsgAndSendToSlack(
+  slackChannel,
   messageText,
   targetInstanceName,
   targetInstanceId,
@@ -86,11 +91,12 @@ function constructMsgAndSendToSlack(
   messageText =
     messageText + ` to target: ${targetInstanceName} (${targetInstanceId})`;
 
-  sendMessageToSlack(messageText, callback);
+  sendMessageToSlack(slackChannel, messageText, callback);
 }
 
 function postMessage(message, callback) {
   const body = JSON.stringify(message);
+  console.info("body is:" + body);
   const options = url.parse(hookUrl);
   options.method = "POST";
   options.headers = {
@@ -118,10 +124,12 @@ function postMessage(message, callback) {
   postReq.end();
 }
 
-function sendMessageToSlack(messageText, callback) {
+function sendMessageToSlack(slackChannel, messageText, callback) {
   const slackMessage = {
     channel: slackChannel,
     text: messageText,
+    username: `Dockstore ${dockstoreEnvironment} Notification`,
+    icon_emoji: ":exclamation:",
   };
 
   postMessage(slackMessage, (response) => {
@@ -244,21 +252,46 @@ function addInstanceDetails(message) {
   return false;
 }
 
+// Set the Slack channel based on the input SNS Topic to Slack Channel map
+// in the snsTopicToSlackChannel env var with format
+// {"<SNS Topic resource id>":"<slack channel name>"}
+// E.g.
+//     {"slack-low-priority-topic":"dockstore-testing",
+//     "slack-medium-priority-topic":"dockstore-dev-alerts",
+//     "slack-high-priority-topic":"dockstore-alerts",
+//     "SSM-to-Slack-SNSTopicToSlack-1VI4KZW1DSADS":"dockstore-dev-testing" }
+// input: SNS topic ARN
+function setSlackChannelBasedOnSNSTopic(topicArn) {
+  // Get the SNS Topic resource ID from the AWS ARN
+  // https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html
+  const snsTopicResourceID = topicArn.slice(topicArn.lastIndexOf(":") + 1);
+
+  if (Object.keys(snsTopicToSlackChannel).includes(snsTopicResourceID)) {
+    return snsTopicToSlackChannel[snsTopicResourceID];
+  } else {
+    return defaultSlackChannel;
+  }
+}
+
 function processEvent(event, callback) {
   console.log(event);
   const message = JSON.parse(event.Records[0].Sns.Message);
+  const topicArn = event.Records[0].Sns.TopicArn;
+  const slackChannel = setSlackChannelBasedOnSNSTopic(topicArn);
+  console.info("Slack channel is " + slackChannel);
 
   const messageText = messageTextFromMessage(message);
   if (addInstanceDetails(message)) {
     const targetInstanceId = message.detail.requestParameters.target;
     getInstanceNameAndSendMsgToSlack(
+      slackChannel,
       targetInstanceId,
       messageText,
       callback,
       constructMsgAndSendToSlack
     );
   } else {
-    sendMessageToSlack(messageText, callback);
+    sendMessageToSlack(slackChannel, messageText, callback);
   }
 }
 
