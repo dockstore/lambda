@@ -1,5 +1,5 @@
 {
-  "body": "{\"message\": \"https://www.google.ca/\"}",
+  "body": "https:\/\/www.google.ca",
   "resource": "/{proxy+}",
   "path": "/path/to/resource",
   "httpMethod": "POST",
