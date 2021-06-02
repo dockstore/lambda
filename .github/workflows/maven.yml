@@ -21,6 +21,10 @@ jobs:
        working-directory: ./cloud-watch-to-slack-testing-58006136-c30b-43d1-880c-7b36f860e7c8
      - run: npx eslint deployment/index.js
        working-directory: ./cloud-watch-to-slack-testing-58006136-c30b-43d1-880c-7b36f860e7c8
+     - run: npm install
+       working-directory: ./checkUrlExists
+     - run: npx eslint deployment/index.js
+       working-directory: ./checkUrlExists
   testWithSAMCLI:
      runs-on: ubuntu-latest
      steps:
