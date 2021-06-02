@@ -1,8 +1,6 @@
 "use strict";
 
 const app = require("../../app.js");
-const chai = require("chai");
-const expect = chai.expect;
 var event, context;
 
 describe("Tests index", function () {
@@ -29,9 +27,9 @@ async function setupTest(url, expectedMessage) {
   event = {};
   event.body = url;
   const result = await app.lambdaHandler(event, context);
-  expect(result).to.be.an("object");
-  expect(result.statusCode).to.equal(200);
+  expect(result).toBeDefined();
+  expect(result.statusCode).toBe(200);
   let response = JSON.parse(result.body);
-  expect(response).to.be.an("object");
-  expect(response.message).to.be.equal(expectedMessage);
+  expect(response).toBeDefined();
+  expect(response.message).toBe(expectedMessage);
 }
