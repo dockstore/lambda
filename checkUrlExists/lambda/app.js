@@ -18,7 +18,7 @@ const fetch = require("node-fetch");
  *
  */
 exports.lambdaHandler = async function (event) {
-  const url = event.body;
+  const url = event.queryStringParameters.url;
   return checkUrl(url);
 };
 

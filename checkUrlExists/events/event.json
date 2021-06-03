@@ -1,11 +1,11 @@
 {
-  "body": "https:\/\/www.google.ca",
+  "body": "",
   "resource": "/{proxy+}",
   "path": "/path/to/resource",
   "httpMethod": "POST",
   "isBase64Encoded": false,
   "queryStringParameters": {
-    "foo": "bar"
+    "url": "https:\/\/www.google.ca"
   },
   "pathParameters": {
     "proxy": "/path/to/resource"

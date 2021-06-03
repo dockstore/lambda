@@ -24,8 +24,9 @@ describe("Tests index", function () {
 });
 
 async function setupTest(url, expectedMessage) {
-  event = {};
-  event.body = url;
+  event = {"queryStringParameters": {
+    "url": url
+  }};
   const result = await app.lambdaHandler(event, context);
   expect(result).toBeDefined();
   expect(result.statusCode).toBe(200);
