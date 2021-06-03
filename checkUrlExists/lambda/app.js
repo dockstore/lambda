@@ -19,7 +19,7 @@ exports.lambdaHandler = async function (event) {
   return checkUrl(url);
 };
 
-async function checkUrl(url) {
+function checkUrl(url) {
   return fetch(url, { method: "HEAD" })
     .then((res) => {
       if (res.ok) {
@@ -34,11 +34,11 @@ async function checkUrl(url) {
 }
 
 function returnResponse(fileFound) {
-  const response2 = {
+  const response = {
     statusCode: 200,
     body: JSON.stringify({
       message: fileFound,
     }),
   };
-  return response2;
+  return response;
 }
