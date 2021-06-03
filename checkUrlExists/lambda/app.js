@@ -1,11 +1,8 @@
-// const axios = require('axios')
-// const url = 'http://checkip.amazonaws.com/';
-
 const fetch = require("node-fetch");
 /**
  * TODO: Change to array of URLs to parse
  * Always returns 200. Body is true if file URL is valid, body is false if file URL is not valid or something has gone wrong
- * The request is expected to have a body that is the just the plan text URL to check
+ * The request is expected to have a url query parameter (i.e. ?url=https://www.google.ca)
  *
  * Event doc: https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format
  * @param {Object} event - API Gateway Lambda Proxy Input Format
