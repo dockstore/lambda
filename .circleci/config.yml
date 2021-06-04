@@ -133,6 +133,9 @@ commands:
                   name: install npm packages
                   command: bash -i -c 'npm ci'
             - run:
+                  name: install individual lambda packages
+                  command: bash -i -c 'npm --prefix checkUrlExists/lambda install'
+            - run:
                   name: run unit tests
                   command: bash -i -c 'npm run test'
 
