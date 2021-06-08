@@ -198,8 +198,7 @@ function processEvent(event, callback) {
       console.log("Event is not supported");
       callback(null, {
         statusCode: 200,
-        body:
-          "Currently, this lambda does not support this event type from GitHub.",
+        body: "Currently, this lambda does not support this event type from GitHub.",
       });
     }
 

@@ -18,9 +18,8 @@ describe("installation_repositories event handling", function () {
       installation: { id: "123456" },
       repositories_added: repositories_added,
     };
-    const postBody = lambda.handleInstallationRepositoriesEvent(
-      fake_payload_body
-    );
+    const postBody =
+      lambda.handleInstallationRepositoriesEvent(fake_payload_body);
 
     expect(postBody.installationId).toEqual("123456");
     expect(postBody.username).toEqual("myinfo");
@@ -45,9 +44,8 @@ describe("installation_repositories event handling", function () {
       installation: { id: "123456" },
       repositories_added: repositories_added,
     };
-    const postBody = lambda.handleInstallationRepositoriesEvent(
-      fake_payload_body
-    );
+    const postBody =
+      lambda.handleInstallationRepositoriesEvent(fake_payload_body);
     expect(postBody).toEqual(null);
   });
 });
