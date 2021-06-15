@@ -219,6 +219,13 @@ function dockstoreDeployerMessageText(message) {
   return message.message;
 }
 
+function s3ActivityMessageText(message) {
+  const userName = message.detail["userName"];
+  const eventName = message.detail["eventName"];
+  const bucketName = message.requestParameters["bucketName"];
+  return `${userName} generated S3 event ${eventName} for bucket ${bucketName} in Dockstore ${dockstoreEnvironment} in region ${message.region}`;
+}
+
 function messageTextFromMessage(message) {
   if (message.source === "aws.config") {
     return awsConfigMessageText(message);
@@ -228,6 +235,8 @@ function messageTextFromMessage(message) {
     return guardDutyMessageText(message);
   } else if (message.source === "aws.ssm" || message.source === "aws.signin") {
     return ssmOrSigninMessageText(message);
+  } else if (message.source === "aws.s3") {
+    return s3ActivityMessageText(message);
   } else if (message.source === "dockstore.deployer") {
     return dockstoreDeployerMessageText(message);
   } else {
