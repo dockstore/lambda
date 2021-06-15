@@ -220,7 +220,7 @@ function dockstoreDeployerMessageText(message) {
 }
 
 function s3ActivityMessageText(message) {
-  const userName = message.detail["userName"];
+  const userName = message.detail.userIdentity["userName"];
   const eventName = message.detail["eventName"];
   const bucketName = message.detail.requestParameters["bucketName"];
   return `${userName} generated S3 event ${eventName} for bucket ${bucketName} in Dockstore ${dockstoreEnvironment} in region ${message.region}`;
