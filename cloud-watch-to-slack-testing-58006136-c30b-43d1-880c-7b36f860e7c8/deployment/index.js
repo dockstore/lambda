@@ -219,11 +219,14 @@ function dockstoreDeployerMessageText(message) {
   return message.message;
 }
 
+// https://docs.aws.amazon.com/AmazonS3/latest/userguide/notification-content-structure.html
+// https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/CloudWatchEventsandEventPatterns.html
 function s3ActivityMessageText(message) {
   const userName = message.detail.userIdentity["userName"];
   const eventName = message.detail["eventName"];
+  const awsRegion = message.detail["awsRegion"];
   const bucketName = message.detail.requestParameters["bucketName"];
-  return `${userName} generated S3 event ${eventName} for bucket ${bucketName} in Dockstore ${dockstoreEnvironment} in region ${message.region}`;
+  return `${userName} generated S3 event ${eventName} from region ${awsRegion} for bucket ${bucketName} in Dockstore ${dockstoreEnvironment}`;
 }
 
 function messageTextFromMessage(message) {
