@@ -219,6 +219,16 @@ function dockstoreDeployerMessageText(message) {
   return message.message;
 }
 
+// https://docs.aws.amazon.com/AmazonS3/latest/userguide/notification-content-structure.html
+// https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/CloudWatchEventsandEventPatterns.html
+function s3ActivityMessageText(message) {
+  const userName = message.detail.userIdentity["userName"];
+  const eventName = message.detail["eventName"];
+  const awsRegion = message.detail["awsRegion"];
+  const bucketName = message.detail.requestParameters["bucketName"];
+  return `${userName} generated S3 event ${eventName} from region ${awsRegion} for bucket ${bucketName} in Dockstore ${dockstoreEnvironment}`;
+}
+
 function messageTextFromMessage(message) {
   if (message.source === "aws.config") {
     return awsConfigMessageText(message);
@@ -228,6 +238,8 @@ function messageTextFromMessage(message) {
     return guardDutyMessageText(message);
   } else if (message.source === "aws.ssm" || message.source === "aws.signin") {
     return ssmOrSigninMessageText(message);
+  } else if (message.source === "aws.s3") {
+    return s3ActivityMessageText(message);
   } else if (message.source === "dockstore.deployer") {
     return dockstoreDeployerMessageText(message);
   } else {
