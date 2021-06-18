@@ -20,13 +20,13 @@ import org.openapitools.client.model.LanguageParsingResponse;
 public class AppTest {
   @Test
   public void successfulResponse() throws IOException {
-    ObjectMapper objectMapper = new ObjectMapper();
     LanguageParsingRequest request = new LanguageParsingRequest();
     request.setBranch("1.0.4");
     request.setUri("https://github.com/briandoconnor/dockstore-tool-md5sum.git");
     request.setDescriptorRelativePathInGit("Dockstore.wdl");
     App app = new App();
     APIGatewayProxyRequestEvent requestEvent = new APIGatewayProxyRequestEvent();
+    ObjectMapper objectMapper = new ObjectMapper();
     requestEvent.setBody(objectMapper.writeValueAsString(request));
     APIGatewayProxyResponseEvent result = app.handleRequest(requestEvent, null);
     System.out.println(result.getBody());
@@ -48,13 +48,13 @@ public class AppTest {
 
   @Test
   public void successfulResponseOfComplexWorkflow() throws IOException {
-    ObjectMapper objectMapper = new ObjectMapper();
     LanguageParsingRequest request = new LanguageParsingRequest();
     request.setBranch("dockstore-test");
     request.setUri("https://github.com/dockstore-testing/gatk-sv-clinical.git");
     request.setDescriptorRelativePathInGit("GATKSVPipelineClinical.wdl");
     App app = new App();
     APIGatewayProxyRequestEvent requestEvent = new APIGatewayProxyRequestEvent();
+    ObjectMapper objectMapper = new ObjectMapper();
     requestEvent.setBody(objectMapper.writeValueAsString(request));
     APIGatewayProxyResponseEvent result = app.handleRequest(requestEvent, null);
     System.out.println(result.getBody());
@@ -73,12 +73,14 @@ public class AppTest {
     assertFalse(
         response.getSecondaryFilePaths().contains("GATKSVPipelineClinical.wdl"),
         "Main descriptor isn't a secondary file path");
-    assertEquals(76, response.getSecondaryFilePaths().size());
+    final long expectedNumberOfFiles = 76;
+    assertEquals(expectedNumberOfFiles, response.getSecondaryFilePaths().size());
     System.out.println(response.getClonedRepositoryAbsolutePath());
   }
 
+  /** Tests the case where the WDL is malformed and recursively imports itself. */
   @Disabled("Too dangerous test to run, also flakey")
-  public void testRecursiveWDL() throws IOException {
+  public void testRecursiveWdl() {
     File file = new File("src/test/resources/recursive.wdl");
     String path = file.getAbsolutePath();
     LanguageParsingResponse response = App.getResponse(path);
