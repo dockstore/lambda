@@ -80,6 +80,7 @@ public class AppTest {
 
   /** Tests the case where the WDL is malformed and recursively imports itself. */
   @Disabled("Too dangerous test to run, also flakey")
+  @Test
   public void testRecursiveWdl() {
     File file = new File("src/test/resources/recursive.wdl");
     String path = file.getAbsolutePath();
