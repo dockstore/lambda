@@ -14,9 +14,7 @@ jobs:
        with:
          node-version: 12.x
      - run: npm install
-       working-directory: ./upsertGitHubTag-f79c4f36-3e61-43f4-8f6c-0b2e0e9774d7
-     - run: npx eslint deployment/index.js
-       working-directory: ./upsertGitHubTag-f79c4f36-3e61-43f4-8f6c-0b2e0e9774d7
+     - run: npm run lint
   testWithSAMCLI:
      runs-on: ubuntu-latest
      steps:

@@ -1,2 +1,18 @@
 # Created by .ignore support plugin (hsz.mobi)
 git-secrets.sh
+
+# Environments
+**/.env
+**/.venv
+**/env/
+**/venv/
+**/ENV/
+**/env.bak/
+**/venv.bak/
+**/node_modules
+
+# Byte-compiled / optimized / DLL files
+**/.pytest_cache
+**/__pycache__/
+**/*.py[cod]
+**/*$py.class
