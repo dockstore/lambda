@@ -181,7 +181,7 @@
                         </goals>
                         <configuration>
                             <inputSpec>
-                            https://github.com/dockstore/dockstore/blob/3a718e1868b4b26433b7711005d65834755bad2f/dockstore-webservice/src/main/resources/openapi3/openapi.yaml
+                            https://raw.githubusercontent.com/dockstore/dockstore/3a718e1868b4b26433b7711005d65834755bad2f/dockstore-webservice/src/main/resources/openapi3/openapi.yaml
                             </inputSpec>
                             <generatorName>java</generatorName>
                             <configOptions>
