@@ -32,10 +32,13 @@ jobs:
        run: | 
          sam local invoke HelloWorldFunction -e events/event.json -n env.json &> output.txt
          grep "Valid push event" output.txt
-     - name: Test wdl parsing with SAM CLI
+     - name: Test wdl parsing with SAM CLI build
        working-directory: ./wdl-parsing
        run: | 
          sam build --use-container
+     - name: Test wdl parsing with SAM CLI invoke
+       working-directory: ./wdl-parsing
+       run: | 
          sam local invoke HelloWorldFunction -e events/event.json -n env.json &> output.txt
          grep "Valid push event" output.txt
 
