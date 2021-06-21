@@ -72,9 +72,7 @@ public class App
       } catch (IOException e) {
         String errorMessage = "Could not process request";
         LOGGER.error(errorMessage, e);
-        return response
-            .withBody(errorMessage)
-            .withStatusCode(HttpURLConnection.HTTP_BAD_REQUEST);
+        return response.withBody(errorMessage).withStatusCode(HttpURLConnection.HTTP_BAD_REQUEST);
       }
     } else {
       return response
