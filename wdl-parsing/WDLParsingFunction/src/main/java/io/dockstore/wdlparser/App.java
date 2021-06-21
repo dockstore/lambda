@@ -22,6 +22,8 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.openapitools.client.model.LanguageParsingRequest;
 import org.openapitools.client.model.LanguageParsingResponse;
 import org.openapitools.client.model.VersionTypeValidation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import scala.Option;
 import scala.collection.JavaConverters;
 import womtool.WomtoolMain;
@@ -30,6 +32,7 @@ import womtool.WomtoolMain;
 public class App
     implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
   ObjectMapper mapper = new ObjectMapper();
+  private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
 
   @Override
   public APIGatewayProxyResponseEvent handleRequest(
@@ -53,9 +56,10 @@ public class App
                   request);
           return response.withStatusCode(HttpURLConnection.HTTP_OK).withBody(s);
         } catch (IOException e) {
-          e.printStackTrace();
+          String errorMessage = "Could not clone repository to temporary directory";
+          LOGGER.error(errorMessage, e);
           return response
-              .withBody("Could not clone repository to temporary directory")
+              .withBody(errorMessage)
               .withStatusCode(HttpURLConnection.HTTP_INTERNAL_ERROR);
         } catch (GitAPIException e) {
           StringWriter sw = new StringWriter();
@@ -66,9 +70,10 @@ public class App
               .withStatusCode(HttpURLConnection.HTTP_INTERNAL_ERROR);
         }
       } catch (IOException e) {
-        e.printStackTrace();
+        String errorMessage = "Could not process request";
+        LOGGER.error(errorMessage, e);
         return response
-            .withBody("Could not process request")
+            .withBody(errorMessage)
             .withStatusCode(HttpURLConnection.HTTP_BAD_REQUEST);
       }
     } else {
