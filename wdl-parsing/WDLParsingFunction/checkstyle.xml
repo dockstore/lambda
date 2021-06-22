@@ -16,6 +16,8 @@
     Authors: Max Vetrenko, Ruslan Diachenko, Roman Ivanov.
  -->
 
+ <!-- This checkstyle is modified by Dockstore to have additional checks. This checkstyle can be considered the gold standard for new Dockstore Java projects -->
+
 <module name="Checker">
     <property name="charset" value="UTF-8"/>
 
