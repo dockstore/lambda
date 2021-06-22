@@ -9,13 +9,10 @@
     <properties>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
-        <cromwell.version>51</cromwell.version>
-        <swagger-annotations-version>1.5.8</swagger-annotations-version>
-        <jersey-version>2.27</jersey-version>
-        <jackson-version>2.9.10</jackson-version>
-        <jackson-databind-nullable-version>0.2.0</jackson-databind-nullable-version>
-        <junit-version>5.6.2</junit-version>
-        <maven-plugin-version>2.22.2</maven-plugin-version>
+        <jersey-version>2.34</jersey-version>
+        <jackson-version>2.12.3</jackson-version>
+        <junit-version>5.7.2</junit-version>
+        <maven-plugin-version>3.0.0-M5</maven-plugin-version>
     </properties>
     <repositories>
         <repository>
@@ -38,23 +35,23 @@
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-lambda-java-core</artifactId>
-            <version>1.2.0</version>
+            <version>1.2.1</version>
         </dependency>
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-lambda-java-events</artifactId>
-            <version>3.1.0</version>
+            <version>3.9.0</version>
         </dependency>
 
         <dependency>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-library</artifactId>
-            <version>2.12.8</version>
+            <version>2.12.12</version>
         </dependency>
         <dependency>
             <groupId>org.broadinstitute</groupId>
             <artifactId>womtool_2.12</artifactId>
-            <version>${cromwell.version}</version>
+            <version>65</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -72,12 +69,12 @@
         <dependency>
             <groupId>org.eclipse.jgit</groupId>
             <artifactId>org.eclipse.jgit</artifactId>
-            <version>5.8.1.202007141445-r</version>
+            <version>5.12.0.202106070339-r</version>
         </dependency>
         <dependency>
             <groupId>io.swagger</groupId>
             <artifactId>swagger-annotations</artifactId>
-            <version>${swagger-annotations-version}</version>
+            <version>1.6.2</version>
         </dependency>
 
         <!-- You can find the dependencies for the library configuration you chose by looking in JavaClientCodegen.
@@ -100,6 +97,11 @@
             <version>${jersey-version}</version>
         </dependency>
 
+	<dependency>
+	  <groupId>jakarta.ws.rs</groupId>
+	  <artifactId>jakarta.ws.rs-api</artifactId>
+	  <version>2.1.6</version>
+	</dependency>
         <!-- @Nullable annotation -->
         <dependency>
             <groupId>com.google.code.findbugs</groupId>
@@ -121,17 +123,12 @@
         <dependency>
             <groupId>org.openapitools</groupId>
             <artifactId>jackson-databind-nullable</artifactId>
-            <version>${jackson-databind-nullable-version}</version>
+            <version>0.2.1</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
             <version>${jackson-version}</version>
-        </dependency>
-        <dependency>
-            <groupId>javax.ws.rs</groupId>
-            <artifactId>javax.ws.rs-api</artifactId>
-            <version>2.1</version>
         </dependency>
         <dependency>
             <groupId>org.glassfish.jersey.core</groupId>
@@ -141,7 +138,7 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>1.7.25</version>
+            <version>1.7.31</version>
         </dependency>
     </dependencies>
 
@@ -254,7 +251,7 @@
             <plugin>
                 <groupId>net.alchim31.maven</groupId>
                 <artifactId>scala-maven-plugin</artifactId>
-                <version>4.4.0</version>
+                <version>4.5.3</version>
                 <executions>
                     <execution>
                         <id>scala-compile</id>
