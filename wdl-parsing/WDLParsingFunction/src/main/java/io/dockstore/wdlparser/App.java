@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dockstore.openapi.client.model.LanguageParsingRequest;
 import dockstore.openapi.client.model.LanguageParsingResponse;
 import dockstore.openapi.client.model.VersionTypeValidation;
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -33,9 +34,11 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.ws.rs.core.MediaType;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -48,16 +51,79 @@ import womtool.WomtoolMain;
 public class App
     implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
-  ObjectMapper mapper = new ObjectMapper();
   private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
+  ObjectMapper mapper = new ObjectMapper();
+
+  /**
+   * Get a language parsing response by running womtool.
+   *
+   * @param descriptorAbsolutePathString Absolute path to the main descriptor file
+   * @return LanguageParsingResponse constructed after running womtool
+   */
+  public static LanguageParsingResponse getResponse(String descriptorAbsolutePathString) {
+    LanguageParsingResponse response = new LanguageParsingResponse();
+    response.setClonedRepositoryAbsolutePath(descriptorAbsolutePathString);
+    List<String> commandLineArgs = Arrays.asList("validate", "-l", descriptorAbsolutePathString);
+    try {
+      // TODO: This can be cleaner (without parsing stdout) by directly using Validate.scala, etc
+      WomtoolMain.Termination termination =
+          WomtoolMain.runWomtool(
+              JavaConverters.collectionAsScalaIterableConverter(commandLineArgs).asScala().toSeq());
+      Option<String> stdout = termination.stdout();
+      // The womtool successful response returns lines of text.
+      String[] split = stdout.get().split(System.lineSeparator());
+      List<String> strings = new ArrayList<>();
+      Collections.addAll(strings, split);
+
+      // The first two lines aren't actual paths.
+      VersionTypeValidation versionTypeValidation = new VersionTypeValidation();
+      if (strings.get(0).equals("Success!")
+          && strings.get(1).equals("List of Workflow dependencies is:")) {
+        versionTypeValidation.setValid(true);
+        response.setVersionTypeValidation(versionTypeValidation);
+        handleSuccessResponse(response, strings);
+      } else {
+        versionTypeValidation.setValid(false);
+        Map<String, String> messageMap = new HashMap<>();
+        // TODO: Using the main descriptor path as the key until we figure out how to get the actual
+        //  file that has the error
+        messageMap.put(descriptorAbsolutePathString, stdout.get());
+        versionTypeValidation.setMessage(messageMap);
+        response.setVersionTypeValidation(versionTypeValidation);
+      }
+      return response;
+    } catch (StackOverflowError e) {
+      VersionTypeValidation versionTypeValidation = new VersionTypeValidation();
+      versionTypeValidation.setValid(false);
+      Map<String, String> messageMap = new HashMap<>();
+      // TODO: Using the main descriptor path as the key until we figure out how to get the actual
+      //  file that has the error
+      messageMap.put(descriptorAbsolutePathString, "Encountered recursive imports");
+      versionTypeValidation.setMessage(messageMap);
+      response.setVersionTypeValidation(versionTypeValidation);
+      return response;
+    }
+  }
+
+  // The first two lines aren't actual paths.
+  // It looks like "Success!" and "List of Workflow dependencies is:"
+  private static void handleSuccessResponse(
+      LanguageParsingResponse response, List<String> strings) {
+    strings.remove(0);
+    strings.remove(0);
+    // If there are no imports, womtool says None
+    if (strings.get(0).equals("None")) {
+      strings.remove(0);
+    }
+    response.setSecondaryFilePaths(strings);
+  }
 
   @Override
   public APIGatewayProxyResponseEvent handleRequest(
       final APIGatewayProxyRequestEvent input, final Context context) {
 
     Map<String, String> headers = new HashMap<>();
-    headers.put("Content-Type", "application/json");
-    headers.put("X-Custom-Header", "application/json");
+    headers.put("Content-Type", MediaType.APPLICATION_JSON);
 
     APIGatewayProxyResponseEvent response = new APIGatewayProxyResponseEvent().withHeaders(headers);
     if (input != null && input.getBody() != null) {
@@ -115,64 +181,16 @@ public class App
     String descriptorAbsolutePathString = descriptorAbsolutePath.toString();
     LanguageParsingResponse response = getResponse(descriptorAbsolutePathString);
     response.setLanguageParsingRequest(languageParsingRequest);
+    // Deleting a directory without Common IO
+    Files.walk(tempDirWithPrefix)
+        .sorted(Comparator.reverseOrder())
+        .map(Path::toFile)
+        .forEach(File::delete);
     if (response.getSecondaryFilePaths() != null) {
       response
           .getSecondaryFilePaths()
           .replaceAll(s -> s.replaceFirst(tempDirWithPrefix.toString(), ""));
     }
     return mapper.writeValueAsString(response);
-  }
-
-  // The first two lines aren't actual paths.
-  // It looks like "Success!" and "List of Workflow dependencies is:"
-  private static void handleSuccessResponse(
-      LanguageParsingResponse response, List<String> strings) {
-    strings.remove(0);
-    strings.remove(0);
-    // If there are no imports, womtool says None
-    if (strings.get(0).equals("None")) {
-      strings.remove(0);
-    }
-    response.setSecondaryFilePaths(strings);
-  }
-
-  /**
-   * Get a language parsing response by running womtool.
-   *
-   * @param descriptorAbsolutePathString Absolute path to the main descriptor file
-   * @return LanguageParsingResponse constructed after running womtool
-   */
-  public static LanguageParsingResponse getResponse(String descriptorAbsolutePathString) {
-    LanguageParsingResponse response = new LanguageParsingResponse();
-    response.setClonedRepositoryAbsolutePath(descriptorAbsolutePathString);
-    List<String> commandLineArgs = Arrays.asList("validate", "-l", descriptorAbsolutePathString);
-    try {
-      WomtoolMain.Termination termination =
-          WomtoolMain.runWomtool(
-              JavaConverters.collectionAsScalaIterableConverter(commandLineArgs).asScala().toSeq());
-      Option<String> stdout = termination.stdout();
-      // The womtool successful response returns lines of text.
-      String[] split = stdout.get().split(System.lineSeparator());
-      List<String> strings = new ArrayList<>();
-      Collections.addAll(strings, split);
-
-      // The first two lines aren't actual paths.
-      VersionTypeValidation versionTypeValidation = new VersionTypeValidation();
-      if (strings.get(0).equals("Success!")
-          && strings.get(1).equals("List of Workflow dependencies is:")) {
-        versionTypeValidation.setValid(true);
-        response.setVersionTypeValidation(versionTypeValidation);
-        handleSuccessResponse(response, strings);
-      } else {
-        versionTypeValidation.setValid(false);
-        response.setVersionTypeValidation(versionTypeValidation);
-      }
-      return response;
-    } catch (StackOverflowError e) {
-      VersionTypeValidation versionTypeValidation = new VersionTypeValidation();
-      versionTypeValidation.setValid(false);
-      response.setVersionTypeValidation(versionTypeValidation);
-      return response;
-    }
   }
 }
