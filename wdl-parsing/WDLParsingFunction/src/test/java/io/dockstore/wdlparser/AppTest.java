@@ -24,14 +24,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dockstore.openapi.client.model.LanguageParsingRequest;
+import dockstore.openapi.client.model.LanguageParsingResponse;
 import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import javax.ws.rs.core.MediaType;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.openapitools.client.model.LanguageParsingRequest;
-import org.openapitools.client.model.LanguageParsingResponse;
 
 public class AppTest {
   @Test

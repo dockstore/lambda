@@ -21,6 +21,9 @@ import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dockstore.openapi.client.model.LanguageParsingRequest;
+import dockstore.openapi.client.model.LanguageParsingResponse;
+import dockstore.openapi.client.model.VersionTypeValidation;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -35,9 +38,6 @@ import java.util.List;
 import java.util.Map;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.openapitools.client.model.LanguageParsingRequest;
-import org.openapitools.client.model.LanguageParsingResponse;
-import org.openapitools.client.model.VersionTypeValidation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Option;
@@ -47,6 +47,7 @@ import womtool.WomtoolMain;
 /** Handler for requests to Lambda function. */
 public class App
     implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
+
   ObjectMapper mapper = new ObjectMapper();
   private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
 
