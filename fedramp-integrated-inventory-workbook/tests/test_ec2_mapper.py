@@ -61,7 +61,7 @@ def test_given_isntance_has_with_public_dns_ec2_then_dns_public_dns_is_used(full
 
     mapped_result = mapper.map(full_ec2_config)
 
-    assert len(mapped_result) == 2, "Two rows was expected since it is a public EC2 instance"
+    assert len(mapped_result) == 1, "One row is expected. Two IP addresses are expected, one for the public IP and one for the private IP"
     assert mapped_result[0].dns_name == full_ec2_config["configuration"]["publicDnsName"], "Public DNS should be used if public DNS is available"
 
 def test_given_ec2_instance_with_no_public_ip_then_one_item_returned(full_ec2_config):
@@ -79,14 +79,17 @@ def test_given_ec2_instance_with_public_ip_then_two_items_returned(full_ec2_conf
 
     mapped_result = mapper.map(full_ec2_config)
     
-    assert len(mapped_result) == 2, "Two rows were expected. One for the public IP and one for the private IP"
-    assert mapped_result[1].ip_address == full_ec2_config["configuration"]["networkInterfaces"][0]["privateIpAddresses"][0]["association"]["publicIp"], "IP Address should match public IP returned from config"
+    assert len(mapped_result) == 1, "One row is expected. Two IP addresses are expected, one for the public IP and one for the private IP"
+
+    # Make sure both ip addresses are in the mapping
+    privateIp, publicIp = mapped_result[0].ip_address.split(',')
+    assert full_ec2_config["configuration"]["networkInterfaces"][0]["privateIpAddresses"][0]["privateIpAddress"] == privateIp
+    assert full_ec2_config["configuration"]["networkInterfaces"][0]["privateIpAddresses"][0]["association"]["publicIp"] == publicIp
 
 def test_given_ec2_instance_with_public_dns_name_then_asset_is_marked_as_public(full_ec2_config):
     mapper = EC2DataMapper()
 
     mapped_result = mapper.map(full_ec2_config)
     
-    assert len(mapped_result) == 2, "Two rows were expected. One for the public IP and one for the private IP"
+    assert len(mapped_result) == 1, "One row is expected. Two IP addresses are expected, one for the public IP and one for the private IP"
     assert mapped_result[0].is_public == "Yes", "Instance should have been marked public since it has a public DNS name"
-    assert mapped_result[1].is_public == "Yes", "Instance should have been marked public since it has a public DNS name"
