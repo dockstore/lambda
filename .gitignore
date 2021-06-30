@@ -16,3 +16,9 @@ git-secrets.sh
 **/__pycache__/
 **/*.py[cod]
 **/*$py.class
+
+.aws-sam
+.idea
+*.iml
+dependency-reduced-pom.xml
+target
