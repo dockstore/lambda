@@ -97,14 +97,11 @@ class EC2DataMapper(DataMapper):
                     ec2_data["dns_name"] = config_resource["configuration"]["privateDnsName"]
                     ec2_data["is_public"] = "No"
 
-                ec2_data_list.append(InventoryData(**ec2_data))
-
                 if "association" in ipAddress:
-                    # Each IP address needs its own row in report so public IP requires an additional row
-                    ec2_data = copy.deepcopy(ec2_data)
-                    ec2_data["ip_address"] = ipAddress["association"]["publicIp"]
+                    # Add a publicIp address it the ip_address field if necessary
+                    ec2_data["ip_address"] += "," + ipAddress["association"]["publicIp"]
 
-                    ec2_data_list.append(InventoryData(**ec2_data))
+                ec2_data_list.append(InventoryData(**ec2_data))
 
         return ec2_data_list
 
