@@ -10,7 +10,7 @@ from openpyxl.utils import get_column_letter
 from .mappers import InventoryData
 
 _logger = logging.getLogger("inventory.reports")
-_logger.setLevel(os.environ.get("LOG_LEVEL", logging.DEBUG))
+_logger.setLevel(os.environ.get("LOG_LEVEL", logging.INFO))
 _current_dir_name = os.path.dirname(__file__)
 _workbook_template_file_name = os.path.join(_current_dir_name, "SSP-A13-FedRAMP-Integrated-Inventory-Workbook-Template.xlsx")
 _workbook_output_file_path = PurePath("/tmp/SSP-A13-FedRAMP-Integrated-Inventory.xlsx")

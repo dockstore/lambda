@@ -8,7 +8,7 @@ from .mappers import DataMapper, EC2DataMapper, ElbDataMapper, DynamoDbTableData
     VPCDataMapper, LambdaDataMapper
 
 _logger = logging.getLogger("inventory.readers")
-_logger.setLevel(os.environ.get("LOG_LEVEL", logging.INFO))
+_logger.setLevel(os.environ.get("LOG_LEVEL", logging.DEBUG))
 
 
 class AwsConfigInventoryReader():
