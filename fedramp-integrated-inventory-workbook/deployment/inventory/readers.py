@@ -12,12 +12,11 @@ _logger.setLevel(os.environ.get("LOG_LEVEL", logging.DEBUG))
 
 
 class AwsConfigInventoryReader():
-    def __init__(self, lambda_context, sts_client=boto3.client('sts'), mappers=None):
+    def __init__(self, lambda_context, mappers=None):
         if mappers is None:
             mappers = [EC2DataMapper(), ElbDataMapper(), DynamoDbTableDataMapper(), RdsDataMapper(), S3DataMapper(), VPCDataMapper(),
                        LambdaDataMapper()]
         self._lambda_context = lambda_context
-        self._sts_client = sts_client
         self._mappers: List[DataMapper] = mappers
 
     # Moved into it's own method to make it easier to mock boto3 client
@@ -37,8 +36,14 @@ class AwsConfigInventoryReader():
             sts_response = boto3.Session().get_credentials()
 
             for region in region_list:
+                curr_client = boto3.client('sts', region_name=region)
+                sts_response = boto3.Session().get_credentials()
                 config_client = self._get_config_client(sts_response, region)
-                _logger.info(f"assuming role on account {account_id} for region {region}")
+
+                my_session = boto3.session.Session()
+                my_region = my_session.region_name
+
+                _logger.info(f"assuming role on account {account_id} for region {my_region}")
 
                 next_token: str = ''
                 while True:
