@@ -38,6 +38,7 @@ class AwsConfigInventoryReader():
 
             for region in region_list:
                 config_client = self._get_config_client(sts_response, region)
+                _logger.info(f"assuming role on account {account_id} for region {region}")
 
                 next_token: str = ''
                 while True:
@@ -51,7 +52,7 @@ class AwsConfigInventoryReader():
                     next_token = resources_result.get('NextToken', '')
                     results: List[str] = resources_result.get('Results', [])
 
-                    _logger.debug(f"page returned {len(results)} and next token of '{next_token}'")
+                    _logger.debug(f"Region {region} page returned {len(results)} and next token of '{next_token}'")
 
                     yield results
 
