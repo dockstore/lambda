@@ -74,9 +74,9 @@ class AwsConfigInventoryReader():
 
         all_inventory: List[InventoryData] = []
         accounts = json.loads(os.environ["ACCOUNT_LIST"])
-        region_list = accounts["regions"]
 
         for account in accounts:
+            region_list = account["regions"]
             _logger.info(f"retrieving inventory for account {account['id']} in regions {region_list}")
 
             for resource_list_page in self._get_resources_from_account(account["id"], region_list):
