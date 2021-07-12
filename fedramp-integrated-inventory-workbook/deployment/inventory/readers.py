@@ -98,4 +98,12 @@ class AwsConfigInventoryReader():
 
         _logger.info(f"completed getting inventory, with a total of {len(all_inventory)}")
 
+        # Add the manual items listed as an environment variable
+        manual_entry_items = json.loads(os.environ["MANUAL_ENTRY_ITEMS"])
+        for item in manual_entry_items:
+            manual_inventory_item = InventoryData()
+            for key in item:
+                setattr(manual_inventory_item, key, item[key])
+            all_inventory.append(manual_inventory_item)
+
         return all_inventory
