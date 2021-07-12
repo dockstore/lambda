@@ -21,7 +21,6 @@ class AwsConfigInventoryReader():
 
     # Moved into it's own method to make it easier to mock boto3 client
     def _get_config_client(self, sts_response, region: str) -> boto3.client:
-        sts_response = sts_response.get_frozen_credentials()
         return boto3.client('config',
                             aws_access_key_id=sts_response.access_key,
                             aws_secret_access_key=sts_response.secret_key,
@@ -32,18 +31,11 @@ class AwsConfigInventoryReader():
         try:
             _logger.info(f"assuming role on account {account_id}")
 
-            # get the credentials for the current role assumed by the lambda
-            sts_response = boto3.Session().get_credentials()
-
             for region in region_list:
-                curr_client = boto3.client('sts', region_name=region)
                 sts_response = boto3.Session().get_credentials()
                 config_client = self._get_config_client(sts_response, region)
 
-                my_session = boto3.session.Session()
-                my_region = my_session.region_name
-
-                _logger.info(f"assuming role on account {account_id} for region {my_region}")
+                _logger.info(f"Querying resources on account {account_id} for region {region}")
 
                 next_token: str = ''
                 while True:
