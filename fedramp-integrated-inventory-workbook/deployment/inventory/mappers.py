@@ -265,3 +265,12 @@ class LambdaDataMapper(DataMapper):
                 }
 
         return [InventoryData(**data)]
+
+
+class ElasticSearchDataMapper(DataMapper):
+    def _get_supported_resource_type(self) -> List[str]:
+        return ["AWS::Elasticsearch::Domain"]
+
+    def _do_mapping(self, config_resource: dict) -> List[InventoryData]:
+        data = {}
+        return [InventoryData(**data)]
