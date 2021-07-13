@@ -8,7 +8,7 @@ from .mappers import DataMapper, EC2DataMapper, ElbDataMapper, DynamoDbTableData
     VPCDataMapper, LambdaDataMapper, ElasticSearchDataMapper
 
 _logger = logging.getLogger("inventory.readers")
-_logger.setLevel(os.environ.get("LOG_LEVEL", logging.INFO))
+_logger.setLevel(os.environ.get("LOG_LEVEL", logging.DEBUG))
 
 
 class AwsConfigInventoryReader():
@@ -85,6 +85,7 @@ class AwsConfigInventoryReader():
 
                     # One line item returned from AWS Config can result in multiple inventory line items (e.g. multiple IPs)
                     # Mappers that do not support the resource type will return False
+                    _logger.debug(f"Searching for mapper for resource type: {resource['resourceType']}")
                     mapper: Optional[DataMapper] = next((mapper for mapper in self._mappers if mapper.can_map(resource["resourceType"])),
                                                         None)
 
