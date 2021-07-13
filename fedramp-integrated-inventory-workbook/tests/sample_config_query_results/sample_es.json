@@ -55,7 +55,7 @@
     },
     "logPublishingOptions": {
       "ES_APPLICATION_LOGS": {
-        "cloudWatchLogsLogGroupArn": "arn:aws:logs:us-west-2:123456789:log-group:/aws/aes/domains/application-logs:*",
+        "cloudWatchLogsLogGroupArn": "arn:aws:logs:us-west-2:123456789:log-group:/logs:*",
         "enabled": true
       }
     },
@@ -92,7 +92,7 @@
         "subnet-abcdefghijklmnop"
       ],
       "availabilityZones": [
-        "us-west-2a"
+        "us-west-2b"
       ],
       "securityGroupIds": [
         "sg-abcdefghijklmnop"
