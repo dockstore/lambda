@@ -1,0 +1,108 @@
+{
+  "version": "1.3",
+  "accountId": "123456789",
+  "configurationItemCaptureTime": "2021-07-08T20:42:22.993Z",
+  "configurationItemStatus": "OK",
+  "configurationStateId": "0987654321",
+  "configurationItemMD5Hash": "",
+  "arn": "arn:aws:es:us-west-2:123456789:domain/my-elasticsearch",
+  "resourceType": "AWS::Elasticsearch::Domain",
+  "resourceId": "123456789/my-elasticsearch",
+  "resourceName": "my-elasticsearch",
+  "awsRegion": "us-west-2",
+  "availabilityZone": "Multiple Availability Zones",
+  "tags": {
+    "Environment": "custom"
+  },
+  "relatedEvents": [],
+  "relationships": [],
+  "configuration": {
+    "domainId": "123456789/my-elasticsearch",
+    "domainName": "my-elasticsearch",
+    "created": true,
+    "deleted": false,
+    "endpoints": {
+      "vpc": "vpc-my-elasticsearch-vpcid.us-west-2.es.amazonaws.com"
+    },
+    "processing": false,
+    "upgradeProcessing": false,
+    "elasticsearchVersion": "7.10",
+    "elasticsearchClusterConfig": {
+      "instanceType": "t3.medium.elasticsearch",
+      "instanceCount": 1,
+      "dedicatedMasterEnabled": false,
+      "zoneAwarenessEnabled": false,
+      "warmEnabled": false,
+      "coldStorageOptions": {
+        "enabled": false
+      }
+    },
+    "accessPolicies": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"*\"},\"Action\":\"*\",\"Resource\":\"*\"}]}",
+    "snapshotOptions": {
+      "automatedSnapshotStartHour": 0
+    },
+    "cognitoOptions": {
+      "enabled": false
+    },
+    "encryptionAtRestOptions": {
+      "enabled": false
+    },
+    "nodeToNodeEncryptionOptions": {
+      "enabled": true
+    },
+    "advancedOptions": {
+      "rest.action.multi.allow_explicit_index": "true"
+    },
+    "logPublishingOptions": {
+      "ES_APPLICATION_LOGS": {
+        "cloudWatchLogsLogGroupArn": "arn:aws:logs:us-west-2:123456789:log-group:/aws/aes/domains/application-logs:*",
+        "enabled": true
+      }
+    },
+    "serviceSoftwareOptions": {
+      "currentVersion": "R20210426",
+      "newVersion": "R20210426-P2",
+      "updateAvailable": true,
+      "cancellable": false,
+      "updateStatus": "ELIGIBLE",
+      "description": "A new software release R20210426-P2 is available. This release will be automatically deployed if no action is taken.",
+      "automatedUpdateDate": 1625731585000,
+      "optionalDeployment": false
+    },
+    "domainEndpointOptions": {
+      "enforceHTTPS": false,
+      "customEndpointEnabled": false,
+      "tlssecurityPolicy": "Policy-Min-TLS-1-0-2019-07"
+    },
+    "advancedSecurityOptions": {
+      "enabled": false,
+      "internalUserDatabaseEnabled": false
+    },
+    "autoTuneOptions": {
+      "state": "ENABLE_IN_PROGRESS"
+    },
+    "arn": "arn:aws:es:us-west-2:123456789:domain/my-elasticsearch",
+    "ebsoptions": {
+      "volumeType": "gp2",
+      "volumeSize": 50,
+      "ebsenabled": true
+    },
+    "vpcoptions": {
+      "subnetIds": [
+        "subnet-abcdefghijklmnop"
+      ],
+      "availabilityZones": [
+        "us-west-2a"
+      ],
+      "securityGroupIds": [
+        "sg-abcdefghijklmnop"
+      ],
+      "vpcid": "vpc-abcdefghijklmnop"
+    }
+  },
+  "supplementaryConfiguration": {
+    "Tags": [
+    ]
+  },
+  "resourceTransitionStatus": "None"
+}
