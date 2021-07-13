@@ -8,7 +8,7 @@ from .mappers import DataMapper, EC2DataMapper, ElbDataMapper, DynamoDbTableData
     VPCDataMapper, LambdaDataMapper, ElasticSearchDataMapper
 
 _logger = logging.getLogger("inventory.readers")
-_logger.setLevel(os.environ.get("LOG_LEVEL", logging.DEBUG))
+_logger.setLevel(os.environ.get("LOG_LEVEL", logging.INFO))
 
 
 class AwsConfigInventoryReader():
@@ -43,7 +43,7 @@ class AwsConfigInventoryReader():
                         Expression="SELECT arn, resourceName, resourceId, resourceType, configuration, supplementaryConfiguration, configurationStateId, tags, awsRegion "
                                    "WHERE resourceType IN ('AWS::EC2::Instance', 'AWS::ElasticLoadBalancingV2::LoadBalancer', "
                                    "'AWS::ElasticLoadBalancing::LoadBalancer', 'AWS::RDS::DBInstance', "
-                                   "'AWS::Lambda::Function', 'AWS::EC2::VPC', 'AWS::S3::Bucket')",
+                                   "'AWS::Lambda::Function', 'AWS::EC2::VPC', 'AWS::S3::Bucket', 'AWS::Elasticsearch::Domain')",
                         NextToken=next_token)
 
                     next_token = resources_result.get('NextToken', '')
@@ -96,14 +96,19 @@ class AwsConfigInventoryReader():
                     if len(inventory_items := mapper.map(resource)) > 0:
                         all_inventory.extend(inventory_items)
 
-        _logger.info(f"completed getting inventory, with a total of {len(all_inventory)}")
+        _logger.info(f"completed querying AWS config, found {len(all_inventory)} resources")
 
         # Add the manual items listed as an environment variable
         manual_entry_items = json.loads(os.environ["MANUAL_ENTRY_ITEMS"])
+
+        _logger.info(f"Adding {len(manual_entry_items)} manual entries")
+
         for item in manual_entry_items:
             manual_inventory_item = InventoryData()
             for key in item:
                 setattr(manual_inventory_item, key, item[key])
             all_inventory.append(manual_inventory_item)
+
+        _logger.info(f"completed getting inventory, with a total of {len(all_inventory)}")
 
         return all_inventory
