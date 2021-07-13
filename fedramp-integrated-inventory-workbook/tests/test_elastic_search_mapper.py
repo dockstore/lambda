@@ -4,7 +4,7 @@ import pytest
 from inventory.mappers import ElasticSearchDataMapper
 
 @pytest.fixture()
-def full_classic_es_config():
+def full_es_config():
     with open(os.path.join(os.path.dirname(__file__), "sample_config_query_results/sample_es.json")) as file_data:
         file_contents = file_data.read()
 
