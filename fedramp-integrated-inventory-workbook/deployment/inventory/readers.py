@@ -5,7 +5,7 @@ from typing import Iterator, List, Optional
 import boto3
 from botocore.exceptions import ClientError
 from .mappers import DataMapper, EC2DataMapper, ElbDataMapper, DynamoDbTableDataMapper, InventoryData, RdsDataMapper, S3DataMapper, \
-    VPCDataMapper, LambdaDataMapper
+    VPCDataMapper, LambdaDataMapper, ElasticSearchDataMapper
 
 _logger = logging.getLogger("inventory.readers")
 _logger.setLevel(os.environ.get("LOG_LEVEL", logging.INFO))
@@ -15,7 +15,7 @@ class AwsConfigInventoryReader():
     def __init__(self, lambda_context, mappers=None):
         if mappers is None:
             mappers = [EC2DataMapper(), ElbDataMapper(), DynamoDbTableDataMapper(), RdsDataMapper(), S3DataMapper(), VPCDataMapper(),
-                       LambdaDataMapper()]
+                       LambdaDataMapper(), ElasticSearchDataMapper()]
         self._lambda_context = lambda_context
         self._mappers: List[DataMapper] = mappers
 
@@ -90,7 +90,6 @@ class AwsConfigInventoryReader():
 
                     if not mapper:
                         _logger.warning(f"skipping mapping, unable to find mapper for resource type of {resource['resourceType']}")
-
                         continue
 
                     if len(inventory_items := mapper.map(resource)) > 0:
