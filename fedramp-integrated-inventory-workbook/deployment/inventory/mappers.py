@@ -262,3 +262,21 @@ class LambdaDataMapper(DataMapper):
                 }
 
         return [InventoryData(**data)]
+
+
+class ElasticSearchDataMapper(DataMapper):
+    def _get_supported_resource_type(self) -> List[str]:
+        return ["AWS::Elasticsearch::Domain"]
+
+    def _do_mapping(self, config_resource: dict) -> List[InventoryData]:
+        data = {"asset_type": "Elastic Search",
+                "unique_id": config_resource["arn"],
+                "is_virtual": "Yes",
+                "is_public": "No",
+                "baseline_config": config_resource["configuration"]["elasticsearchVersion"],
+                "software_vendor": "AWS",
+                "software_product_name": "Elastic Search",
+                "asset_tag": config_resource["resourceName"] if "resourceName" in config_resource else config_resource["resourceId"],
+                "owner": _get_tag_value(config_resource["tags"], "owner"),
+                "location": config_resource["awsRegion"]}
+        return [InventoryData(**data)]

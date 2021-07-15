@@ -24,7 +24,8 @@ import inventory.readers
 from inventory.readers import AwsConfigInventoryReader
 
 def setup_function():
-    os.environ["ACCOUNT_LIST"] = '[ { "name": "foo", "id": "210987654321"} ]'
+    os.environ["ACCOUNT_LIST"] = '[ { "name": "foo", "id": "210987654321", "regions": ["us-east-2"]} ]'
+    os.environ["MANUAL_ENTRY_ITEMS"] = '[]'
     os.environ["CROSS_ACCOUNT_ROLE_NAME"] = "foobar"
 
 def test_given_valid_arn_then_aws_partition_determined():
@@ -47,7 +48,7 @@ def test_given_unsupported_resource_type_then_warning_is_logged(mock_logger):
                               .return_value = { "NextToken": None,
                                                 "Results": [ json.dumps({ "resourceType": "foobar" }) ] }
 
-    reader = AwsConfigInventoryReader(lambda_context=MagicMock(), sts_client=Mock(), mappers=[mock_mapper])
+    reader = AwsConfigInventoryReader(lambda_context=MagicMock(), mappers=[mock_mapper])
     reader._get_config_client = mock_config_client_factory
 
     all_inventory = reader.get_resources_from_all_accounts()
@@ -57,7 +58,7 @@ def test_given_unsupported_resource_type_then_warning_is_logged(mock_logger):
 
 @patch("inventory.readers._logger", autospec=True)
 def test_given_error_from_boto_then_account_is_skipped_but_others_still_processed(mock_logger):
-    os.environ["ACCOUNT_LIST"] = '[ { "name": "foo", "id": "210987654321" }, { "name": "bar", "id": "123456789012" } ]'
+    os.environ["ACCOUNT_LIST"] = '[ { "name": "foo", "id": "210987654321", "regions": ["us-east-2"] }, { "name": "bar", "id": "123456789012","regions": ["us-east-2"] }]'
     mock_mapper = Mock(spec=DataMapper)
     mock_mapper.can_map.return_value = True
     mock_mapper.map.return_value = [ { "test": True }]
@@ -68,7 +69,7 @@ def test_given_error_from_boto_then_account_is_skipped_but_others_still_processe
     mock_config_client_factory.return_value \
                               .select_resource_config = mock_select_resource_config
 
-    reader = AwsConfigInventoryReader(lambda_context=MagicMock(), sts_client=Mock(), mappers=[mock_mapper])
+    reader = AwsConfigInventoryReader(lambda_context=MagicMock(), mappers=[mock_mapper])
     reader._get_config_client = mock_config_client_factory
     
     all_inventory = reader.get_resources_from_all_accounts()
@@ -88,7 +89,7 @@ def test_given_multiple_resource_pages_from_boto_then_reader_loops_through_all_p
     mock_config_client_factory.return_value \
                               .select_resource_config = mock_select_resource_config
 
-    readerx = AwsConfigInventoryReader(lambda_context=MagicMock(), sts_client=Mock(), mappers=[mock_mapper])
+    readerx = AwsConfigInventoryReader(lambda_context=MagicMock(), mappers=[mock_mapper])
     readerx._get_config_client = mock_config_client_factory
 
     all_inventory = readerx.get_resources_from_all_accounts()
