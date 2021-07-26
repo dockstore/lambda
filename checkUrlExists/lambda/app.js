@@ -1,4 +1,4 @@
-const { curly } = require('node-libcurl');
+const { curly } = require("node-libcurl");
 /**
  * TODO: Change to array of URLs to parse
  * Always returns 200. Body is true if file URL is valid, body is false if file URL is not valid or something has gone wrong
@@ -21,14 +21,13 @@ exports.lambdaHandler = async function (event) {
 
 async function checkUrl(url) {
   return run(url)
-  .then(({ data, statusCode, headers }) => {
-    return returnResponse(true);
-  }
-  )
-  .catch((error) => {
-    console.error(`Something went wrong`, { error });
-    return returnResponse(false);
-  })
+    .then(() => {
+      return returnResponse(true);
+    })
+    .catch((error) => {
+      console.error(`Something went wrong`, { error });
+      return returnResponse(false);
+    });
 }
 
 async function run(url) {
