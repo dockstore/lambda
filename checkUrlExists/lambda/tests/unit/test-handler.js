@@ -26,8 +26,7 @@ describe("Tests index", function () {
     await setupTest(url, true);
   });
   it("verifies successful response from ftp file", async () => {
-    const url =
-      "ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/CHANGELOG";
+    const url = "ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/CHANGELOG";
     await setupTest(url, true);
   });
   it("verifies unsuccessful response from ftp file", async () => {
