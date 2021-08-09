@@ -39,6 +39,9 @@ jobs:
                         lambdaFolder: "fedramp-integrated-inventory-workbook/deployment"
                         lambdaRequirements: "fedramp-integrated-inventory-workbook/requirements.txt"
                         s3BucketFolder: "fedrampInventory"
+                    - create_zip_upload_to_s3:
+                        lambdaFolder: "checkUrlExists/lambda"
+                        s3BucketFolder: "checkUrlExists"
     js_tests:
         docker:
             - image: circleci/buildpack-deps:18.04-browsers
