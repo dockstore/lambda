@@ -41,7 +41,7 @@ jobs:
                         lambdaRequirements: "fedramp-integrated-inventory-workbook/requirements.txt"
                         s3BucketFolder: "fedrampInventory"
                     - sam_package_and_upload_to_s3:
-                        lambdaFolder: "checkUrlExists/lambda"
+                        lambdaFolder: "checkUrlExists"
                         s3BucketFolder: "checkUrlExists"
 
     js_tests:
