@@ -75,7 +75,7 @@ commands:
             - sam/install
             - run:
                 name: Build deployment zip with SAM and upload to S3
-                command: cd << parameters.lambdaFolder >> && sam build && sam package --s3-bucket 's3://${AWS_BUCKET}/$(echo ${CIRCLE_TAG-$CIRCLE_BRANCH} | sed "s/\//_/g")-$(echo $CIRCLE_SHA1 | cut -c -7)/<< parameters.s3BucketFolder >>/function.zip'
+                command: cd << parameters.lambdaFolder >> && sam build && sam package --s3-bucket s3://${AWS_BUCKET}/$(echo ${CIRCLE_TAG-$CIRCLE_BRANCH} | sed "s/\//_/g")-$(echo $CIRCLE_SHA1 | cut -c -7)/<< parameters.s3BucketFolder >>/function.zip
 
     create_zip_upload_to_s3:
         description: "Creates a deployment zip for a lambda and uploads to S3"
