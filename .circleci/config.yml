@@ -71,7 +71,7 @@ commands:
         steps:
             - run:
                 name: Validate index.js
-                command: node --check << parameters.lambdaFolder >>/index.js
+                command: node --check << parameters.lambdaFolder >>/lambda/index.js
             - sam/install
             - run:
                 name: Build deployment zip with SAM and upload to S3
