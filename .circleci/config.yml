@@ -2,6 +2,7 @@ version: 2.1
 orbs:
   aws-s3: circleci/aws-s3@1.0.0
   node: circleci/node@2.0.2
+  sam: circleci/aws-sam-serverless@3.0
 jobs:
     build:
         docker:
@@ -39,9 +40,10 @@ jobs:
                         lambdaFolder: "fedramp-integrated-inventory-workbook/deployment"
                         lambdaRequirements: "fedramp-integrated-inventory-workbook/requirements.txt"
                         s3BucketFolder: "fedrampInventory"
-                    - create_zip_upload_to_s3:
+                    - sam_package_and_upload_to_s3:
                         lambdaFolder: "checkUrlExists/lambda"
                         s3BucketFolder: "checkUrlExists"
+
     js_tests:
         docker:
             - image: circleci/buildpack-deps:18.04-browsers
@@ -59,6 +61,22 @@ jobs:
               dependencies: "fedramp-integrated-inventory-workbook/requirements.txt"
 
 commands:
+    sam_package_and_upload_to_s3:
+        description: "Uses SAM to both create a deployment zip for a lambda and upload to S3"
+        parameters:
+            lambdaFolder:
+                type: string
+            s3BucketFolder:
+                type: string
+        steps:
+            - run:
+                name: Validate index.js
+                command: node --check << parameters.lambdaFolder >>/index.js
+            - sam/install
+            - run:
+                name: Build deployment zip with SAM and upload to S3
+                command: cd << parameters.lambdaFolder >> && sam build && sam package --s3-bucket 's3://${AWS_BUCKET}/$(echo ${CIRCLE_TAG-$CIRCLE_BRANCH} | sed "s/\//_/g")-$(echo $CIRCLE_SHA1 | cut -c -7)/<< parameters.s3BucketFolder >>/function.zip'
+
     create_zip_upload_to_s3:
         description: "Creates a deployment zip for a lambda and uploads to S3"
         parameters:
