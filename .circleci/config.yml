@@ -40,29 +40,31 @@ jobs:
                         lambdaFolder: "fedramp-integrated-inventory-workbook/deployment"
                         lambdaRequirements: "fedramp-integrated-inventory-workbook/requirements.txt"
                         s3BucketFolder: "fedrampInventory"
-                    - sam_package_and_upload_to_s3:
-                        lambdaFolder: "checkUrlExists"
-                        s3BucketFolder: "checkUrlExists"
 
-#    sam_tests:
-#      executor: sam/default
-#      parameters:
-#          aws_bucket:
-#              type: string
-#              default: "${AWS_BUCKET}"
-#      steps:
-#        - when:
-#            condition: <<parameters.aws_bucket>>
-#            steps:
-#              - checkout
-#              - run:
-#                  name: Validate index.js
-#                  command: node --check checkUrlExists/lambda/index.js
-#              - check_git_secrets
-#              - lint
-#              - sam_package_and_upload_to_s3:
-#                  lambdaFolder: "checkUrlExists"
-#                  s3BucketFolder: "checkUrlExists"
+    # Make this a separate job because AWS SAM needs to run in
+    # the container specified in the template.yml
+    # If docker image is specified as in the build job
+    # the following sam build step will fail with the message:
+    # Error: Docker is unreachable. Docker needs to be running to build inside a container.
+    sam_tests:
+      executor: sam/default
+      parameters:
+          aws_bucket:
+              type: string
+              default: "${AWS_BUCKET}"
+      steps:
+        - when:
+            condition: <<parameters.aws_bucket>>
+            steps:
+              - checkout
+              - run:
+                  name: Validate index.js
+                  command: node --check checkUrlExists/lambda/index.js
+              - check_git_secrets
+              - lint
+              - sam_package_and_upload_to_s3:
+                  lambdaFolder: "checkUrlExists"
+                  s3BucketFolder: "checkUrlExists"
 
     js_tests:
         docker:
@@ -94,7 +96,7 @@ commands:
                 name: Build deployment zip with SAM and upload to S3
                 # Build the lambda deployment package with the --use-container option
                 # which will use the node version specified in the template.yml file
-                # after the Runtime property
+                # Runtime property
                 command: cd << parameters.lambdaFolder >> && sam build --use-container && sam package --s3-bucket ${AWS_BUCKET} --s3-prefix $(echo ${CIRCLE_TAG-$CIRCLE_BRANCH} | sed "s/\//_/g")-$(echo $CIRCLE_SHA1 | cut -c -7)/<< parameters.s3BucketFolder >>
 
     create_zip_upload_to_s3:
@@ -213,7 +215,7 @@ workflows:
                 filters:
                     tags:
                         only: /.*/
-#            - sam_tests:
-#                 filters:
-#                    tags:
-#                        only: /.*/
+            - sam_tests:
+                 filters:
+                    tags:
+                        only: /.*/
