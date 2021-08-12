@@ -43,10 +43,23 @@ jobs:
 
     sam_tests:
       executor: sam/default
+      parameters:
+          aws_bucket:
+              type: string
+              default: "${AWS_BUCKET}"
       steps:
-        - sam_package_and_upload_to_s3:
-            lambdaFolder: "checkUrlExists"
-            s3BucketFolder: "checkUrlExists"
+        - when:
+            condition: <<parameters.aws_bucket>>
+            steps:
+              - checkout
+              - run:
+                  name: Validate index.js
+                  command: node --check checkUrlExists/lambda/index.js
+              - check_git_secrets
+              - lint
+              - sam_package_and_upload_to_s3:
+                  lambdaFolder: "checkUrlExists"
+                  s3BucketFolder: "checkUrlExists"
 
     js_tests:
         docker:
@@ -73,9 +86,6 @@ commands:
             s3BucketFolder:
                 type: string
         steps:
-            - run:
-                name: Validate index.js
-                command: node --check << parameters.lambdaFolder >>/lambda/index.js
             - sam/install
             - run:
                 name: Build deployment zip with SAM and upload to S3
