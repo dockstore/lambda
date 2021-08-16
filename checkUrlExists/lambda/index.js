@@ -31,7 +31,11 @@ async function checkUrl(url) {
 }
 
 async function run(url) {
-  return curly.head(url);
+  const curlOpts = {
+    SSL_VERIFYPEER: false,
+    SSL_VERIFYHOST: false
+  }
+  return curly.head(url, curlOpts);
 }
 
 function returnResponse(fileFound) {
