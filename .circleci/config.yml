@@ -18,7 +18,6 @@ jobs:
                     - checkout
                     - node/install:
                         install-yarn: false
-                        #node-version: latest
                     - check_git_secrets
                     - lint
                     - create_zip_upload_to_s3:
