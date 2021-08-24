@@ -5,21 +5,15 @@
   "scripts": {
     "install-git-secrets": "./scripts/install-git-secrets.sh",
     "test": "jasmine",
-    "lint": "npx eslint **/*.js"
+    "lint": "npx eslint **/*.js",
+    "prepare": "husky install"
   },
   "dependencies": {},
-  "husky": {
-    "hooks": {
-      "pre-commit": "git secrets --pre_commit_hook -- ${HUSKY_GIT_PARAMS}",
-      "commit-msg": "git secrets --commit_msg_hook -- ${HUSKY_GIT_PARAMS}",
-      "prepare-commit-msg": "git secrets --prepare_commit_msg_hook -- ${HUSKY_GIT_PARAMS}"
-    }
-  },
   "devDependencies": {
     "eslint": "^7.28.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^3.4.0",
-    "husky": "^4.3.8",
+    "husky": "^7.0.0",
     "jasmine": "^3.6.3",
     "jasmine-spec-reporter": "^6.0.0",
     "prettier": "^2.3.1"
