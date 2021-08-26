@@ -1,39 +1,131 @@
+# Commit: b49a717 https://github.com/dockstore/dockstore-deploy/commits/b49a717
+
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  checkUrlExists
+  Creates an ApiGateway API to call a Lambda function to check whether a given URL exists
 
-  Sample SAM Template for checkUrlExists
+# Use a SAM template instead of a CloudFormation template so it is easier to specify
+# using ApiGateway to call the Lambda function
+# https://github.com/aws/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+# https://stackoverflow.com/questions/59633808/should-i-use-aws-sam-for-simple-lambda-functions
+
+# SAM Template for check-url-exists
 
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
     Timeout: 3
 
+Parameters:
+  DockstoreLambdaBucket:
+    Description: The s3 bucket with zip files of Dockstore lambda. Must be in same region and account as the CF stack. For us-east-1/prod, dockstore.lambda; for us-west-2/staging, dockstore.lambda.us-west. dev-dockstore.lambda for dev
+    Type: String
+    Default: 'dockstore.lambda'
+  DockstoreLambdaKey:
+    Description: The s3 key of the Dockstore lambda zip file
+    Type: String
+    Default: 'feature_upload-checkurl-41b0af5/checkUrlExists/d5769013e5f8e243f3029a21954d6763'
+  DockstoreLambdaMaxConcurrency:
+    Description: ReservedConcurrentExecutions for the Dockstore lambda to throttle requests. 0 uses AWS account's remaining unreserved lambda concurrency.
+    Type: Number
+    Default: 12
+    MinValue: 0
+    MaxValue: 1000
+  # https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-private-apis.html
+  CoreStack:
+    Description: The name of the core stack.
+    Type: String
+    MinLength: 1
+
 Resources:
-  LambdaFunction:
+  CheckUrlExistsApi:
+    Type: AWS::Serverless::Api
+    # https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-api.html
+    Properties:
+      Name: !Sub "${AWS::StackName}"
+      Description: 'Calls a Lambda function to check whether a given URL exists'
+      # The name of the stage, which API Gateway uses as the first path segment in the invoke Uniform Resource Identifier (URI)
+      # https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-api.html#sam-api-stagename
+      StageName: 'Prod'
+      # https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-property-api-endpointconfiguration.html
+      EndpointConfiguration:
+        Type: PRIVATE
+      Auth:
+        # https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-property-api-resourcepolicystatement.html#sam-api-resourcepolicystatement-sourcevpcwhitelist
+        ResourcePolicy:
+          # We must include both the Dockstore VPC and the VPC Endpoint
+          # and must have a resource policy for both the function and API
+          # https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-private-apis.html
+          IntrinsicVpceWhitelist:
+            - !Ref  CheckUrlExistsVpcEndpoint
+          IntrinsicVpcWhitelist:
+            -  Fn::ImportValue: !Sub '${CoreStack}-VpcId'
+
+
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-security-group.html
+  CheckUrlExistsSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+        GroupName: !Sub "${AWS::StackName}"
+        GroupDescription: Allow https in to port 443 for CheckUrlExists
+        VpcId:
+           Fn::ImportValue: !Sub '${CoreStack}-VpcId'
+        SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        # Limit security group egress traffic
+        # This entry prevents a default egress rule from being created
+        SecurityGroupEgress:
+        - CidrIp: 127.0.0.1/32
+          IpProtocol: "-1"
+
+  CheckUrlExistsVpcEndpoint:
+    Type: 'AWS::EC2::VPCEndpoint'
+    Properties:
+      PrivateDnsEnabled: true
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.execute-api'
+      VpcEndpointType: Interface
+      VpcId:
+        Fn::ImportValue: !Sub '${CoreStack}-VpcId'
+      SecurityGroupIds:
+        - !Ref CheckUrlExistsSecurityGroup
+      SubnetIds:
+        - Fn::ImportValue: !Sub '${CoreStack}-Subnet1'
+        - Fn::ImportValue: !Sub '${CoreStack}-Subnet2'
+
+  CheckUrlExistsFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
-      CodeUri: lambda/
+      FunctionName: !Sub "${AWS::StackName}"
+      Description: ' Checks whether a given URL exists'
+      CodeUri:
+        Bucket: !Ref DockstoreLambdaBucket
+        Key: !Ref DockstoreLambdaKey
+      ReservedConcurrentExecutions: !Ref DockstoreLambdaMaxConcurrency
       Handler: index.lambdaHandler
       Runtime: nodejs14.x
       Events:
-        Lambda:
+        ApiEvent:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
-            Path: /lambda
+            RestApiId: !Ref CheckUrlExistsApi
+            Path: /checkurlexists
             Method: get
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
   # Find out more about other implicit resources you can reference within SAM
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
-  LambdaApi:
-    Description: "API Gateway endpoint URL for Prod stage for the lambda function"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/lambda/"
-  LambdaFunction:
-    Description: "Lambda Function ARN"
-    Value: !GetAtt LambdaFunction.Arn
-  LambdaFunctionIamRole:
-    Description: "Implicit IAM Role created for the lambda function"
-    Value: !GetAtt LambdaFunctionRole.Arn
+  CheckUrlExistsApi:
+    Description: "API Gateway endpoint URL for Prod stage for the CheckUrlExists function"
+    Value: !Sub "https://${CheckUrlExistsApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/checkurlexists/"
+  CheckUrlExistsFunction:
+    Description: "Check URL Lambda Function ARN"
+    Value: !GetAtt CheckUrlExistsFunction.Arn
+  CheckUrlExistsFunctionIamRole:
+    Description: "Implicit IAM Role created for CheckUrlExists function"
+    Value: !GetAtt CheckUrlExistsFunctionRole.Arn
+

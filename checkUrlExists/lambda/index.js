@@ -33,7 +33,6 @@ async function checkUrl(url) {
 async function run(url) {
   const curlOpts = {
     SSL_VERIFYPEER: false,
-    SSL_VERIFYHOST: false,
   };
   return curly.head(url, curlOpts);
 }
