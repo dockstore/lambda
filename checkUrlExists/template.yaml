@@ -11,30 +11,6 @@ Globals:
     Timeout: 3
 
 Resources:
-  CheckUrlExistsApi:
-    Type: AWS::Serverless::Api
-    Properties:
-      Name: !Sub "CheckUrlExists-${DockstoreEnvironment}"
-      Description: 'Calls a Lambda function to check whether a given URL exists'
-      # The name of the stage, which API Gateway uses as the first path segment in the invoke Uniform Resource Identifier (URI)
-      # https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-api.html#sam-api-stagename
-      StageName: 'Prod'
-      # Users calling this API must be authenticated with IAM credentials
-      # Calls to this API succeed only if there is an IAM policy attached to the
-      # IAM user that represents the API caller, an IAM group that contains the
-      # user, or an IAM role that the user assumes
-      # https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-controlling-access-to-apis.html
-      # https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-controlling-access-to-apis-permissions.html
-      Auth:
-        DefaultAuthorizer: AWS_IAM
-        ResourcePolicy:
-          CustomStatements: {
-              Effect: 'Allow',
-              Action: 'execute-api:Invoke', 
-              Resource: ['execute-api:/*/*/*'],
-              Principal: '*'
-            }
-
   LambdaFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -49,15 +25,8 @@ Resources:
             Method: get
 
 Outputs:
-  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
   # Find out more about other implicit resources you can reference within SAM
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
-  LambdaApi:
-    Description: "API Gateway endpoint URL for Prod stage for the lambda function"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/lambda/"
   LambdaFunction:
     Description: "Lambda Function ARN"
     Value: !GetAtt LambdaFunction.Arn
-  LambdaFunctionIamRole:
-    Description: "Implicit IAM Role created for the lambda function"
-    Value: !GetAtt LambdaFunctionRole.Arn
