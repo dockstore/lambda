@@ -1,8 +1,7 @@
-const fs = require('fs')
-const path = require('path')
-const tls = require('tls')
+const fs = require("fs");
+const tls = require("tls");
 
-const { curly } = require('node-libcurl')
+const { curly } = require("node-libcurl");
 
 // important steps to get validation of https (as opposed to http) urls
 // https://stackoverflow.com/questions/63052127/protractor-node-libcurl-failed-ssl-peer-certificate-or-ssh-remote-key-was-not-o
@@ -10,9 +9,9 @@ const { curly } = require('node-libcurl')
 // When doing sam build the file must be in /tmp because other wise it cannot be read
 // due to ro file system in container
 // https://stackoverflow.com/questions/53810516/getting-error-aws-lambda-erofs-read-only-file-system-open-var-task-assets
-const certFilePath = '/tmp/cacert.pem'
-const tlsData = tls.rootCertificates.join('\n')
-fs.writeFileSync(certFilePath, tlsData)
+const certFilePath = "/tmp/cacert.pem";
+const tlsData = tls.rootCertificates.join("\n");
+fs.writeFileSync(certFilePath, tlsData);
 
 /**
  * TODO: Change to array of URLs to parse
@@ -46,8 +45,8 @@ async function checkUrl(url) {
 }
 
 async function run(url) {
-    const curlOpts = {
-        caInfo: certFilePath,
+  const curlOpts = {
+    caInfo: certFilePath,
   };
   return curly.head(url, curlOpts);
 }
