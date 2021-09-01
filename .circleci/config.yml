@@ -1,7 +1,8 @@
 version: 2.1
 orbs:
   aws-s3: circleci/aws-s3@1.0.0
-  node: circleci/node@2.0.2
+  node: circleci/node@4.7.0
+  sam: circleci/aws-sam-serverless@3.0
 jobs:
     build:
         docker:
@@ -17,7 +18,6 @@ jobs:
                     - checkout
                     - node/install:
                         install-yarn: false
-                        node-version: latest
                     - check_git_secrets
                     - lint
                     - create_zip_upload_to_s3:
@@ -39,6 +39,32 @@ jobs:
                         lambdaFolder: "fedramp-integrated-inventory-workbook/deployment"
                         lambdaRequirements: "fedramp-integrated-inventory-workbook/requirements.txt"
                         s3BucketFolder: "fedrampInventory"
+
+    # Make this a separate job because AWS SAM needs to run in
+    # the container specified in the template.yml
+    # If docker image is specified as in the build job
+    # the following sam build step will fail with the message:
+    # Error: Docker is unreachable. Docker needs to be running to build inside a container.
+    sam_tests:
+      executor: sam/default
+      parameters:
+          aws_bucket:
+              type: string
+              default: "${AWS_BUCKET}"
+      steps:
+        - when:
+            condition: <<parameters.aws_bucket>>
+            steps:
+              - checkout
+              - run:
+                  name: Validate index.js
+                  command: node --check checkUrlExists/lambda/index.js
+              - check_git_secrets
+              - lint
+              - sam_package_and_upload_to_s3:
+                  lambdaFolder: "checkUrlExists"
+                  s3BucketFolder: "checkUrlExists"
+
     js_tests:
         docker:
             - image: circleci/buildpack-deps:18.04-browsers
@@ -56,6 +82,22 @@ jobs:
               dependencies: "fedramp-integrated-inventory-workbook/requirements.txt"
 
 commands:
+    sam_package_and_upload_to_s3:
+        description: "Uses SAM to both create a deployment zip for a lambda and upload to S3"
+        parameters:
+            lambdaFolder:
+                type: string
+            s3BucketFolder:
+                type: string
+        steps:
+            - sam/install
+            - run:
+                name: Build deployment zip with SAM and upload to S3
+                # Build the lambda deployment package with the --use-container option
+                # which will use the node version specified in the template.yml file
+                # Runtime property
+                command: cd << parameters.lambdaFolder >> && sam build --use-container && sam package --s3-bucket ${AWS_BUCKET} --s3-prefix $(echo ${CIRCLE_TAG-$CIRCLE_BRANCH} | sed "s/\//_/g")-$(echo $CIRCLE_SHA1 | cut -c -7)/<< parameters.s3BucketFolder >>
+
     create_zip_upload_to_s3:
         description: "Creates a deployment zip for a lambda and uploads to S3"
         parameters:
@@ -170,5 +212,9 @@ workflows:
                         only: /.*/
             - python_tests:
                 filters:
+                    tags:
+                        only: /.*/
+            - sam_tests:
+                 filters:
                     tags:
                         only: /.*/

@@ -1,6 +1,6 @@
 "use strict";
 
-const app = require("../../app.js");
+const app = require("../../index.js");
 var event, context;
 
 describe("Tests index", function () {
