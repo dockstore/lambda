@@ -206,6 +206,8 @@ workflows:
                 filters:
                     tags:
                         only: /.*/
+                context:
+                  - aws-lambda
             - js_tests:
                 filters:
                     tags:
@@ -218,3 +220,5 @@ workflows:
                  filters:
                     tags:
                         only: /.*/
+                 context:
+                   - aws-lambda
