@@ -82,9 +82,9 @@ jobs:
           dependencies: "fedramp-integrated-inventory-workbook/requirements.txt"
 
   snyk:
+    docker:
+      - image: circleci/node:14.17.3
     steps:
-      - node/install:
-          install-yarn: false
       - run:
           name: Install snyk
           command: npm install -g snyk
