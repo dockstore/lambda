@@ -81,6 +81,25 @@ jobs:
           sourceDirectory: "fedramp-integrated-inventory-workbook/deployment"
           dependencies: "fedramp-integrated-inventory-workbook/requirements.txt"
 
+  snyk:
+    steps:
+      - checkout
+      - node/install:
+          install-yarn: false
+      - run:
+          name: Install snyk
+          command: npm install -g snyk
+      - run:
+          name: Authorize snyk
+          command: snyk auth ${SNYK_TOKEN}
+      - run:
+          name: Snyk test root
+          command: snyk test --file=package-lock.json
+      - run:
+          name: Snyk test checkUrlExists
+          command: snyk test --file=checkUrlExists/lambda/package-lock.json
+
+
 commands:
   sam_package_and_upload_to_s3:
     description: "Uses SAM to both create a deployment zip for a lambda and upload to S3"
@@ -142,6 +161,7 @@ commands:
           to: 's3://${AWS_BUCKET}/$(echo ${CIRCLE_TAG-$CIRCLE_BRANCH} | sed "s/\//_/g")-$(echo $CIRCLE_SHA1 | cut -c -7)/<< parameters.s3BucketFolder >>/function.zip'
           arguments: |
             --cache-control max-age=0
+
   check_git_secrets:
     description: "Installs git-secrets and scan repository to check for secrets"
     steps:
@@ -221,4 +241,6 @@ workflows:
               only: /.*/
           context:
             - aws-lambda
-
+      - snyk
+          context:
+            - snyk
