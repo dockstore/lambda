@@ -83,7 +83,6 @@ jobs:
 
   snyk:
     steps:
-      - checkout
       - node/install:
           install-yarn: false
       - run:
