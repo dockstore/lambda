@@ -84,7 +84,12 @@ jobs:
   snyk:
     docker:
       - image: circleci/node:14.17.3
+    environment:
+      NPM_CONFIG_PREFIX: "~/.npm-global"
     steps:
+      - run:
+          name: Configure for npm install -g
+          command: echo 'export PATH=~/.npm-global/bin:$PATH' >> $BASH_ENV
       - run:
           name: Install snyk
           command: npm install -g snyk
