@@ -241,6 +241,6 @@ workflows:
               only: /.*/
           context:
             - aws-lambda
-      - snyk
+      - snyk:
           context:
             - snyk
