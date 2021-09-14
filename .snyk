@@ -7,4 +7,29 @@ ignore:
         reason: None Given
         expires: 2021-10-14T00:06:35.412Z
         created: 2021-09-14T00:06:35.419Z
+  SNYK-JS-ANSIREGEX-1583908:
+    - '*':
+        reason: None Given
+        expires: 2021-10-14T00:29:48.239Z
+        created: 2021-09-14T00:29:48.245Z
+  SNYK-JS-TAR-1579152:
+    - '*':
+        reason: None Given
+        expires: 2021-10-14T00:30:53.709Z
+        created: 2021-09-14T00:30:53.717Z
+  SNYK-JS-TAR-1579155:
+    - '*':
+        reason: None Given
+        expires: 2021-10-14T00:31:13.574Z
+        created: 2021-09-14T00:31:13.580Z
+  SNYK-JS-TAR-1536758:
+    - '*':
+        reason: None Given
+        expires: 2021-10-14T00:31:38.012Z
+        created: 2021-09-14T00:31:38.018Z
+  SNYK-JS-TAR-1579147:
+    - '*':
+        reason: None Given
+        expires: 2021-10-14T00:31:53.467Z
+        created: 2021-09-14T00:31:53.473Z
 patch: {}
