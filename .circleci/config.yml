@@ -96,10 +96,10 @@ jobs:
           command: snyk auth ${SNYK_TOKEN}
       - run:
           name: Snyk test root
-          command: snyk test --file=package-lock.json
+          command: snyk monitor --file=package-lock.json --org=denis-yuen
       - run:
           name: Snyk test checkUrlExists
-          command: snyk test --file=checkUrlExists/lambda/package-lock.json
+          command: snyk monitor --file=checkUrlExists/lambda/package-lock.json --org=denis-yuen
 
 
 commands:
