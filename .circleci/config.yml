@@ -1,6 +1,6 @@
 version: 2.1
 orbs:
-  aws-s3: circleci/aws-s3@1.0.0
+  aws-s3: circleci/aws-s3@3.0.0
   node: circleci/node@4.7.0
   sam: circleci/aws-sam-serverless@3.0
 jobs:
