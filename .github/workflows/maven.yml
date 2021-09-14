@@ -41,11 +41,11 @@ jobs:
      - name: Run snyk on WDLParsingFunction
        working-directory: ./wdl-parsing
        uses: snyk/actions/maven-3-jdk-11@master
-         continue-on-error: true # To make sure that SARIF upload gets called
-         env:
-           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-         with:
-           args: --file=WDLParsingFunction/pom.xml --sarif-file-output=snyk.sarif
+       continue-on-error: true # To make sure that SARIF upload gets called
+       env:
+         SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+       with:
+         args: --file=WDLParsingFunction/pom.xml --sarif-file-output=snyk.sarif
 
 
 
