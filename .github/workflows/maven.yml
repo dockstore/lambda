@@ -49,4 +49,3 @@ jobs:
            SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
          with:
            args: --file=wdl-parsing/WDLParsingFunction/pom.xml --sarif-file-output=snyk.sarif
-
