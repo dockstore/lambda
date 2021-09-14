@@ -48,4 +48,5 @@ jobs:
          env:
            SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
          with:
-           args: --file=wdl-parsing/WDLParsingFunction/pom.xml --sarif-file-output=snyk.sarif
+           command: monitor
+           args: --file=wdl-parsing/WDLParsingFunction/pom.xml --sarif-file-output=snyk.sarif --org=denis-yuen
