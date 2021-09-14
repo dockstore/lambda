@@ -78,11 +78,37 @@ jobs:
           sourceDirectory: "fedramp-integrated-inventory-workbook/deployment"
           dependencies: "fedramp-integrated-inventory-workbook/requirements.txt"
 
-  snyk:
+  snyk_test:
     docker:
       - image: circleci/node:14.17.3
     environment:
       NPM_CONFIG_PREFIX: "~/.npm-global"
+    steps:
+      - setup_for_snyk
+      - run:
+          name: Snyk test root
+          command: snyk test --file=package-lock.json
+      - run:
+          name: Snyk test checkUrlExists
+          command: snyk test --file=checkUrlExists/lambda/package-lock.json
+
+  snyk_monitor:
+    docker:
+      - image: circleci/node:14.17.3
+    environment:
+      NPM_CONFIG_PREFIX: "~/.npm-global"
+    steps:
+      - setup_for_snyk
+      - run:
+          name: Snyk monitor root
+          command: snyk monitor --file=package-lock.json --org=denis-yuen
+      - run:
+          name: Snyk monitor checkUrlExists
+          command: snyk monitor --file=checkUrlExists/lambda/package-lock.json --org=denis-yuen
+
+commands:
+  setup_for_snyk:
+    description: Install and authorize Snyk
     steps:
       - checkout
       - run:
@@ -94,15 +120,7 @@ jobs:
       - run:
           name: Authorize snyk
           command: snyk auth ${SNYK_TOKEN}
-      - run:
-          name: Snyk test root
-          command: snyk monitor --file=package-lock.json --org=denis-yuen
-      - run:
-          name: Snyk test checkUrlExists
-          command: snyk monitor --file=checkUrlExists/lambda/package-lock.json --org=denis-yuen
 
-
-commands:
   sam_package_and_upload_to_s3:
     description: "Uses SAM to both create a deployment zip for a lambda and upload to S3"
     parameters:
@@ -243,6 +261,14 @@ workflows:
               only: /.*/
           context:
             - aws-lambda
-      - snyk:
+      - snyk_test:
           context:
             - snyk
+      # Monitor sends to dashboard
+      - snyk_monitor:
+          context:
+            - snyk
+          filters:
+            branches:
+              only: /^develop/
+
