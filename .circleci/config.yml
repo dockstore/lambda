@@ -27,9 +27,6 @@ jobs:
                 lambdaFolder: "edge-lambda-for-s3/deployment"
                 s3BucketFolder: "edgeLambdaForS3404s"
             - create_zip_upload_to_s3:
-                lambdaFolder: "serverlessrepo-cloudwatch-a-cloudwatchalarmtoslack/deployment"
-                s3BucketFolder: "serverlessRepoCloudwatchAlarmToSlack"
-            - create_zip_upload_to_s3:
                 lambdaFolder: "upsertGitHubTag/deployment"
                 s3BucketFolder: "upsertGitHubTag"
             - create_zip_upload_to_s3:
