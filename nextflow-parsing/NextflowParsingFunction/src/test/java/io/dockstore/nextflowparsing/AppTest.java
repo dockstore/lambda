@@ -16,12 +16,48 @@
 
 package io.dockstore.nextflowparsing;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import dockstore.openapi.client.model.LanguageParsingRequest;
+import dockstore.openapi.client.model.LanguageParsingResponse;
+import java.net.HttpURLConnection;
+import javax.ws.rs.core.MediaType;
 import org.junit.jupiter.api.Test;
 
 public class AppTest {
 
   @Test
-  public void successfulResponse() {
+  public void successfulResponse() throws JsonProcessingException {
+    LanguageParsingRequest request = new LanguageParsingRequest();
+    request.setBranch("addTestingFinally");
+    request.setUri("https://github.com/nf-core/exoseq.git");
+    request.setDescriptorRelativePathInGit("nextflow.config");
     App app = new App();
+    APIGatewayProxyRequestEvent requestEvent = new APIGatewayProxyRequestEvent();
+    ObjectMapper objectMapper = new ObjectMapper();
+    requestEvent.setBody(objectMapper.writeValueAsString(request));
+    APIGatewayProxyResponseEvent result = app.handleRequest(requestEvent, null);
+    System.out.println(result.getBody());
+    assertEquals(HttpURLConnection.HTTP_OK, result.getStatusCode().intValue());
+    assertEquals(MediaType.APPLICATION_JSON, result.getHeaders().get("Content-Type"));
+    String content = result.getBody();
+    assertNotNull(content);
+    LanguageParsingResponse response =
+        objectMapper.readValue(content, LanguageParsingResponse.class);
+    assertNotNull(response.getVersionTypeValidation());
+    assertNotNull(response.getVersionTypeValidation().getValid());
+    assertTrue(response.getVersionTypeValidation().getValid());
+    assertNotNull(response.getClonedRepositoryAbsolutePath());
+    assertTrue(response.getClonedRepositoryAbsolutePath().contains("/tmp"));
+    assertNotNull(response.getSecondaryFilePaths());
+    assertEquals(8, response.getSecondaryFilePaths().size());
+    assertEquals("Nextflow Exome Sequencing Best Practice analysis pipeline.", response.getDescription());
+    System.out.println(response.getClonedRepositoryAbsolutePath());
   }
 }

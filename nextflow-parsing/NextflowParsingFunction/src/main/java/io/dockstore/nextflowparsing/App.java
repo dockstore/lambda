@@ -31,7 +31,6 @@ import java.io.StringWriter;
 import java.net.HttpURLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -50,58 +49,34 @@ public class App
   ObjectMapper mapper = new ObjectMapper();
 
   /**
-   * Get a language parsing response by running womtool.
+   * Get a language parsing response from NextflowHandler.
    *
-   * @param descriptorAbsolutePathString Absolute path to the main descriptor file
-   * @return LanguageParsingResponse constructed after running womtool
+   * @param nextflowHandler NextflowHandler that contains all relevant Nextflow information
+   * @return LanguageParsingResponse constructed after getting information from NextflowHandler
    */
-  public static LanguageParsingResponse getResponse(String descriptorAbsolutePathString) {
+  public static LanguageParsingResponse getResponse(NextflowHandler nextflowHandler) {
     LanguageParsingResponse response = new LanguageParsingResponse();
+    String descriptorAbsolutePathString = nextflowHandler.getDescriptorTempAbsolutePath();
     response.setClonedRepositoryAbsolutePath(descriptorAbsolutePathString);
-    try {
-      List<String> strings = new ArrayList<>();
-
-      // The first two lines aren't actual paths.
-      VersionTypeValidation versionTypeValidation = new VersionTypeValidation();
-      if (strings.get(0).equals("Success!")
-          && strings.get(1).equals("List of Workflow dependencies is:")) {
-        versionTypeValidation.setValid(true);
-        response.setVersionTypeValidation(versionTypeValidation);
-        handleSuccessResponse(response, strings);
-      } else {
-        versionTypeValidation.setValid(false);
-        Map<String, String> messageMap = new HashMap<>();
-        // TODO: Using the main descriptor path as the key until we figure out how to get the actual
-        //  file that has the error
-        messageMap.put(descriptorAbsolutePathString, "Placeholder");
-        versionTypeValidation.setMessage(messageMap);
-        response.setVersionTypeValidation(versionTypeValidation);
-      }
-      return response;
-    } catch (StackOverflowError e) {
-      VersionTypeValidation versionTypeValidation = new VersionTypeValidation();
+    VersionTypeValidation versionTypeValidation = nextflowHandler.getVersionTypeValidation();
+    if (nextflowHandler.getDescriptorContents() == null) {
       versionTypeValidation.setValid(false);
       Map<String, String> messageMap = new HashMap<>();
-      // TODO: Using the main descriptor path as the key until we figure out how to get the actual
-      //  file that has the error
-      messageMap.put(descriptorAbsolutePathString, "Encountered recursive imports");
+      // TODO: Don't use temp absolute path
+      messageMap.put(nextflowHandler.getDescriptorTempAbsolutePath(), "File not found");
       versionTypeValidation.setMessage(messageMap);
-      response.setVersionTypeValidation(versionTypeValidation);
-      return response;
     }
-  }
-
-  // The first two lines aren't actual paths.
-  // It looks like "Success!" and "List of Workflow dependencies is:"
-  private static void handleSuccessResponse(
-      LanguageParsingResponse response, List<String> strings) {
-    strings.remove(0);
-    strings.remove(0);
-    // If there are no imports, womtool says None
-    if (strings.get(0).equals("None")) {
-      strings.remove(0);
+    if (nextflowHandler.getConfiguration() == null) {
+      versionTypeValidation.setValid(false);
     }
-    response.setSecondaryFilePaths(strings);
+    // TODO: This should be an array, don't join
+    response.setAuthor(
+        String.join(", ", NextflowUtilities.getAuthors(nextflowHandler.getConfiguration())));
+    response.setDescription(NextflowUtilities.getDescription(nextflowHandler.getConfiguration()));
+    versionTypeValidation.setValid(true);
+    response.setVersionTypeValidation(versionTypeValidation);
+    response.setSecondaryFilePaths(nextflowHandler.getSecondaryDescriptorPaths());
+    return response;
   }
 
   @Override
@@ -118,7 +93,7 @@ public class App
             mapper.readValue(input.getBody(), LanguageParsingRequest.class);
         try {
           String s =
-              parseWdlFile(
+              parseFile(
                   request.getUri(),
                   request.getBranch(),
                   request.getDescriptorRelativePathInGit(),
@@ -150,7 +125,7 @@ public class App
     }
   }
 
-  private String parseWdlFile(
+  private String parseFile(
       String uri,
       String branch,
       String descriptorRelativePathInGit,
@@ -165,7 +140,21 @@ public class App
         .call();
     Path descriptorAbsolutePath = tempDirWithPrefix.resolve(descriptorRelativePathInGit);
     String descriptorAbsolutePathString = descriptorAbsolutePath.toString();
-    LanguageParsingResponse response = getResponse(descriptorAbsolutePathString);
+    NextflowHandler nextflowHandler = new NextflowHandler();
+    nextflowHandler.setDescriptorTempAbsolutePath(descriptorAbsolutePathString);
+    nextflowHandler.setConfiguration(
+        NextflowUtilities.grabConfig(new File(descriptorAbsolutePathString)));
+    try {
+      String s = Files.readString(Path.of(descriptorAbsolutePathString));
+      nextflowHandler.setDescriptorContents(s);
+      List<String> strings = nextflowHandler.processImports(
+          nextflowHandler.getDescriptorContents());
+      nextflowHandler.setSecondaryDescriptorPaths(strings);
+    } catch (IOException e) {
+      LOGGER.error(e.getMessage());
+      nextflowHandler.setDescriptorContents(null);
+    }
+    LanguageParsingResponse response = getResponse(nextflowHandler);
     response.setLanguageParsingRequest(languageParsingRequest);
     // Deleting a directory without Common IO
     Files.walk(tempDirWithPrefix)
