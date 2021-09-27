@@ -22,7 +22,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dockstore.openapi.client.model.LanguageParsingRequest;
 import dockstore.openapi.client.model.LanguageParsingResponse;
@@ -33,10 +32,10 @@ import org.junit.jupiter.api.Test;
 public class AppTest {
 
   @Test
-  public void successfulResponse() throws JsonProcessingException {
+  public void successfulResponse() throws Exception {
     LanguageParsingRequest request = new LanguageParsingRequest();
-    request.setBranch("addTestingFinally");
-    request.setUri("https://github.com/nf-core/exoseq.git");
+    request.setBranch("2.3");
+    request.setUri("https://github.com/SciLifeLab/Sarek.git");
     request.setDescriptorRelativePathInGit("nextflow.config");
     App app = new App();
     APIGatewayProxyRequestEvent requestEvent = new APIGatewayProxyRequestEvent();
@@ -56,8 +55,13 @@ public class AppTest {
     assertNotNull(response.getClonedRepositoryAbsolutePath());
     assertTrue(response.getClonedRepositoryAbsolutePath().contains("/tmp"));
     assertNotNull(response.getSecondaryFilePaths());
-    assertEquals(8, response.getSecondaryFilePaths().size());
-    assertEquals("Nextflow Exome Sequencing Best Practice analysis pipeline.", response.getDescription());
+    final int knownSecondaryFilesCount = 23;
+    assertEquals(
+        knownSecondaryFilesCount,
+        response.getSecondaryFilePaths().size(),
+        "Should be 4 bin files, 16 config files, 2 lib files, and main.nf");
+    assertEquals("Sarek - Workflow For Somatic And Germline Variations", response.getDescription());
     System.out.println(response.getClonedRepositoryAbsolutePath());
+    assertEquals("Szilvester Juhos, Maxime Garcia", response.getAuthor());
   }
 }

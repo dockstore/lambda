@@ -17,28 +17,31 @@
 package io.dockstore.nextflowparsing;
 
 import com.google.common.base.CharMatcher;
-import dockstore.openapi.client.model.SourceFile;
 import dockstore.openapi.client.model.VersionTypeValidation;
+import java.io.File;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import org.apache.commons.configuration2.Configuration;
-import org.apache.commons.io.FilenameUtils;
 
 public class NextflowHandler {
+
   private String descriptorContents;
   private String descriptorTempAbsolutePath;
   private Configuration configuration;
   private VersionTypeValidation versionTypeValidation = new VersionTypeValidation();
   private List<String> secondaryDescriptorPaths;
-  protected static final Pattern IMPORT_PATTERN = Pattern.compile("^\\s*include.+?from.+?'.+?'", Pattern.DOTALL | Pattern.MULTILINE);
-  private static final Pattern INCLUDE_CONFIG_PATTERN = Pattern.compile("(?i)(?m)^[ \t]*includeConfig(.*)");
+  protected static final Pattern IMPORT_PATTERN =
+      Pattern.compile("^\\s*include.+?from.+?'.+?'", Pattern.DOTALL | Pattern.MULTILINE);
+  private static final Pattern INCLUDE_CONFIG_PATTERN =
+      Pattern.compile("(?i)(?m)^[ \t]*includeConfig(.*)");
 
   public String getDescriptorTempAbsolutePath() {
     return descriptorTempAbsolutePath;
@@ -56,6 +59,12 @@ public class NextflowHandler {
     this.descriptorContents = descriptorContents;
   }
 
+  /**
+   * Get the relative path imports of the workflow.
+   *
+   * @param content The contents of the main descriptor file
+   * @return
+   */
   public List<String> processImports(String content) {
     // FIXME: see{@link NextflowUtilities#grabConfig(String) grabConfig} method for comments on why
 
@@ -66,16 +75,15 @@ public class NextflowHandler {
       suspectedConfigImports.add(CharMatcher.is('\'').trimFrom(matcher.group(1).trim()));
     }
     List<String> imports = new ArrayList<>();
-    Configuration configuration;
     try {
       configuration = NextflowUtilities.grabConfig(content);
     } catch (Exception e) {
-      VersionTypeValidation versionTypeValidation = this.getVersionTypeValidation();
-      versionTypeValidation.setValid(false);
+      VersionTypeValidation newVersionTypeValidation = this.getVersionTypeValidation();
+      newVersionTypeValidation.setValid(false);
       Map<String, String> messageMap = new HashMap<>();
       messageMap.put(this.getDescriptorTempAbsolutePath(), e.getMessage());
-      versionTypeValidation.setMessage(messageMap);
-      this.setVersionTypeValidation(versionTypeValidation);
+      newVersionTypeValidation.setMessage(messageMap);
+      this.setVersionTypeValidation(newVersionTypeValidation);
       return imports;
     }
 
@@ -86,15 +94,31 @@ public class NextflowHandler {
     }
 
     suspectedConfigImports.add(mainScriptPath);
-
-
-    // source files in /lib seem to be automatically added to the script classpath
-    // binaries are also there and will need to be ignored
-//    List<String> strings = sourceCodeRepoInterface.listFiles(repositoryId, "/", version.getReference());
-//    handleNextflowImports(repositoryId, version, sourceCodeRepoInterface, imports, strings, "lib");
-//    handleNextflowImports(repositoryId, version, sourceCodeRepoInterface, imports, strings, "bin");
+    imports.addAll(handleNextflowImports("bin"));
+    imports.addAll(handleNextflowImports("lib"));
     imports.addAll(suspectedConfigImports);
     return imports;
+  }
+
+  /**
+   * Get relative file paths from directory.
+   *
+   * @param directory The directory to get files from
+   * @return List of files relative to the main descriptor file
+   */
+  private List<String> handleNextflowImports(String directory) {
+    File binDirectory = Paths.get(descriptorTempAbsolutePath).resolveSibling(directory).toFile();
+    List<String> binFiles = new ArrayList<>();
+    String[] binFileNames =
+        binDirectory.list((current, name) -> !(new File(current, name).isDirectory()));
+    if (binFileNames != null) {
+      List<String> binFileNamesList = List.of(binFileNames);
+      binFiles =
+          binFileNamesList.stream()
+              .map(string -> directory + "/" + string)
+              .collect(Collectors.toList());
+    }
+    return binFiles;
   }
 
   public Configuration getConfiguration() {
@@ -109,8 +133,7 @@ public class NextflowHandler {
     return this.versionTypeValidation;
   }
 
-  public void setVersionTypeValidation(
-      VersionTypeValidation versionTypeValidation) {
+  public void setVersionTypeValidation(VersionTypeValidation versionTypeValidation) {
     this.versionTypeValidation = versionTypeValidation;
   }
 

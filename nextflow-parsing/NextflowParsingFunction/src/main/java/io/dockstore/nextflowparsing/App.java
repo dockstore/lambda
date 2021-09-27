@@ -147,8 +147,8 @@ public class App
     try {
       String s = Files.readString(Path.of(descriptorAbsolutePathString));
       nextflowHandler.setDescriptorContents(s);
-      List<String> strings = nextflowHandler.processImports(
-          nextflowHandler.getDescriptorContents());
+      List<String> strings =
+          nextflowHandler.processImports(nextflowHandler.getDescriptorContents());
       nextflowHandler.setSecondaryDescriptorPaths(strings);
     } catch (IOException e) {
       LOGGER.error(e.getMessage());

@@ -102,6 +102,38 @@ public final class NextflowUtilities {
   }
 
   /**
+   * Get authors of the workflow.
+   *
+   * @param configuration The Nextflow configuration
+   * @return
+   */
+  public static List<String> getAuthors(Configuration configuration) {
+    List<String> authorsList = new ArrayList<>();
+    if (configuration.containsKey("manifest.author")) {
+      String[] authors =
+          Arrays.stream(configuration.getString("manifest.author").split(","))
+              .map(String::trim)
+              .toArray(String[]::new);
+      authorsList = Arrays.asList(authors);
+    }
+    return authorsList;
+  }
+
+  /**
+   * Get the description of the workflow.
+   *
+   * @param configuration The Nextflow configuration
+   * @return
+   */
+  public static String getDescription(Configuration configuration) {
+    if (configuration.containsKey("manifest.description")) {
+      return configuration.getString("manifest.description");
+    } else {
+      return null;
+    }
+  }
+
+  /**
    * Use nextflow to read nextflow configs Nextflow binary assumes workflow is in the working
    * directory (with no other workflows) TODO: nextflow normally uses DRIP, investigate to see if
    * this helps us https://github.com/ninjudd/drip
@@ -121,23 +153,6 @@ public final class NextflowUtilities {
     } catch (RuntimeException | IOException | InterruptedException e) {
       LOG.error("Problem running Nextflow: ", e);
       throw new NextflowParsingException("Could not run Nextflow", e);
-    }
-  }
-
-  public static List<String> getAuthors(Configuration configuration) {
-    List<String> authorsList = new ArrayList<>();
-    if (configuration.containsKey("manifest.author")) {
-      String[] authors = configuration.getString("manifest.author").split(",");
-      authorsList = Arrays.asList(authors);
-    }
-    return authorsList;
-  }
-
-  public static String getDescription(Configuration configuration) {
-    if (configuration.containsKey("manifest.description")) {
-      return configuration.getString("manifest.description");
-    } else {
-      return null;
     }
   }
 
