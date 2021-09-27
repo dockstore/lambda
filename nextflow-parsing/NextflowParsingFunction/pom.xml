@@ -203,7 +203,8 @@
       <plugin>
         <artifactId>maven-checkstyle-plugin</artifactId>
         <configuration>
-          <configLocation>checkstyle.xml</configLocation>
+          <!-- Develop's latest commit for this checkstyle file -->
+          <configLocation>https://raw.githubusercontent.com/dockstore/lambda/a6ae4d98592b0d057c495bdb7b40c54e062ff998/wdl-parsing/WDLParsingFunction/checkstyle.xml</configLocation>
           <includeResources>true</includeResources>
           <includeTestResources>true</includeTestResources>
           <includeTestSourceDirectory>true</includeTestSourceDirectory>
