@@ -15,6 +15,30 @@
     <jersey-version>2.34</jersey-version>
     <jackson-version>2.12.3</jackson-version>
   </properties>
+  <repositories>
+    <repository>
+      <id>artifacts.oicr.on.ca.snapshot</id>
+      <name>artifacts.oicr.on.ca.snapshot</name>
+      <url>https://artifacts.oicr.on.ca/artifactory/collab-snapshot</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+    <repository>
+      <id>artifacts.oicr.on.ca.release</id>
+      <name>artifacts.oicr.on.ca.release</name>
+      <url>https://artifacts.oicr.on.ca/artifactory/collab-release</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
   <dependencies>
     <dependency>
       <groupId>org.eclipse.jgit</groupId>
