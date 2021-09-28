@@ -94,9 +94,6 @@ public class App
         try {
           String s =
               parseFile(
-                  request.getUri(),
-                  request.getBranch(),
-                  request.getDescriptorRelativePathInGit(),
                   request);
           return response.withStatusCode(HttpURLConnection.HTTP_OK).withBody(s);
         } catch (IOException e) {
@@ -126,19 +123,16 @@ public class App
   }
 
   private String parseFile(
-      String uri,
-      String branch,
-      String descriptorRelativePathInGit,
       LanguageParsingRequest languageParsingRequest)
       throws IOException, GitAPIException {
     Path tempDirWithPrefix = Files.createTempDirectory("clonedRepository");
     Git.cloneRepository()
         .setCloneAllBranches(false)
-        .setBranch(branch)
-        .setURI(uri)
+        .setBranch(languageParsingRequest.getBranch())
+        .setURI(languageParsingRequest.getUri())
         .setDirectory(tempDirWithPrefix.toFile())
         .call();
-    Path descriptorAbsolutePath = tempDirWithPrefix.resolve(descriptorRelativePathInGit);
+    Path descriptorAbsolutePath = tempDirWithPrefix.resolve(languageParsingRequest.getDescriptorRelativePathInGit());
     String descriptorAbsolutePathString = descriptorAbsolutePath.toString();
     NextflowHandler nextflowHandler = new NextflowHandler();
     nextflowHandler.setDescriptorTempAbsolutePath(descriptorAbsolutePathString);
