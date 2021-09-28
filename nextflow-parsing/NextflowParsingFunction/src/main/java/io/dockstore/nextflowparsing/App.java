@@ -143,9 +143,10 @@ public class App
     NextflowHandler nextflowHandler = new NextflowHandler();
     nextflowHandler.setDescriptorTempAbsolutePath(descriptorAbsolutePathString);
     nextflowHandler.setConfiguration(
-        NextflowUtilities.grabConfig(new File(descriptorAbsolutePathString)));
+        NextflowUtilities.getConfig(new File(descriptorAbsolutePathString)));
     try {
       String s = Files.readString(Path.of(descriptorAbsolutePathString));
+
       nextflowHandler.setDescriptorContents(s);
       List<String> strings =
           nextflowHandler.processImports(nextflowHandler.getDescriptorContents());

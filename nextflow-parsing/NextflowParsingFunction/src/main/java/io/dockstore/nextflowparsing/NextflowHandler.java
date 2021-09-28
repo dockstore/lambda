@@ -18,10 +18,10 @@ package io.dockstore.nextflowparsing;
 
 import com.google.common.base.CharMatcher;
 import dockstore.openapi.client.model.VersionTypeValidation;
+import groovy.util.ConfigObject;
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -29,13 +29,12 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import org.apache.commons.configuration2.Configuration;
 
 public class NextflowHandler {
 
   private String descriptorContents;
   private String descriptorTempAbsolutePath;
-  private Configuration configuration;
+  private ConfigObject configuration;
   private VersionTypeValidation versionTypeValidation = new VersionTypeValidation();
   private List<String> secondaryDescriptorPaths;
   protected static final Pattern IMPORT_PATTERN =
@@ -67,7 +66,6 @@ public class NextflowHandler {
    */
   public List<String> processImports(String content) {
     // FIXME: see{@link NextflowUtilities#grabConfig(String) grabConfig} method for comments on why
-
     // we have to look at imports in this crummy way
     final Matcher matcher = INCLUDE_CONFIG_PATTERN.matcher(content);
     Set<String> suspectedConfigImports = new HashSet<>();
@@ -75,29 +73,28 @@ public class NextflowHandler {
       suspectedConfigImports.add(CharMatcher.is('\'').trimFrom(matcher.group(1).trim()));
     }
     List<String> imports = new ArrayList<>();
-    try {
-      configuration = NextflowUtilities.grabConfig(content);
-    } catch (Exception e) {
-      VersionTypeValidation newVersionTypeValidation = this.getVersionTypeValidation();
-      newVersionTypeValidation.setValid(false);
-      Map<String, String> messageMap = new HashMap<>();
-      messageMap.put(this.getDescriptorTempAbsolutePath(), e.getMessage());
-      newVersionTypeValidation.setMessage(messageMap);
-      this.setVersionTypeValidation(newVersionTypeValidation);
-      return imports;
-    }
 
     // add the Nextflow scripts
     String mainScriptPath = "main.nf";
-    if (configuration.containsKey("manifest.mainScript")) {
-      mainScriptPath = configuration.getString("manifest.mainScript");
+    String manifest = getManifest(configuration);
+    if (manifest != null) {
+      mainScriptPath = manifest;
     }
-
     suspectedConfigImports.add(mainScriptPath);
+
     imports.addAll(handleNextflowImports("bin"));
     imports.addAll(handleNextflowImports("lib"));
     imports.addAll(suspectedConfigImports);
     return imports;
+  }
+
+  private String getManifest(ConfigObject configObject) {
+    try {
+      Map property = (Map) configObject.get("manifest");
+      return (String) property.get("mainScript");
+    } catch (Exception e) {
+      return null;
+    }
   }
 
   /**
@@ -121,11 +118,11 @@ public class NextflowHandler {
     return binFiles;
   }
 
-  public Configuration getConfiguration() {
+  public ConfigObject getConfiguration() {
     return configuration;
   }
 
-  public void setConfiguration(Configuration configuration) {
+  public void setConfiguration(ConfigObject configuration) {
     this.configuration = configuration;
   }
 
