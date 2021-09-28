@@ -132,7 +132,8 @@ public class App
         .setURI(languageParsingRequest.getUri())
         .setDirectory(tempDirWithPrefix.toFile())
         .call();
-    Path descriptorAbsolutePath = tempDirWithPrefix.resolve(languageParsingRequest.getDescriptorRelativePathInGit());
+     Path descriptorAbsolutePath = tempDirWithPrefix.resolve(
+         languageParsingRequest.getDescriptorRelativePathInGit());
     String descriptorAbsolutePathString = descriptorAbsolutePath.toString();
     NextflowHandler nextflowHandler = new NextflowHandler();
     nextflowHandler.setDescriptorTempAbsolutePath(descriptorAbsolutePathString);
