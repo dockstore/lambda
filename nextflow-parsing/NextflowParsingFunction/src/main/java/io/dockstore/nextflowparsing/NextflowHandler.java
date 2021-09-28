@@ -17,8 +17,8 @@
 package io.dockstore.nextflowparsing;
 
 import com.google.common.base.CharMatcher;
-import dockstore.openapi.client.model.VersionTypeValidation;
 import groovy.util.ConfigObject;
+import io.dockstore.openapi.client.model.VersionTypeValidation;
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.ArrayList;

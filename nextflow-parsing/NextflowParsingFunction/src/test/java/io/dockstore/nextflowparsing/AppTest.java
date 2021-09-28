@@ -23,8 +23,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dockstore.openapi.client.model.LanguageParsingRequest;
-import dockstore.openapi.client.model.LanguageParsingResponse;
+import io.dockstore.openapi.client.model.LanguageParsingRequest;
+import io.dockstore.openapi.client.model.LanguageParsingResponse;
 import java.net.HttpURLConnection;
 import javax.ws.rs.core.MediaType;
 import org.junit.jupiter.api.Test;
@@ -50,8 +50,8 @@ public class AppTest {
     LanguageParsingResponse response =
         objectMapper.readValue(content, LanguageParsingResponse.class);
     assertNotNull(response.getVersionTypeValidation());
-    assertNotNull(response.getVersionTypeValidation().getValid());
-    assertTrue(response.getVersionTypeValidation().getValid());
+    assertNotNull(response.getVersionTypeValidation().isValid());
+    assertTrue(response.getVersionTypeValidation().isValid());
     assertNotNull(response.getClonedRepositoryAbsolutePath());
     assertTrue(response.getClonedRepositoryAbsolutePath().contains("/tmp"));
     assertNotNull(response.getSecondaryFilePaths());
