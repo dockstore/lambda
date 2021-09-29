@@ -92,9 +92,7 @@ public class App
         LanguageParsingRequest request =
             mapper.readValue(input.getBody(), LanguageParsingRequest.class);
         try {
-          String s =
-              parseFile(
-                  request);
+          String s = parseFile(request);
           return response.withStatusCode(HttpURLConnection.HTTP_OK).withBody(s);
         } catch (IOException e) {
           String errorMessage = "Could not clone repository to temporary directory";
@@ -122,8 +120,7 @@ public class App
     }
   }
 
-  private String parseFile(
-      LanguageParsingRequest languageParsingRequest)
+  private String parseFile(LanguageParsingRequest languageParsingRequest)
       throws IOException, GitAPIException {
     Path tempDirWithPrefix = Files.createTempDirectory("clonedRepository");
     Git.cloneRepository()
@@ -132,8 +129,8 @@ public class App
         .setURI(languageParsingRequest.getUri())
         .setDirectory(tempDirWithPrefix.toFile())
         .call();
-     Path descriptorAbsolutePath = tempDirWithPrefix.resolve(
-         languageParsingRequest.getDescriptorRelativePathInGit());
+    Path descriptorAbsolutePath =
+        tempDirWithPrefix.resolve(languageParsingRequest.getDescriptorRelativePathInGit());
     String descriptorAbsolutePathString = descriptorAbsolutePath.toString();
     NextflowHandler nextflowHandler = new NextflowHandler();
     nextflowHandler.setDescriptorTempAbsolutePath(descriptorAbsolutePathString);
