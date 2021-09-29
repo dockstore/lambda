@@ -35,6 +35,7 @@ public class AppTest {
   public void successfulResponse() throws Exception {
     LanguageParsingRequest request = new LanguageParsingRequest();
     request.setBranch("2.3");
+    // Archived repository with tag that is unlikely to change
     request.setUri("https://github.com/SciLifeLab/Sarek.git");
     request.setDescriptorRelativePathInGit("nextflow.config");
     App app = new App();
