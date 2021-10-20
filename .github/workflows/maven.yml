@@ -43,5 +43,8 @@ jobs:
        # SAM build also runs the Java tests
        run: | 
          sam build --use-container
+     - name: Test CWL packing with SAM CLI build (no invoke, no test)
+       working-directory: ./cwlpack
+       run: sam build --use-container
 
 
