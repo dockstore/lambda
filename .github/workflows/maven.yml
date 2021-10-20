@@ -43,8 +43,13 @@ jobs:
        # SAM build also runs the Java tests
        run: | 
          sam build --use-container
-     - name: Test CWL packing with SAM CLI build (no invoke, no test)
+     - name: Build CWL packing with SAM CLI build (no invoke, no test)
        working-directory: ./cwlpack
        run: sam build --use-container
+     - name: Test CWL packing with pytest
+       working-directory: ./cwlpack
+       run: |
+         pip install -r tests/requirements.txt --user
+         python -m pytest tests/unit -v
 
 
