@@ -1,6 +1,10 @@
+import io
 import json
+import tempfile
 
-# import requests
+from pygit2 import clone_repository
+import sbpack.pack as pack
+import ruamel.yaml
 
 
 def lambda_handler(event, context):
@@ -33,10 +37,22 @@ def lambda_handler(event, context):
 
     #     raise e
 
-    return {
-        "statusCode": 200,
-        "body": json.dumps({
-            "message": "hello world",
-            # "location": ip.text.replace("\n", "")
-        }),
-    }
+    # So, so many TODOs. Handle errors, use interface types
+    body = json.loads(event['body'])
+    git_url = body["git_url"]
+    absolute_git_descriptor_path = body["descriptor_path"]
+    # git_url = 'https://github.com/common-workflow-language/common-workflow-language.git'
+    # absolute_git_descriptor_path = '/v1.0/examples/1st-workflow.cwl'
+    with tempfile.TemporaryDirectory() as tempDir:
+        clone_repository(git_url, tempDir)
+        packed_cwl = pack.pack(tempDir + absolute_git_descriptor_path)
+        yaml = ruamel.yaml.YAML()
+        buf = io.BytesIO()
+        yaml.dump(packed_cwl, buf)
+        content = buf.getvalue().decode("utf-8")
+        return {
+            "statusCode": 200,
+            "body": json.dumps({
+                "content": content
+            }),
+        }

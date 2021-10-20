@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from hello_world import app
+from cwl_pack_function import app
 
 
 @pytest.fixture()
@@ -10,7 +10,7 @@ def apigw_event():
     """ Generates API GW Event"""
 
     return {
-        "body": '{ "test": "body"}',
+        "body": '{ "git_url": "https://github.com/common-workflow-language/common-workflow-language.git", "descriptor_path": "/v1.0/examples/1st-workflow.cwl"}',
         "resource": "/{proxy+}",
         "requestContext": {
             "resourceId": "123456",
@@ -62,12 +62,12 @@ def apigw_event():
     }
 
 
-def test_lambda_handler(apigw_event, mocker):
-
+def test_lambda_handler(apigw_event):
     ret = app.lambda_handler(apigw_event, "")
     data = json.loads(ret["body"])
-
     assert ret["statusCode"] == 200
-    assert "message" in ret["body"]
-    assert data["message"] == "hello world"
-    # assert "location" in data.dict_keys()
+    assert "content" in ret["body"]
+    # Only the tar-param.cwl import has this
+    assert "xf" in data["content"]
+    # Only the arguments.cwl import has this
+    assert "$(runtime.outdir)" in data["content"]
