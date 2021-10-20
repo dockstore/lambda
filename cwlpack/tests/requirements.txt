@@ -3,3 +3,4 @@ pytest-mock
 boto3
 pygit2
 pylint
+sbpack
