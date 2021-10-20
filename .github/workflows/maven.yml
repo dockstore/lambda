@@ -51,5 +51,6 @@ jobs:
        run: |
          pip install -r tests/requirements.txt --user
          python -m pytest tests/unit -v
+         pylint cwl_pack_function
 
 

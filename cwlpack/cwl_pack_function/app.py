@@ -1,12 +1,13 @@
+"""app module."""
 import io
 import json
 import tempfile
 
 from pygit2 import clone_repository
-import sbpack.pack as pack
+from sbpack import pack
 import ruamel.yaml
 
-
+# Handles when the lambda is called
 def lambda_handler(event, context):
     """Sample pure Lambda function
 
@@ -14,8 +15,6 @@ def lambda_handler(event, context):
     ----------
     event: dict, required
         API Gateway Lambda Proxy Input Format
-
-        Event doc: https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format
 
     context: object, required
         Lambda Context runtime methods and attributes
@@ -25,8 +24,6 @@ def lambda_handler(event, context):
     Returns
     ------
     API Gateway Lambda Proxy Output Format: dict
-
-        Return doc: https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html
     """
 
     # try:
@@ -38,14 +35,15 @@ def lambda_handler(event, context):
     #     raise e
 
     # So, so many TODOs. Handle errors, use interface types
+    print(context)
     body = json.loads(event['body'])
     git_url = body["git_url"]
     absolute_git_descriptor_path = body["descriptor_path"]
     # git_url = 'https://github.com/common-workflow-language/common-workflow-language.git'
     # absolute_git_descriptor_path = '/v1.0/examples/1st-workflow.cwl'
-    with tempfile.TemporaryDirectory() as tempDir:
-        clone_repository(git_url, tempDir)
-        packed_cwl = pack.pack(tempDir + absolute_git_descriptor_path)
+    with tempfile.TemporaryDirectory() as temp_dir:
+        clone_repository(git_url, temp_dir)
+        packed_cwl = pack.pack(temp_dir + absolute_git_descriptor_path)
         yaml = ruamel.yaml.YAML()
         buf = io.BytesIO()
         yaml.dump(packed_cwl, buf)
