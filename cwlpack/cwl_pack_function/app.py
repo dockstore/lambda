@@ -37,8 +37,14 @@ def lambda_handler(event, context):
     # So, so many TODOs. Handle errors, use interface types
     print(context)
     body = json.loads(event['body'])
-    git_url = body["git_url"]
-    absolute_git_descriptor_path = body["descriptor_path"]
+    try:
+        git_url = body["git_url"]
+        absolute_git_descriptor_path = body["descriptor_path"]
+    except KeyError:
+        return {
+            "statusCode": 400,
+            "body": "Missing either git_url or descriptor_path"
+        }
     with tempfile.TemporaryDirectory() as temp_dir:
         try:
             clone_repository(git_url, temp_dir)
@@ -58,7 +64,7 @@ def lambda_handler(event, context):
                 "statusCode": 400,
                 "body": "Descriptor file not found in Git repository",
             }
-        # An invalid CWL descriptor (like a WDL descriptor for example would cause sbpack to SystemExit
+        # An invalid CWL descriptor (like a WDL descriptor for example would cause sbpack to SystemExit)
         except SystemExit:
             return {
                 "statusCode": 400,

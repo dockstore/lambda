@@ -85,3 +85,9 @@ def test_lambda_handler_invalid(apigw_event):
                                 '.git", "descriptor_path": "/Dockstore.wdl"}'})
     ret = app.lambda_handler(apigw_event, "")
     assert ret["statusCode"] == 400
+
+
+def test_lambda_handler_missing_parameters(apigw_event):
+    apigw_event.update({"body": '{}'})
+    ret = app.lambda_handler(apigw_event, "")
+    assert ret["statusCode"] == 400
