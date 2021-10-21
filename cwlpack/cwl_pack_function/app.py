@@ -15,6 +15,7 @@ def lambda_handler(event, context):
     ----------
     event: dict, required
         API Gateway Lambda Proxy Input Format
+        This event should have two query string parameters: git_url and descriptor_path
 
     context: object, required
         Lambda Context runtime methods and attributes
