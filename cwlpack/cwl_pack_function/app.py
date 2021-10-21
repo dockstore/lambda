@@ -64,7 +64,7 @@ def lambda_handler(event, context):
                 "statusCode": 400,
                 "body": "Descriptor file not found in Git repository",
             }
-        # An invalid CWL descriptor (like a WDL descriptor for example would cause sbpack to SystemExit)
+        # An invalid CWL descriptor may cause sbpack to SystemExit
         except SystemExit:
             return {
                 "statusCode": 400,
