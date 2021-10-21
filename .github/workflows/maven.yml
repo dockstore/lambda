@@ -50,6 +50,7 @@ jobs:
        working-directory: ./cwlpack
        run: |
          pip install -r tests/requirements.txt --user
+         pip install -r cwl_pack_function/requirements.txt --user
          python -m pytest tests/unit -v
          pylint cwl_pack_function
 
