@@ -54,7 +54,7 @@ public class AppTest {
     assertNotNull(response.getVersionTypeValidation().isValid());
     assertTrue(response.getVersionTypeValidation().isValid());
     assertNotNull(response.getClonedRepositoryAbsolutePath());
-    assertTrue(response.getClonedRepositoryAbsolutePath().contains("/tmp"));
+    assertTrue(response.getClonedRepositoryAbsolutePath().contains("clonedRepository"));
     assertNotNull(response.getSecondaryFilePaths());
     final int knownSecondaryFilesCount = 23;
     assertEquals(
