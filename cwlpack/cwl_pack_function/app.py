@@ -39,18 +39,28 @@ def lambda_handler(event, context):
     body = json.loads(event['body'])
     git_url = body["git_url"]
     absolute_git_descriptor_path = body["descriptor_path"]
-    # git_url = 'https://github.com/common-workflow-language/common-workflow-language.git'
-    # absolute_git_descriptor_path = '/v1.0/examples/1st-workflow.cwl'
     with tempfile.TemporaryDirectory() as temp_dir:
-        clone_repository(git_url, temp_dir)
-        packed_cwl = pack.pack(temp_dir + absolute_git_descriptor_path)
-        yaml = ruamel.yaml.YAML()
-        buf = io.BytesIO()
-        yaml.dump(packed_cwl, buf)
-        content = buf.getvalue().decode("utf-8")
-        return {
-            "statusCode": 200,
-            "body": json.dumps({
-                "content": content
-            }),
-        }
+        try:
+            clone_repository(git_url, temp_dir)
+            packed_cwl = pack.pack(temp_dir + absolute_git_descriptor_path)
+            yaml = ruamel.yaml.YAML()
+            buf = io.BytesIO()
+            yaml.dump(packed_cwl, buf)
+            content = buf.getvalue().decode("utf-8")
+            return {
+                "statusCode": 200,
+                "body": json.dumps({
+                    "content": content
+                }),
+            }
+        except FileNotFoundError:
+            return {
+                "statusCode": 400,
+                "body": "Descriptor file not found in Git repository",
+            }
+        # An invalid CWL descriptor (like a WDL descriptor for example would cause sbpack to SystemExit
+        except SystemExit:
+            return {
+                "statusCode": 400,
+                "body": "Descriptor is invalid"
+            }

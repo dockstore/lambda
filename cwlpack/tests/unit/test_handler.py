@@ -71,3 +71,17 @@ def test_lambda_handler(apigw_event):
     assert "xf" in data["content"]
     # Only the arguments.cwl import has this
     assert "$(runtime.outdir)" in data["content"]
+
+
+def test_lambda_handler_not_exist(apigw_event):
+    apigw_event.update({"body": '{ "git_url": "https://github.com/common-workflow-language/common-workflow-language'
+                                '.git", "descriptor_path": "/v1.0/examples/not_exist.cwl"}'})
+    ret = app.lambda_handler(apigw_event, "")
+    assert ret["statusCode"] == 400
+
+
+def test_lambda_handler_invalid(apigw_event):
+    apigw_event.update({"body": '{ "git_url": "https://github.com/dockstore-testing/hello-wdl-workflow'
+                                '.git", "descriptor_path": "/Dockstore.wdl"}'})
+    ret = app.lambda_handler(apigw_event, "")
+    assert ret["statusCode"] == 400
