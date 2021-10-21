@@ -36,7 +36,7 @@ def lambda_handler(event, context):
 
     # So, so many TODOs. Handle errors, use interface types
     print(context)
-    body = json.loads(event['body'])
+    body = event['queryStringParameters']
     try:
         git_url = body["git_url"]
         absolute_git_descriptor_path = body["descriptor_path"]

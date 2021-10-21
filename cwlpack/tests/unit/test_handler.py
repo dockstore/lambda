@@ -10,7 +10,7 @@ def apigw_event():
     """ Generates API GW Event"""
 
     return {
-        "body": '{ "git_url": "https://github.com/common-workflow-language/common-workflow-language.git", "descriptor_path": "/v1.0/examples/1st-workflow.cwl"}',
+        "body": '',
         "resource": "/{proxy+}",
         "requestContext": {
             "resourceId": "123456",
@@ -34,7 +34,7 @@ def apigw_event():
             },
             "stage": "prod",
         },
-        "queryStringParameters": {"foo": "bar"},
+        "queryStringParameters": {"git_url": "https://github.com/common-workflow-language/common-workflow-language.git", "descriptor_path": "/v1.0/examples/1st-workflow.cwl"},
         "headers": {
             "Via": "1.1 08f323deadbeefa7af34d5feb414ce27.cloudfront.net (CloudFront)",
             "Accept-Language": "en-US,en;q=0.8",
@@ -74,20 +74,18 @@ def test_lambda_handler(apigw_event):
 
 
 def test_lambda_handler_not_exist(apigw_event):
-    apigw_event.update({"body": '{ "git_url": "https://github.com/common-workflow-language/common-workflow-language'
-                                '.git", "descriptor_path": "/v1.0/examples/not_exist.cwl"}'})
+    apigw_event.update({"queryStringParameters": {"git_url": "https://github.com/common-workflow-language/common-workflow-language.git", "descriptor_path": "/v1.0/examples/not_exist.cwl"}})
     ret = app.lambda_handler(apigw_event, "")
     assert ret["statusCode"] == 400
 
 
 def test_lambda_handler_invalid(apigw_event):
-    apigw_event.update({"body": '{ "git_url": "https://github.com/dockstore-testing/hello-wdl-workflow'
-                                '.git", "descriptor_path": "/Dockstore.wdl"}'})
+    apigw_event.update({"queryStringParameters": {"git_url": "https://github.com/dockstore-testing/hello-wdl-workflow.git", "descriptor_path": "/Dockstore.wdl"}})
     ret = app.lambda_handler(apigw_event, "")
     assert ret["statusCode"] == 400
 
 
 def test_lambda_handler_missing_parameters(apigw_event):
-    apigw_event.update({"body": '{}'})
+    apigw_event.update({"queryStringParameters": {}})
     ret = app.lambda_handler(apigw_event, "")
     assert ret["statusCode"] == 400
