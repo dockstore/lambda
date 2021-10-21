@@ -26,7 +26,8 @@ describe("Tests index", function () {
     await setupTest(url, true);
   });
   it("verifies successful response from ftp file", async () => {
-    const url = "ftp://ftp.ensembl.org/pub/release-100/tsv/homo_sapiens/Homo_sapiens.GRCh38.100.entrez.tsv.gz";
+    const url =
+      "ftp://ftp.ensembl.org/pub/release-100/tsv/homo_sapiens/Homo_sapiens.GRCh38.100.entrez.tsv.gz";
     await setupTest(url, true);
   });
   it("verifies unsuccessful response from ftp file", async () => {
