@@ -1,3 +1,7 @@
+"""
+Tests the cwl pack function
+"""
+
 import json
 
 import pytest
@@ -34,7 +38,9 @@ def apigw_event():
             },
             "stage": "prod",
         },
-        "queryStringParameters": {"git_url": "https://github.com/common-workflow-language/common-workflow-language.git", "descriptor_path": "/v1.0/examples/1st-workflow.cwl"},
+        "queryStringParameters": {
+            "git_url": "https://github.com/common-workflow-language/common-workflow-language.git",
+            "descriptor_path": "/v1.0/examples/1st-workflow.cwl"},
         "headers": {
             "Via": "1.1 08f323deadbeefa7af34d5feb414ce27.cloudfront.net (CloudFront)",
             "Accept-Language": "en-US,en;q=0.8",
@@ -47,22 +53,25 @@ def apigw_event():
             "Upgrade-Insecure-Requests": "1",
             "X-Forwarded-Port": "443",
             "Host": "1234567890.execute-api.us-east-1.amazonaws.com",
-            "X-Forwarded-Proto": "https",
-            "X-Amz-Cf-Id": "aaaaaaaaaae3VYQb9jd-nvCd-de396Uhbp027Y2JvkCPNLmGJHqlaA==",
-            "CloudFront-Is-Tablet-Viewer": "false",
-            "Cache-Control": "max-age=0",
-            "User-Agent": "Custom User Agent String",
-            "CloudFront-Forwarded-Proto": "https",
-            "Accept-Encoding": "gzip, deflate, sdch",
+                    "X-Forwarded-Proto": "https",
+                    "X-Amz-Cf-Id": "aaaaaaaaaae3VYQb9jd-nvCd-de396Uhbp027Y2JvkCPNLmGJHqlaA==",
+                    "CloudFront-Is-Tablet-Viewer": "false",
+                    "Cache-Control": "max-age=0",
+                    "User-Agent": "Custom User Agent String",
+                    "CloudFront-Forwarded-Proto": "https",
+                    "Accept-Encoding": "gzip, deflate, sdch",
         },
-        "pathParameters": {"proxy": "/examplepath"},
+        "pathParameters": {
+            "proxy": "/examplepath"},
         "httpMethod": "POST",
-        "stageVariables": {"baz": "qux"},
+        "stageVariables": {
+            "baz": "qux"},
         "path": "/examplepath",
     }
 
 
-def test_lambda_handler(apigw_event):
+def test_lambda_handler():
+    """Tests the basic success state"""
     ret = app.lambda_handler(apigw_event, "")
     data = json.loads(ret["body"])
     assert ret["statusCode"] == 200
@@ -73,22 +82,32 @@ def test_lambda_handler(apigw_event):
     assert "$(runtime.outdir)" in data["content"]
 
 
-def test_lambda_handler_not_exist(apigw_event):
-    apigw_event.update({"queryStringParameters": {"git_url": "https://github.com/common-workflow-language/common"
-                                                             "-workflow-language.git", "descriptor_path":
-        "/v1.0/examples/not_exist.cwl"}})
+def test_lambda_handler_not_exist():
+    """Tests when the descriptor file does not exist in the Git repository"""
+    apigw_event.update(
+        {
+            "queryStringParameters": {
+                "git_url": "https://github.com/common-workflow-language/common"
+                "-workflow-language.git",
+                "descriptor_path": "/v1.0/examples/not_exist.cwl"}})
     ret = app.lambda_handler(apigw_event, "")
     assert ret["statusCode"] == 400
 
 
-def test_lambda_handler_invalid(apigw_event):
-    apigw_event.update({"queryStringParameters": {"git_url": "https://github.com/dockstore-testing/hello-wdl-workflow"
-                                                             ".git", "descriptor_path": "/Dockstore.wdl"}})
+def test_lambda_handler_invalid():
+    """Tests when the descriptor file is invalid (a WDL in this case)"""
+    apigw_event.update(
+        {
+            "queryStringParameters": {
+                "git_url": "https://github.com/dockstore-testing/hello-wdl-workflow"
+                ".git",
+                "descriptor_path": "/Dockstore.wdl"}})
     ret = app.lambda_handler(apigw_event, "")
     assert ret["statusCode"] == 400
 
 
-def test_lambda_handler_missing_parameters(apigw_event):
+def test_lambda_handler_missing_parameters():
+    """Tests when a parameter is missing"""
     apigw_event.update({"queryStringParameters": {}})
     ret = app.lambda_handler(apigw_event, "")
     assert ret["statusCode"] == 400
