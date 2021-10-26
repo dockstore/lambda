@@ -9,8 +9,8 @@ import pytest
 from cwl_pack_function import app
 
 
-@pytest.fixture()
-def apigw_event():
+@pytest.fixture(name="apigw_event")
+def normal_event():
     """ Generates API GW Event"""
 
     return {
@@ -70,8 +70,9 @@ def apigw_event():
     }
 
 
-def test_lambda_handler():
+def test_lambda_handler(apigw_event):
     """Tests the basic success state"""
+
     ret = app.lambda_handler(apigw_event, "")
     data = json.loads(ret["body"])
     assert ret["statusCode"] == 200
@@ -82,7 +83,7 @@ def test_lambda_handler():
     assert "$(runtime.outdir)" in data["content"]
 
 
-def test_lambda_handler_not_exist():
+def test_lambda_handler_not_exist(apigw_event):
     """Tests when the descriptor file does not exist in the Git repository"""
     apigw_event.update(
         {
@@ -94,7 +95,7 @@ def test_lambda_handler_not_exist():
     assert ret["statusCode"] == 400
 
 
-def test_lambda_handler_invalid():
+def test_lambda_handler_invalid(apigw_event):
     """Tests when the descriptor file is invalid (a WDL in this case)"""
     apigw_event.update(
         {
@@ -106,7 +107,7 @@ def test_lambda_handler_invalid():
     assert ret["statusCode"] == 400
 
 
-def test_lambda_handler_missing_parameters():
+def test_lambda_handler_missing_parameters(apigw_event):
     """Tests when a parameter is missing"""
     apigw_event.update({"queryStringParameters": {}})
     ret = app.lambda_handler(apigw_event, "")
