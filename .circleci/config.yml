@@ -1,174 +1,221 @@
 version: 2.1
 orbs:
-  aws-s3: circleci/aws-s3@1.0.0
-  node: circleci/node@2.0.2
+  aws-s3: circleci/aws-s3@3.0.0
+  node: circleci/node@4.7.0
+  sam: circleci/aws-sam-serverless@3.0
 jobs:
-    build:
-        docker:
-            - image: circleci/python:3.7
-        parameters:
-            aws_bucket:
-                type: string
-                default: "${AWS_BUCKET}"
-        steps:
-            - when:
-                condition: <<parameters.aws_bucket>>
-                steps:
-                    - checkout
-                    - node/install:
-                        install-yarn: false
-                        node-version: latest
-                    - check_git_secrets
-                    - lint
-                    - create_zip_upload_to_s3:
-                        lambdaFolder: "cloud-watch-to-slack-testing-58006136-c30b-43d1-880c-7b36f860e7c8/deployment"
-                        s3BucketFolder: "cloudWatchToSlackTesting"
-                    - create_zip_upload_to_s3:
-                        lambdaFolder: "edge-lambda-for-s3-404s-4cbfb453-f95b-45d0-8568-fc17164c9a4c/deployment"
-                        s3BucketFolder: "edgeLambdaForS3404s"
-                    - create_zip_upload_to_s3:
-                        lambdaFolder: "serverlessrepo-cloudwatch-a-cloudwatchalarmtoslack-60UO1LIXCS1Y-5885aaa7-b2bf-4619-9a72-f63a06b9fd4d/deployment"
-                        s3BucketFolder: "serverlessRepoCloudwatchAlarmToSlack"
-                    - create_zip_upload_to_s3:
-                        lambdaFolder: "upsertGitHubTag-f79c4f36-3e61-43f4-8f6c-0b2e0e9774d7/deployment"
-                        s3BucketFolder: "upsertGitHubTag"
-                    - create_zip_upload_to_s3:
-                        lambdaFolder: "webhook-testing-bdf90c40-b8ea-409b-951a-3ee800a00dda/deployment"
-                        s3BucketFolder: "webhookTesting"
-                    - create_fedramp_inventory_zip_upload_to_s3:
-                        lambdaFolder: "fedramp-integrated-inventory-workbook/deployment"
-                        lambdaRequirements: "fedramp-integrated-inventory-workbook/requirements.txt"
-                        s3BucketFolder: "fedrampInventory"
-    js_tests:
-        docker:
-            - image: circleci/buildpack-deps:18.04-browsers
-        steps:
+  build:
+    docker:
+      - image: cimg/python:3.7
+    parameters:
+      aws_bucket:
+        type: string
+        default: "${AWS_BUCKET}"
+    steps:
+      - when:
+          condition: <<parameters.aws_bucket>>
+          steps:
             - checkout
-            - install_container_dependencies
-            - unit_tests
-    python_tests:
-        docker:
-          - image: circleci/python:3.8
-        steps:
-          - checkout
-          - python_unit_tests:
-              sourceDirectory: "fedramp-integrated-inventory-workbook/deployment"
-              dependencies: "fedramp-integrated-inventory-workbook/requirements.txt"
+            - node/install:
+                install-yarn: false
+            - check_git_secrets
+            - lint
+            - create_zip_upload_to_s3:
+                lambdaFolder: "cloud-watch-to-slack-testing/deployment"
+                s3BucketFolder: "cloudWatchToSlackTesting"
+            - create_zip_upload_to_s3:
+                lambdaFolder: "edge-lambda-for-s3/deployment"
+                s3BucketFolder: "edgeLambdaForS3404s"
+            - create_zip_upload_to_s3:
+                lambdaFolder: "upsertGitHubTag/deployment"
+                s3BucketFolder: "upsertGitHubTag"
+            - create_zip_upload_to_s3:
+                lambdaFolder: "webhook-testing/deployment"
+                s3BucketFolder: "webhookTesting"
+            - create_fedramp_inventory_zip_upload_to_s3:
+                lambdaFolder: "fedramp-integrated-inventory-workbook/deployment"
+                lambdaRequirements: "fedramp-integrated-inventory-workbook/requirements.txt"
+                s3BucketFolder: "fedrampInventory"
 
-commands:
-    create_zip_upload_to_s3:
-        description: "Creates a deployment zip for a lambda and uploads to S3"
-        parameters:
-            lambdaFolder:
-                type: string
-            s3BucketFolder:
-                type: string
-        steps:
+  # Make this a separate job because AWS SAM needs to run in
+  # the container specified in the template.yml
+  # If docker image is specified as in the build job
+  # the following sam build step will fail with the message:
+  # Error: Docker is unreachable. Docker needs to be running to build inside a container.
+  sam_tests:
+    executor: sam/default
+    parameters:
+      aws_bucket:
+        type: string
+        default: "${AWS_BUCKET}"
+    steps:
+      - when:
+          condition: <<parameters.aws_bucket>>
+          steps:
+            - checkout
             - run:
                 name: Validate index.js
-                command: node --check << parameters.lambdaFolder >>/index.js
-            - run:
-                name: Create deployment zip
-                command: cd << parameters.lambdaFolder >> && zip function.zip index.js
-            - aws-s3/copy:
-                from: << parameters.lambdaFolder >>/function.zip
-                to: 's3://${AWS_BUCKET}/$(echo ${CIRCLE_TAG-$CIRCLE_BRANCH} | sed "s/\//_/g")-$(echo $CIRCLE_SHA1 | cut -c -7)/<< parameters.s3BucketFolder >>/function.zip'
-                arguments: |
-                    --cache-control max-age=0
+                command: node --check checkUrlExists/lambda/index.js
+            - check_git_secrets
+            - lint
+            - sam_package_and_upload_to_s3:
+                lambdaFolder: "checkUrlExists"
+                s3BucketFolder: "checkUrlExists"
 
-    create_fedramp_inventory_zip_upload_to_s3:
-        description: "Creates a deployment zip for the fedramp inventory lambda and uploads to S3"
-        parameters:
-            lambdaFolder:
-                type: string
-            lambdaRequirements:
-                type: string
-            s3BucketFolder:
-                type: string
-        steps:
-            - run:
-                  name: make temporary directory and copy in source files
-                  command: cd << parameters.lambdaFolder >> && mkdir output && cp -R inventory output
-            - run:
-                  name: install all requirements into the temporary directory
-                  command: pip install -r << parameters.lambdaRequirements >> -t << parameters.lambdaFolder >>/output -U --no-deps && chmod -R 755 << parameters.lambdaFolder >>/output
-            - run:
-                  name: zip source files alongside dependencies
-                  command: (cd << parameters.lambdaFolder >>/output && zip -r8 ../function.zip . && cd .. && rm -rf output)
-            - aws-s3/copy:
-                  from: << parameters.lambdaFolder >>/function.zip
-                  to: 's3://${AWS_BUCKET}/$(echo ${CIRCLE_TAG-$CIRCLE_BRANCH} | sed "s/\//_/g")-$(echo $CIRCLE_SHA1 | cut -c -7)/<< parameters.s3BucketFolder >>/function.zip'
-                  arguments: |
-                      --cache-control max-age=0
+  js_tests:
+    docker:
+      - image: circleci/buildpack-deps:18.04-browsers
+    steps:
+      - checkout
+      - install_container_dependencies
+      - unit_tests
+  python_tests:
+    docker:
+      - image: cimg/python:3.8
+    steps:
+      - checkout
+      - python_unit_tests:
+          sourceDirectory: "fedramp-integrated-inventory-workbook/deployment"
+          dependencies: "fedramp-integrated-inventory-workbook/requirements.txt"
 
-    check_git_secrets:
-        description: "Installs git-secrets and scan repository to check for secrets"
-        steps:
-            - run:
-                name: install npm packages
-                command: npm install
-            - run:
-                name: install and check for secrets
-                command: npm run install-git-secrets
+commands:
+  sam_package_and_upload_to_s3:
+    description: "Uses SAM to both create a deployment zip for a lambda and upload to S3"
+    parameters:
+      lambdaFolder:
+        type: string
+      s3BucketFolder:
+        type: string
+    steps:
+      - sam/install
+      - run:
+          name: Build deployment zip with SAM and upload to S3
+          # Build the lambda deployment package with the --use-container option
+          # which will use the node version specified in the template.yml file
+          # Runtime property
+          command: cd << parameters.lambdaFolder >> && sam build --use-container && sam package --s3-bucket ${AWS_BUCKET} --s3-prefix $(echo ${CIRCLE_TAG-$CIRCLE_BRANCH} | sed "s/\//_/g")-$(echo $CIRCLE_SHA1 | cut -c -7)/<< parameters.s3BucketFolder >>
 
-    lint:
-        description: "Runs lint"
-        steps:
-          - run:
-              name: lint
-              command: npm run lint
+  create_zip_upload_to_s3:
+    description: "Create a deployment zip for a lambda and upload to S3"
+    parameters:
+      lambdaFolder:
+        type: string
+      s3BucketFolder:
+        type: string
+    steps:
+      - run:
+          name: Validate index.js
+          command: node --check << parameters.lambdaFolder >>/index.js
+      - run:
+          name: Create deployment zip
+          command: cd << parameters.lambdaFolder >> && zip function.zip index.js
+      - aws-s3/copy:
+          from: << parameters.lambdaFolder >>/function.zip
+          to: 's3://${AWS_BUCKET}/$(echo ${CIRCLE_TAG-$CIRCLE_BRANCH} | sed "s/\//_/g")-$(echo $CIRCLE_SHA1 | cut -c -7)/<< parameters.s3BucketFolder >>/function.zip'
+          arguments: |
+            --cache-control max-age=0
 
-    install_container_dependencies:
-        steps:
-            - run:
-                  name: Install npm
-                  command: |
-                      wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
-                      bash -i -c 'nvm install'
+  create_fedramp_inventory_zip_upload_to_s3:
+    description: "Create a deployment zip for the fedramp inventory lambda and upload to S3"
+    parameters:
+      lambdaFolder:
+        type: string
+      lambdaRequirements:
+        type: string
+      s3BucketFolder:
+        type: string
+    steps:
+      - run:
+          name: make temporary directory and copy in source files
+          command: cd << parameters.lambdaFolder >> && mkdir output && cp -R inventory output
+      - run:
+          name: install all requirements into the temporary directory
+          command: pip install -r << parameters.lambdaRequirements >> -t << parameters.lambdaFolder >>/output -U --no-deps && chmod -R 755 << parameters.lambdaFolder >>/output
+      - run:
+          name: zip source files alongside dependencies
+          command: (cd << parameters.lambdaFolder >>/output && zip -r8 ../function.zip . && cd .. && rm -rf output)
+      - aws-s3/copy:
+          from: << parameters.lambdaFolder >>/function.zip
+          to: 's3://${AWS_BUCKET}/$(echo ${CIRCLE_TAG-$CIRCLE_BRANCH} | sed "s/\//_/g")-$(echo $CIRCLE_SHA1 | cut -c -7)/<< parameters.s3BucketFolder >>/function.zip'
+          arguments: |
+            --cache-control max-age=0
 
-    unit_tests:
-        description: "Run all unit tests"
-        steps:
-            - run:
-                  name: install npm packages
-                  command: bash -i -c 'npm ci'
-            - run:
-                  name: install individual lambda packages
-                  command: bash -i -c 'npm --prefix checkUrlExists/lambda install'
-            - run:
-                  name: run unit tests
-                  command: bash -i -c 'npm run test'
+  check_git_secrets:
+    description: "Install git-secrets and scan repository to check for secrets"
+    steps:
+      - run:
+          name: install npm packages
+          command: npm install
+      - run:
+          name: install and check for secrets
+          command: npm run install-git-secrets
 
-    python_unit_tests:
-        description: "Run unit tests for the fedramp python lambda"
-        parameters:
-          sourceDirectory:
-            type: string
-          dependencies:
-            type: string
-        steps:
-          - run:
-              name: setup python test environment
-              command: pip install -r << parameters.dependencies >> && pip install pytest==6.2.2 callee==0.3.1
-          - run:
-              name: run python unit tests
-              # The tests require you to have access to the python package, in this case, deployment/inventory/
-              # which is why we change directories.
-              command: cd << parameters.sourceDirectory >> && python -m pytest -v -s ../tests
+  lint:
+    description: "Run lint"
+    steps:
+      - run:
+          name: lint
+          command: npm run lint
+
+  install_container_dependencies:
+    steps:
+      - run:
+          name: Install npm
+          command: |
+            wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
+            bash -i -c 'nvm install'
+
+  unit_tests:
+    description: "Run all unit tests"
+    steps:
+      - run:
+          name: install npm packages
+          command: bash -i -c 'npm ci'
+      - run:
+          name: install individual lambda packages
+          command: bash -i -c 'npm --prefix checkUrlExists/lambda install'
+      - run:
+          name: run unit tests
+          command: bash -i -c 'npm run test'
+
+  python_unit_tests:
+    description: "Run unit tests for the fedramp python lambda"
+    parameters:
+      sourceDirectory:
+        type: string
+      dependencies:
+        type: string
+    steps:
+      - run:
+          name: setup python test environment
+          command: pip install -r << parameters.dependencies >> && pip install pytest==6.2.2 callee==0.3.1
+      - run:
+          name: run python unit tests
+          # The tests require you to have access to the python package, in this case, deployment/inventory/
+          # which is why we change directories.
+          command: cd << parameters.sourceDirectory >> && python -m pytest -v -s ../tests
 
 workflows:
-    version: 2
-    everything:
-        jobs:
-            - build:
-                filters:
-                    tags:
-                        only: /.*/
-            - js_tests:
-                filters:
-                    tags:
-                        only: /.*/
-            - python_tests:
-                filters:
-                    tags:
-                        only: /.*/
+  version: 2
+  everything:
+    jobs:
+      - build:
+          filters:
+            tags:
+              only: /.*/
+          context:
+            - aws-lambda
+      - js_tests:
+          filters:
+            tags:
+              only: /.*/
+      - python_tests:
+          filters:
+            tags:
+              only: /.*/
+      - sam_tests:
+          filters:
+            tags:
+              only: /.*/
+          context:
+            - aws-lambda

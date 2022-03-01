@@ -28,9 +28,31 @@ jobs:
          python -m pip install --upgrade pip
          pip install aws-sam-cli
      - name: Test with SAM CLI
-       working-directory: ./upsertGitHubTag-f79c4f36-3e61-43f4-8f6c-0b2e0e9774d7
+       working-directory: ./upsertGitHubTag
        run: | 
          sam local invoke HelloWorldFunction -e events/event.json -n env.json &> output.txt
          grep "Valid push event" output.txt
+     - name: Test wdl parsing with SAM CLI build and invoke
+       working-directory: ./wdl-parsing
+       run: | 
+         sam build --use-container
+         sam local invoke WDLParsingFunction -e events/event.json &> output.txt
+         grep "statusCode\":200" output.txt
+     - name: Test Nextflow parsing with SAM CLI build (no invoke)
+       working-directory: ./nextflow-parsing
+       # SAM build also runs the Java tests
+       run: | 
+         sam build --use-container
+     - name: Build CWL packing with SAM CLI build (no invoke, no test)
+       working-directory: ./cwlpack
+       run: sam build --use-container
+     - name: Test CWL packing with pytest
+       working-directory: ./cwlpack
+       run: |
+         pip install -r tests/requirements.txt --user
+         pip install -r cwl_pack_function/requirements.txt --user
+         python -m pytest tests/unit -v
+         pylint cwl_pack_function
+         pylint tests
 
 

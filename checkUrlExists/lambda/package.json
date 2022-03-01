@@ -2,12 +2,12 @@
   "name": "checkUrlExists",
   "version": "1.0.0",
   "description": "Checks whether an http(s) url for a file exists (open access)",
-  "main": "app.js",
+  "main": "index.js",
   "repository": "https://github.com/dockstore/lambda",
   "author": "Dockstore",
   "license": "MIT",
   "dependencies": {
-    "node-fetch": "^2.6.1"
+    "node-libcurl": "^2.3.3"
   },
   "scripts": {
     "test": "jasmine"

@@ -97,14 +97,11 @@ class EC2DataMapper(DataMapper):
                     ec2_data["dns_name"] = config_resource["configuration"]["privateDnsName"]
                     ec2_data["is_public"] = "No"
 
-                ec2_data_list.append(InventoryData(**ec2_data))
-
                 if "association" in ipAddress:
-                    # Each IP address needs its own row in report so public IP requires an additional row
-                    ec2_data = copy.deepcopy(ec2_data)
-                    ec2_data["ip_address"] = ipAddress["association"]["publicIp"]
+                    # Add a publicIp address it the ip_address field if necessary
+                    ec2_data["ip_address"] += "," + ipAddress["association"]["publicIp"]
 
-                    ec2_data_list.append(InventoryData(**ec2_data))
+                ec2_data_list.append(InventoryData(**ec2_data))
 
         return ec2_data_list
 
@@ -264,4 +261,22 @@ class LambdaDataMapper(DataMapper):
                 "location": config_resource["awsRegion"]
                 }
 
+        return [InventoryData(**data)]
+
+
+class ElasticSearchDataMapper(DataMapper):
+    def _get_supported_resource_type(self) -> List[str]:
+        return ["AWS::Elasticsearch::Domain"]
+
+    def _do_mapping(self, config_resource: dict) -> List[InventoryData]:
+        data = {"asset_type": "Elastic Search",
+                "unique_id": config_resource["arn"],
+                "is_virtual": "Yes",
+                "is_public": "No",
+                "baseline_config": config_resource["configuration"]["elasticsearchVersion"],
+                "software_vendor": "AWS",
+                "software_product_name": "Elastic Search",
+                "asset_tag": config_resource["resourceName"] if "resourceName" in config_resource else config_resource["resourceId"],
+                "owner": _get_tag_value(config_resource["tags"], "owner"),
+                "location": config_resource["awsRegion"]}
         return [InventoryData(**data)]

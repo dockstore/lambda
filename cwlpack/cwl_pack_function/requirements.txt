@@ -1,0 +1,3 @@
+requests==2.26.0
+pygit2==1.7.0
+sbpack==2021.10.7
