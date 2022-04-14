@@ -153,7 +153,11 @@ function sendMessageToSlack(slackChannel, messageText, callback) {
 function awsConfigMessageText(message) {
   const alarmName = message.detail.configRuleName;
   const newState = message.detail.newEvaluationResult.complianceType;
-  return `${alarmName} state is now ${newState}`;
+  // If the event has a resource in the details, include that in the message
+  const resource = message.detail.resourceId
+    ? `for ${message.detail.resourceId}`
+    : "";
+  return `${alarmName} state is now ${newState} ${resource}`;
 }
 
 function trustedAdvisorMessageText(message) {
