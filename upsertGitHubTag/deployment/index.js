@@ -149,6 +149,16 @@ function processEvent(event, callback) {
   var loneEvent = event.Records[0];
   var requestBody = JSON.parse(loneEvent.body);
 
+  // Print SQS message ID if it is there
+  if (
+    Object.prototype.hasOwnProperty.call(loneEvent, "messageId") &&
+    loneEvent["messageId"]
+  ) {
+    const messageId = loneEvent.messageId;
+    const messageText = `message ID is: ${messageId}`;
+    console.log(messageText);
+  }
+
   // The payload is encoded in base64
   const buff = Buffer.from(requestBody.payload, "base64");
   const bodyDecoded = buff.toString("utf8");
