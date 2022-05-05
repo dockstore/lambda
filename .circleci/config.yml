@@ -3,6 +3,7 @@ orbs:
   aws-s3: circleci/aws-s3@3.0.0
   node: circleci/node@4.7.0
   sam: circleci/aws-sam-serverless@3.0
+  aws-cli: circleci/aws-cli@3.1.1 # perform openid connect  
 jobs:
   build:
     docker:
@@ -14,7 +15,12 @@ jobs:
     steps:
       - when:
           condition: <<parameters.aws_bucket>>
+          executor: aws-cli/default
           steps:
+            - aws-cli/setup:
+                profile-name: WEB IDENTITY PROFILE
+                role-arn: $AWS_ROLE_ARN
+                role-session-name: "CircleCI-${CIRCLE_WORKFLOW_ID}-${CIRCLE_JOB}"          
             - checkout
             - node/install:
                 install-yarn: false
@@ -51,7 +57,12 @@ jobs:
     steps:
       - when:
           condition: <<parameters.aws_bucket>>
+          executor: aws-cli/default
           steps:
+            - aws-cli/setup:
+                profile-name: WEB IDENTITY PROFILE
+                role-arn: $AWS_ROLE_ARN
+                role-session-name: "CircleCI-${CIRCLE_WORKFLOW_ID}-${CIRCLE_JOB}"          
             - checkout
             - run:
                 name: Validate index.js
@@ -204,7 +215,7 @@ workflows:
             tags:
               only: /.*/
           context:
-            - aws-lambda
+            - aws-lambda-v2
       - js_tests:
           filters:
             tags:
@@ -218,4 +229,4 @@ workflows:
             tags:
               only: /.*/
           context:
-            - aws-lambda
+            - aws-lambda-v2

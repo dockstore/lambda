@@ -30,6 +30,11 @@
             <id>jgit-repository</id>
             <url>https://repo.eclipse.org/content/groups/releases/</url>
         </repository>
+        <repository>
+            <id>artifacts.oicr.on.ca</id>
+            <name>artifacts.oicr.on.ca</name>
+	    <url>https://artifacts.oicr.on.ca/artifactory/collab-release</url>
+        </repository>
     </repositories>
     <dependencies>
         <dependency>
