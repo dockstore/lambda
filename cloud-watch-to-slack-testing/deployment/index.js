@@ -234,6 +234,9 @@ function s3ActivityMessageText(message) {
 }
 
 function messageTextFromMessage(message) {
+  if (typeof message !== "object") {
+    return message;
+  }
   if (message.source === "aws.config") {
     return awsConfigMessageText(message);
   } else if (message.source === "aws.trustedadvisor") {
@@ -291,7 +294,12 @@ function setSlackChannelBasedOnSNSTopic(topicArn) {
 
 function processEvent(event, callback) {
   console.log(event);
-  const message = JSON.parse(event.Records[0].Sns.Message);
+  var message;
+  try {
+    message = JSON.parse(event.Records[0].Sns.Message);
+  } catch (e) {
+    message = event.Records[0].Sns.Message;
+  }
   const topicArn = event.Records[0].Sns.TopicArn;
   const slackChannel = setSlackChannelBasedOnSNSTopic(topicArn);
   console.info("Slack channel is " + slackChannel);
