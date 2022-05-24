@@ -233,10 +233,7 @@ function s3ActivityMessageText(message) {
   return `${userName} generated S3 event ${eventName} from region ${awsRegion} for bucket ${bucketName} in Dockstore ${dockstoreEnvironment}`;
 }
 
-function messageTextFromMessage(message) {
-  if (typeof message !== "object") {
-    return message;
-  }
+function messageTextFromMessageObject(message) {
   if (message.source === "aws.config") {
     return awsConfigMessageText(message);
   } else if (message.source === "aws.trustedadvisor") {
@@ -294,17 +291,19 @@ function setSlackChannelBasedOnSNSTopic(topicArn) {
 
 function processEvent(event, callback) {
   console.log(event);
-  var message;
+  let message;
+  let messageText;
   try {
     message = JSON.parse(event.Records[0].Sns.Message);
+    messageText = messageTextFromMessageObject(message);
   } catch (e) {
     message = event.Records[0].Sns.Message;
+    messageText = message;
   }
   const topicArn = event.Records[0].Sns.TopicArn;
   const slackChannel = setSlackChannelBasedOnSNSTopic(topicArn);
   console.info("Slack channel is " + slackChannel);
 
-  const messageText = messageTextFromMessage(message);
   if (addInstanceDetails(message)) {
     const targetInstanceId = message.detail.requestParameters.target;
     getInstanceNameAndSendMsgToSlack(
