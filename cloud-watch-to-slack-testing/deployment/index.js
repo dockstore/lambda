@@ -298,6 +298,7 @@ function processEvent(event, callback) {
     messageText = messageTextFromMessageObject(message);
   } catch (e) {
     message = event.Records[0].Sns.Message;
+    console.log("Plain message received: " + messageText);
     messageText = message;
   }
   const topicArn = event.Records[0].Sns.TopicArn;
