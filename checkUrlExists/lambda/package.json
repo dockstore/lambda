@@ -7,7 +7,7 @@
   "author": "Dockstore",
   "license": "MIT",
   "dependencies": {
-    "node-libcurl": "^2.3.3"
+    "node-libcurl": "^2.3.4"
   },
   "scripts": {
     "test": "jasmine"
