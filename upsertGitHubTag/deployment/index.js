@@ -205,6 +205,7 @@ function processEvent(event, callback) {
         statusCode: 200,
         body: "Currently, this lambda does not support this event type from GitHub.",
       });
+      return;
     }
 
     // A push has been made for some repository (ignore pushes that are deletes)
