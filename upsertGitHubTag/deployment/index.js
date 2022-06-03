@@ -269,8 +269,6 @@ function processEvent(event, callback) {
         " from GitHub.",
     });
   }
-
-  callback(null, { statusCode: 200, body: "results" });
 }
 
 // Handle response from Dockstore webservice
