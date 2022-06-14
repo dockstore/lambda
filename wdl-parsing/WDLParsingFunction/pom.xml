@@ -9,7 +9,7 @@
     <properties>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
-        <jersey-version>2.34</jersey-version>
+        <jersey-version>2.36</jersey-version>
         <jackson-version>2.12.3</jackson-version>
         <junit-version>5.7.2</junit-version>
         <maven-plugin-version>3.0.0-M5</maven-plugin-version>
