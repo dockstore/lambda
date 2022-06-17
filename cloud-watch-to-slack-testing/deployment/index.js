@@ -236,7 +236,8 @@ function s3ActivityMessageText(message) {
 function ecsAutoScalingMessageText(message) {
   const serviceName = message.detail.requestParameters.service;
   const newDesiredCount = message.detail.requestParameters.desiredCount;
-  const currentRunningCount = message.detail.responseElements.service.runningCount;
+  const currentRunningCount =
+    message.detail.responseElements.service.runningCount;
   return `Auto scaling event triggered for ECS service ${serviceName}: desired count of tasks updated from ${currentRunningCount} to ${newDesiredCount}`;
 }
 
