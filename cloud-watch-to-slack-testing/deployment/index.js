@@ -233,6 +233,13 @@ function s3ActivityMessageText(message) {
   return `${userName} generated S3 event ${eventName} from region ${awsRegion} for bucket ${bucketName} in Dockstore ${dockstoreEnvironment}`;
 }
 
+function ecsAutoScalingMessageText(message) {
+  const serviceName = message.detail.requestParameters.service;
+  const newDesiredCount = message.detail.requestParameters.desiredCount;
+  const currentRunningCount = message.detail.responseElements.service.runningCount
+  return `Auto scaling event triggered for ECS service ${serviceName}: desired count of tasks updated from ${currentRunningCount} to ${newDesiredCount}`;
+}
+
 function messageTextFromMessageObject(message) {
   if (message.source === "aws.config") {
     return awsConfigMessageText(message);
@@ -246,6 +253,8 @@ function messageTextFromMessageObject(message) {
     return s3ActivityMessageText(message);
   } else if (message.source === "dockstore.deployer") {
     return dockstoreDeployerMessageText(message);
+  } else if (message.source === "aws.ecs") {
+    return ecsAutoScalingMessageText(message);
   } else {
     return alarmMessageText(message);
   }
