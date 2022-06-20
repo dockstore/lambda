@@ -213,9 +213,9 @@ function ssmOrSigninMessageText(message) {
 }
 
 function cloudWatchEventBridgeAlarmMessageText(message) {
-  const alarmName = message.alarmName;
-  const newState = message.state.value;
-  const newStateReason = message.state.reason;
+  const alarmName = message.detail.alarmName;
+  const newState = message.detail.state.value;
+  const newStateReason = message.detail.state.reason;
   if (message.state.value === "ALARM") {
     return `${alarmName} state is now ${newState}: ${newStateReason}`;
   } else {
