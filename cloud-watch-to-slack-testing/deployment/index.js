@@ -217,7 +217,7 @@ function cloudWatchEventBridgeAlarmMessageText(message) {
   const newState = message.state.value;
   const newStateReason = message.state.reason;
   if (message.state.value === "ALARM") {
-    return `${alarmName} state is now ${newState}: ${newStateReason}`
+    return `${alarmName} state is now ${newState}: ${newStateReason}`;
   } else {
     return "";
   }
