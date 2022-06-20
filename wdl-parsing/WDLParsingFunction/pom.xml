@@ -15,6 +15,17 @@
         <maven-plugin-version>3.0.0-M5</maven-plugin-version>
     </properties>
     <repositories>
+	<repository>
+            <id>1_maven.apache.org</id>
+	    <releases>
+		<enabled>true</enabled>
+	    </releases>
+	    <snapshots>
+		<enabled>true</enabled>
+	    </snapshots>
+            <url>https://repo.maven.apache.org/maven2</url>
+            <layout>default</layout>
+        </repository>
         <repository>
             <id>artifactory.broadinstitute.org</id>
             <name>artifactory.broadinstitute.org</name>
