@@ -212,6 +212,17 @@ function ssmOrSigninMessageText(message) {
   return messageText + ` Event was initiated from IP ${sourceIPAddress}`;
 }
 
+function cloudWatchEventBridgeAlarmMessageText(message) {
+  const alarmName = message.alarmName;
+  const newState = message.state.value;
+  const newStateReason = message.state.reason;
+  if (message.state.value === "ALARM") {
+    return `${alarmName} state is now ${newState}: ${newStateReason}`
+  } else {
+    return "";
+  }
+}
+
 function alarmMessageText(message) {
   const alarmName = message.AlarmName;
   const newState = message.NewStateValue;
@@ -238,7 +249,7 @@ function ecsAutoScalingMessageText(message) {
   const newDesiredCount = message.detail.requestParameters.desiredCount;
   const currentRunningCount =
     message.detail.responseElements.service.runningCount;
-  return `Auto scaling event triggered for ECS service ${serviceName}: desired count of tasks updated from ${currentRunningCount} to ${newDesiredCount}`;
+  return `Auto scaling event triggered for ECS service ${serviceName}. Desired count of tasks updated from ${currentRunningCount} to ${newDesiredCount}`;
 }
 
 function messageTextFromMessageObject(message) {
@@ -256,6 +267,8 @@ function messageTextFromMessageObject(message) {
     return dockstoreDeployerMessageText(message);
   } else if (message.source === "aws.ecs") {
     return ecsAutoScalingMessageText(message);
+  } else if (message.source === "aws.cloudwatch") {
+    return cloudWatchEventBridgeAlarmMessageText(message);
   } else {
     return alarmMessageText(message);
   }
