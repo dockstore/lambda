@@ -212,6 +212,13 @@ function ssmOrSigninMessageText(message) {
   return messageText + ` Event was initiated from IP ${sourceIPAddress}`;
 }
 
+function cloudWatchEventBridgeAlarmMessageText(message) {
+  const alarmName = message.detail.alarmName;
+  const newState = message.detail.state.value;
+  const newStateReason = message.detail.state.reason;
+  return `${alarmName} state is now ${newState}: ${newStateReason}`;
+}
+
 function alarmMessageText(message) {
   const alarmName = message.AlarmName;
   const newState = message.NewStateValue;
@@ -233,6 +240,14 @@ function s3ActivityMessageText(message) {
   return `${userName} generated S3 event ${eventName} from region ${awsRegion} for bucket ${bucketName} in Dockstore ${dockstoreEnvironment}`;
 }
 
+function ecsAutoScalingMessageText(message) {
+  const serviceName = message.detail.requestParameters.service;
+  const newDesiredCount = message.detail.requestParameters.desiredCount;
+  const currentRunningCount =
+    message.detail.responseElements.service.runningCount;
+  return `Auto scaling event triggered for ECS service ${serviceName}. Desired count of tasks updated from ${currentRunningCount} to ${newDesiredCount}`;
+}
+
 function messageTextFromMessageObject(message) {
   if (message.source === "aws.config") {
     return awsConfigMessageText(message);
@@ -246,6 +261,10 @@ function messageTextFromMessageObject(message) {
     return s3ActivityMessageText(message);
   } else if (message.source === "dockstore.deployer") {
     return dockstoreDeployerMessageText(message);
+  } else if (message.source === "aws.ecs") {
+    return ecsAutoScalingMessageText(message);
+  } else if (message.source === "aws.cloudwatch") {
+    return cloudWatchEventBridgeAlarmMessageText(message);
   } else {
     return alarmMessageText(message);
   }
