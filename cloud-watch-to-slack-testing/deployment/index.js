@@ -57,7 +57,7 @@ function getInstanceNameAndSendMsgToSlack(
         var tagInstanceNameKey =
           instance && instance.Tags.find((tag) => "Name" === tag.Key);
         if (tagInstanceNameKey) {
-          var tagInstanceName = tagInstanceNameKey.Value || "unknown";
+          var tagInstanceName = tagInstanceNameKey.Value || null;
           return callback(
             slackChannel,
             messageText,
@@ -73,7 +73,7 @@ function getInstanceNameAndSendMsgToSlack(
     return callback(
       slackChannel,
       messageText,
-      "unknown",
+      null,
       targetInstanceId,
       processEventCallback
     );
@@ -88,8 +88,12 @@ function constructMsgAndSendToSlack(
   callback
 ) {
   console.info(`Found instance name:${targetInstanceName}`);
-  messageText =
-    messageText + ` to target: ${targetInstanceName} (${targetInstanceId})`;
+  if (targetInstanceName) {
+    messageText =
+      messageText + ` to target: ${targetInstanceName} (${targetInstanceId})`;
+  } else {
+    messageText = messageText + ` to target: ${targetInstanceId}`;
+  }
 
   sendMessageToSlack(slackChannel, messageText, callback);
 }
@@ -188,8 +192,15 @@ function ssmOrSigninMessageText(message) {
 
   let messageText = `uninitialized message text`;
   if (message.source === "aws.ssm") {
-    const userName = message.detail.userIdentity.userName;
-    messageText = `${userName} initiated AWS Systems Manager (SSM) event ${eventName}`;
+    let user;
+    if (message.detail.userIdentity.type === "IAMUser") {
+      user = message.detail.userIdentity.userName;
+    } else if (message.detail.userIdentity.type === "AssumedRole") {
+      const accountId = message.detail.userIdentity.accountId;
+      // Don't display account ID
+      user = message.detail.userIdentity.arn.replace(accountId, "X".repeat(accountId.length));
+    }
+    messageText = `${user} initiated AWS Systems Manager (SSM) event ${eventName}`;
   } else if (message.source === "aws.signin") {
     const userType = message.detail.userIdentity.type;
     messageText = `A user initiated AWS sign-in event ${eventName} as ${userType}`;
