@@ -198,7 +198,10 @@ function ssmOrSigninMessageText(message) {
     } else if (message.detail.userIdentity.type === "AssumedRole") {
       const accountId = message.detail.userIdentity.accountId;
       // Don't display account ID
-      user = message.detail.userIdentity.arn.replace(accountId, "X".repeat(accountId.length));
+      user = message.detail.userIdentity.arn.replace(
+        accountId,
+        "X".repeat(accountId.length)
+      );
     }
     messageText = `${user} initiated AWS Systems Manager (SSM) event ${eventName}`;
   } else if (message.source === "aws.signin") {
