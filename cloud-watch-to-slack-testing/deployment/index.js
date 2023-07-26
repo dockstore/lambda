@@ -19,7 +19,7 @@
 
 const url = require("url");
 const https = require("https");
-const AWS = require("aws-sdk");
+const { EC2Client, DescribeInstancesCommand } = require("@aws-sdk/client-ec2");
 
 // The Slack URL to send the message to
 const hookUrl = process.env.hookUrl;
@@ -40,44 +40,36 @@ function getInstanceNameAndSendMsgToSlack(
   processEventCallback,
   callback
 ) {
-  const ec2 = new AWS.EC2();
-
-  ec2.describeInstances(function (err, result) {
-    if (err) console.log(err);
-    // Log the error message.
-    else {
-      for (var i = 0; i < result.Reservations.length; i++) {
-        var res = result.Reservations[i];
-        var instances = res.Instances;
-
-        // Try to get the user friendly name of the EC2 target instance
-        var instance = instances.find(
-          (instance) => instance.InstanceId === targetInstanceId
-        );
-        var tagInstanceNameKey =
-          instance && instance.Tags.find((tag) => "Name" === tag.Key);
-        if (tagInstanceNameKey) {
-          var tagInstanceName = tagInstanceNameKey.Value || null;
-          return callback(
-            slackChannel,
-            messageText,
-            tagInstanceName,
-            targetInstanceId,
-            processEventCallback
-          );
-        }
-      }
-    }
-    // If there was an error or the user friendly name was not found just send the
-    // message to Slack with a default name for the target
-    return callback(
+  instanceName(targetInstanceId).then((friendlyName) => {
+    callback(
       slackChannel,
       messageText,
-      null,
+      friendlyName,
       targetInstanceId,
       processEventCallback
     );
   });
+}
+
+/**
+ * If the instanceId exists and has a tag whose key is "Name", returns that tag's value, otherwise returs null.
+ * @param instanceId
+ * @returns {Promise<void>}
+ */
+async function instanceName(instanceId) {
+  const client = new EC2Client();
+  const command = new DescribeInstancesCommand({
+    InstanceIds: [instanceId],
+  });
+  try {
+    const result = await client.send(command); // Throws if the instance is not found
+    const instance = result.Reservations[0].Instances; // Safe to assume, as previous line would have thrown
+    const tagInstanceNameKey = instance.Tags.find((tag) => "Name" === tag.Key);
+    return tagInstanceNameKey && tagInstanceNameKey.Value;
+  } catch (e) {
+    console.error("Error describing instance", e);
+  }
+  return null;
 }
 
 function constructMsgAndSendToSlack(
