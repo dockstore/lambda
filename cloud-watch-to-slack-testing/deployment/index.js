@@ -52,7 +52,7 @@ function getInstanceNameAndSendMsgToSlack(
 }
 
 /**
- * If the instanceId exists and has a tag whose key is "Name", returns that tag's value, otherwise returs null.
+ * If the instanceId exists and has a tag whose key is "Name", returns that tag's value, otherwise returns null.
  * @param instanceId
  * @returns {Promise<void>}
  */
@@ -65,7 +65,7 @@ async function instanceName(instanceId) {
     const result = await client.send(command); // Throws if the instance is not found
     const instance = result.Reservations[0].Instances; // Safe to assume, as previous line would have thrown
     const tagInstanceNameKey = instance.Tags.find((tag) => "Name" === tag.Key);
-    return tagInstanceNameKey && tagInstanceNameKey.Value;
+    return tagInstanceNameKey?.Value || null;
   } catch (e) {
     console.error("Error describing instance", e);
   }
