@@ -34,10 +34,10 @@ function postEndpoint(path, postBody, deliveryId, callback) {
   const options = url.parse(path);
   options.method = "POST";
   options.headers = {
-    "Content-Type": "application/x-www-form-urlencoded",
+    "Content-Type": "application/json",
     Authorization: "Bearer " + process.env.DOCKSTORE_TOKEN,
     "User-Agent": LAMBDA_USER_AGENT,
-    DELIVERY_ID_HEADER: deliveryId,
+    "X-GitHub-Delivery": deliveryId,
   };
 
   const req = https.request(options, (res) => {
@@ -90,7 +90,7 @@ function deleteEndpoint(
   options.headers = {
     Authorization: "Bearer " + process.env.DOCKSTORE_TOKEN,
     "User-Agent": LAMBDA_USER_AGENT,
-    DELIVERY_ID_HEADER: deliveryId,
+    "X-GitHub-Delivery": deliveryId,
   };
 
   const req = https.request(options, (res) => {
@@ -146,6 +146,7 @@ function processEvent(event, callback) {
 
   // Handle installation events
   const deliveryId = requestBody[DELIVERY_ID_HEADER];
+  console.log("X-GitHub-Delivery: " + deliveryId);
   var githubEventType = requestBody["X-GitHub-Event"];
   if (githubEventType === "installation_repositories") {
     // Currently ignoring repository removal events, only calling the endpoint if we are adding a repository.
@@ -211,7 +212,7 @@ function processEvent(event, callback) {
 
       path += "workflows/github";
 
-      deleteEndpoint(path, repository, gitReference, username, (response) => {
+      deleteEndpoint(path, repository, gitReference, username, deliveryId, (response) => {
         const successMessage =
           "The associated versions on Dockstore for repository " +
           repository +
