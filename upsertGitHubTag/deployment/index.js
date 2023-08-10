@@ -212,15 +212,22 @@ function processEvent(event, callback) {
 
       path += "workflows/github";
 
-      deleteEndpoint(path, repository, gitReference, username, deliveryId, (response) => {
-        const successMessage =
-          "The associated versions on Dockstore for repository " +
-          repository +
-          " with version " +
-          gitReference +
-          " have been deleted";
-        handleCallback(response, successMessage, callback);
-      });
+      deleteEndpoint(
+        path,
+        repository,
+        gitReference,
+        username,
+        deliveryId,
+        (response) => {
+          const successMessage =
+            "The associated versions on Dockstore for repository " +
+            repository +
+            " with version " +
+            gitReference +
+            " have been deleted";
+          handleCallback(response, successMessage, callback);
+        }
+      );
     }
   } else {
     console.log("Event " + githubEventType + " is not supported");
