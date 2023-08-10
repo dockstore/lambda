@@ -3,7 +3,6 @@
 const url = require("url");
 const https = require("https");
 const crypto = require("crypto");
-const qs = require("querystring");
 const LAMBDA_USER_AGENT = "DockstoreLambda (NodeJs)";
 const DELIVERY_ID_HEADER = "X-GitHub-Delivery";
 
