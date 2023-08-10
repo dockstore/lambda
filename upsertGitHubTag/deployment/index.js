@@ -29,7 +29,7 @@ const verifyGitHub = (req, payload) => {
 // Makes a POST request to the given path
 function postEndpoint(path, postBody, deliveryId, callback) {
   console.log("POST " + path);
-  console.log(qs.stringify(postBody));
+  console.log(postBody);
 
   const options = url.parse(path);
   options.method = "POST";
@@ -65,7 +65,7 @@ function postEndpoint(path, postBody, deliveryId, callback) {
     });
     return res;
   });
-  req.write(qs.stringify(postBody));
+  req.write(JSON.stringify(postBody));
   req.end();
 }
 
