@@ -5,6 +5,7 @@ const https = require("https");
 const crypto = require("crypto");
 const qs = require("querystring");
 const LAMBDA_USER_AGENT = "DockstoreLambda (NodeJs)";
+const DELIVERY_ID_HEADER = "X-GitHub-Delivery";
 
 // Verification function to check if it is actually GitHub who is POSTing here
 const verifyGitHub = (req, payload) => {
@@ -26,7 +27,7 @@ const verifyGitHub = (req, payload) => {
 };
 
 // Makes a POST request to the given path
-function postEndpoint(path, postBody, callback) {
+function postEndpoint(path, postBody, deliveryId, callback) {
   console.log("POST " + path);
   console.log(qs.stringify(postBody));
 
@@ -36,6 +37,7 @@ function postEndpoint(path, postBody, callback) {
     "Content-Type": "application/x-www-form-urlencoded",
     Authorization: "Bearer " + process.env.DOCKSTORE_TOKEN,
     "User-Agent": LAMBDA_USER_AGENT,
+    DELIVERY_ID_HEADER: deliveryId,
   };
 
   const req = https.request(options, (res) => {
@@ -73,7 +75,7 @@ function deleteEndpoint(
   repository,
   reference,
   username,
-  installationId,
+  deliveryId,
   callback
 ) {
   console.log("DELETE " + path);
@@ -82,13 +84,13 @@ function deleteEndpoint(
   urlWithParams.searchParams.append("gitReference", reference);
   urlWithParams.searchParams.append("repository", repository);
   urlWithParams.searchParams.append("username", username);
-  urlWithParams.searchParams.append("installationId", installationId);
 
   const options = url.parse(urlWithParams.href);
   options.method = "DELETE";
   options.headers = {
     Authorization: "Bearer " + process.env.DOCKSTORE_TOKEN,
     "User-Agent": LAMBDA_USER_AGENT,
+    DELIVERY_ID_HEADER: deliveryId,
   };
 
   const req = https.request(options, (res) => {
@@ -108,38 +110,6 @@ function deleteEndpoint(
     });
   });
   req.end();
-}
-
-/**
- * Handles github apps payload parsing for the 'installation_repositories' event type and creates a JSON to call the post endpoint.
- * Currently, if the payload's action is not 'added', we return null, as we don't want to call the endpoint.
- *
- * @param body - JSON payload body
- * @returns {null|{repositories: *, installationId: string, username: *}}
- */
-function handleInstallationRepositoriesEvent(body) {
-  // Currently ignoring repository removal events, only calling the endpoint if we are adding a repository.
-  if (body.action === "added") {
-    console.log("Valid installation event");
-    const username = body.sender.login;
-    const installationId = body.installation.id;
-    const repositoriesAdded = body.repositories_added;
-    const repositories = [];
-    repositoriesAdded.forEach((repo) => {
-      repositories.push(repo.full_name);
-    });
-
-    return {
-      installationId: installationId,
-      username: username,
-      repositories: repositories.join(","),
-    };
-  } else {
-    console.log(
-      'installation_repositories event ignored "' + body.action + '" action'
-    );
-    return null;
-  }
 }
 
 // Performs an action based on the event type (action)
@@ -175,18 +145,26 @@ function processEvent(event, callback) {
   var path = process.env.API_URL;
 
   // Handle installation events
+  const deliveryId = requestBody[DELIVERY_ID_HEADER];
   var githubEventType = requestBody["X-GitHub-Event"];
   if (githubEventType === "installation_repositories") {
-    const pushPostBody = handleInstallationRepositoriesEvent(body);
-    path += "workflows/github/install";
+    // Currently ignoring repository removal events, only calling the endpoint if we are adding a repository.
+    if (body.action === "added") {
+      console.log("Valid installation event");
+      path += "workflows/github/install";
+      const repositoriesAdded = body.repositories_added;
+      const repositories = repositoriesAdded.map((repo) => repo.full_name);
 
-    if (pushPostBody != null) {
-      postEndpoint(path, pushPostBody, (response) => {
+      postEndpoint(path, body, deliveryId, (response) => {
         const successMessage =
           "The GitHub app was successfully installed on repositories " +
-          pushPostBody.repositories;
+          repositories;
         handleCallback(response, successMessage, callback);
       });
+    } else {
+      console.log(
+        'installation_repositories event ignored "' + body.action + '" action'
+      );
     }
   } else if (githubEventType === "push") {
     /**
@@ -212,20 +190,11 @@ function processEvent(event, callback) {
     if (!body.deleted) {
       console.log("Valid push event");
       const repository = body.repository.full_name;
-      const username = body.sender.login;
       const gitReference = body.ref;
-      const installationId = body.installation.id;
-
-      const pushPostBody = {
-        gitReference: gitReference,
-        installationId: installationId,
-        repository: repository,
-        username: username,
-      };
 
       path += "workflows/github/release";
 
-      postEndpoint(path, pushPostBody, (response) => {
+      postEndpoint(path, body, deliveryId, (response) => {
         const successMessage =
           "The associated entries on Dockstore for repository " +
           repository +
@@ -239,26 +208,18 @@ function processEvent(event, callback) {
       const repository = body.repository.full_name;
       const gitReference = body.ref;
       const username = body.sender.login;
-      const installationId = body.installation.id;
 
       path += "workflows/github";
 
-      deleteEndpoint(
-        path,
-        repository,
-        gitReference,
-        username,
-        installationId,
-        (response) => {
-          const successMessage =
-            "The associated versions on Dockstore for repository " +
-            repository +
-            " with version " +
-            gitReference +
-            " have been deleted";
-          handleCallback(response, successMessage, callback);
-        }
-      );
+      deleteEndpoint(path, repository, gitReference, username, (response) => {
+        const successMessage =
+          "The associated versions on Dockstore for repository " +
+          repository +
+          " with version " +
+          gitReference +
+          " have been deleted";
+        handleCallback(response, successMessage, callback);
+      });
     }
   } else {
     console.log("Event " + githubEventType + " is not supported");
@@ -293,10 +254,6 @@ function handleCallback(response, successMessage, callback) {
     });
   }
 }
-
-module.exports = {
-  handleInstallationRepositoriesEvent,
-};
 
 module.exports.handler = (event, context, callback) => {
   processEvent(event, callback);
