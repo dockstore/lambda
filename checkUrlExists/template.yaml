@@ -17,6 +17,7 @@ Resources:
       CodeUri: lambda/
       Handler: index.lambdaHandler
       Runtime: nodejs18.x
+      Layers: "arn:aws:lambda:us-east-2:312767926603:layer:libstdc:1"
       Events:
         Lambda:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
