@@ -34,6 +34,8 @@ fs.writeFileSync(certFilePath, tlsData);
  *
  */
 exports.lambdaHandler = async function (event) {
+  console.log(process.env.PATH);
+  console.log(process.env.LD_LIBRARY_PATH);
   const url = event.queryStringParameters.url;
   return checkUrl(url);
 };
