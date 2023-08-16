@@ -18,7 +18,7 @@ Resources:
         - nodejs18.x
       CompatibleArchitectures:
         - x86_64
-      ContentUri: lib/
+      ContentUri: lib64/
   LambdaFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
