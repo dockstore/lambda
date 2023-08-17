@@ -1,5 +1,6 @@
 const fs = require("fs");
 const tls = require("tls");
+const process = require("process");
 
 const { curly } = require("node-libcurl");
 
