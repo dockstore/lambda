@@ -18,7 +18,7 @@ Resources:
         - nodejs18.x
       CompatibleArchitectures:
         - x86_64
-      ContentUri: lib64/
+      ContentUri: lib
   LambdaFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -26,7 +26,7 @@ Resources:
       Handler: index.lambdaHandler
       Runtime: nodejs18.x
       Environment:
-        LD_LIBRARY_PATH: /opt/lib64:/var/lang/lib:/lib64:/usr/lib64:/var/runtime:/var/runtime/lib:/var/task:/var/task/lib:/opt/lib
+        LD_LIBRARY_PATH: /opt/lib:/var/lang/lib:/lib64:/usr/lib64:/var/runtime:/var/runtime/lib:/var/task:/var/task/lib
       Layers: !Ref LayerVersion
       Events:
         Lambda:
