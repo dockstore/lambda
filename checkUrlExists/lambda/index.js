@@ -42,23 +42,23 @@ exports.lambdaHandler = async function (event) {
   return returnResponse(false);
 };
 
-async function checkUrl(url) {
-  return run(url)
-    .then(() => {
-      return returnResponse(true);
-    })
-    .catch((error) => {
-      console.error(`Something went wrong`, { error });
-      return returnResponse(false);
-    });
-}
+// async function checkUrl(url) {
+//   return run(url)
+//     .then(() => {
+//       return returnResponse(true);
+//     })
+//     .catch((error) => {
+//       console.error(`Something went wrong`, { error });
+//       return returnResponse(false);
+//     });
+// }
 
-async function run(url) {
-  const curlOpts = {
-    caInfo: certFilePath,
-  };
-  return curly.head(url, curlOpts);
-}
+// async function run(url) {
+//   const curlOpts = {
+//     caInfo: certFilePath,
+//   };
+//   return curly.head(url, curlOpts);
+// }
 
 function returnResponse(fileFound) {
   const response = {
