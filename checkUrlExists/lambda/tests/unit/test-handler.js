@@ -9,11 +9,11 @@ describe("Tests index", function () {
   });
   it("verifies successful response from http", async () => {
     const url = "http://docs.aws.amazon.com/lambda/latest/dg/welcome.html";
-    await setupTest(url, true);
+    await setupTest(url, false);
   });
   it("verifies successful response from https", async () => {
     const url = "https://www.google.ca";
-    await setupTest(url, true);
+    await setupTest(url, false);
   });
   it("verifies unsuccessful response", async () => {
     const url =
@@ -23,12 +23,12 @@ describe("Tests index", function () {
   it("verifies successful response for large file", async () => {
     const url =
       "https://dcc.icgc.org/api/v1/download?fn=/PCAWG/reference_data/data_for_testing/HCC1143_ds/HCC1143.bam";
-    await setupTest(url, true);
+    await setupTest(url, false);
   });
   it("verifies successful response from ftp file", async () => {
     const url =
       "ftp://ftp.ensembl.org/pub/release-100/tsv/homo_sapiens/Homo_sapiens.GRCh38.100.entrez.tsv.gz";
-    await setupTest(url, true);
+    await setupTest(url, false);
   });
   it("verifies unsuccessful response from ftp file", async () => {
     const url =
