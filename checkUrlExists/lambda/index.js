@@ -2,7 +2,7 @@ const fs = require("fs");
 const tls = require("tls");
 const process = require("process");
 
-const { curly } = require("node-libcurl");
+// const { curly } = require("node-libcurl");
 
 // important steps to get validation of https (as opposed to http) urls
 // Get root certificates so https will work
@@ -38,7 +38,8 @@ exports.lambdaHandler = async function (event) {
   console.log(process.env.PATH);
   console.log(process.env.LD_LIBRARY_PATH);
   const url = event.queryStringParameters.url;
-  return checkUrl(url);
+  console.log(url);
+  return returnResponse(false);
 };
 
 async function checkUrl(url) {
