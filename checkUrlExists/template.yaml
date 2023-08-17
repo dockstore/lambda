@@ -25,6 +25,8 @@ Resources:
       CodeUri: lambda/
       Handler: index.lambdaHandler
       Runtime: nodejs18.x
+      Environment:
+        LD_LIBRARY_PATH: /opt/lib64:/var/lang/lib:/lib64:/usr/lib64:/var/runtime:/var/runtime/lib:/var/task:/var/task/lib:/opt/lib
       Layers: !Ref LayerVersion
       Events:
         Lambda:

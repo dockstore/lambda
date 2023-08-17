@@ -1,8 +1,7 @@
 const fs = require("fs");
 const tls = require("tls");
-const process = require("process");
 
-// const { curly } = require("node-libcurl");
+const { curly } = require("node-libcurl");
 
 // important steps to get validation of https (as opposed to http) urls
 // Get root certificates so https will work
@@ -35,30 +34,27 @@ fs.writeFileSync(certFilePath, tlsData);
  *
  */
 exports.lambdaHandler = async function (event) {
-  console.log(process.env.PATH);
-  console.log(process.env.LD_LIBRARY_PATH);
   const url = event.queryStringParameters.url;
-  console.log(url);
-  return returnResponse(false);
+  return checkUrl(url);
 };
 
-// async function checkUrl(url) {
-//   return run(url)
-//     .then(() => {
-//       return returnResponse(true);
-//     })
-//     .catch((error) => {
-//       console.error(`Something went wrong`, { error });
-//       return returnResponse(false);
-//     });
-// }
+async function checkUrl(url) {
+  return run(url)
+    .then(() => {
+      return returnResponse(true);
+    })
+    .catch((error) => {
+      console.error(`Something went wrong`, { error });
+      return returnResponse(false);
+    });
+}
 
-// async function run(url) {
-//   const curlOpts = {
-//     caInfo: certFilePath,
-//   };
-//   return curly.head(url, curlOpts);
-// }
+async function run(url) {
+  const curlOpts = {
+    caInfo: certFilePath,
+  };
+  return curly.head(url, curlOpts);
+}
 
 function returnResponse(fileFound) {
   const response = {
