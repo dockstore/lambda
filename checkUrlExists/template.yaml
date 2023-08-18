@@ -11,23 +11,12 @@ Globals:
     Timeout: 3
 
 Resources:
-  LayerVersion:
-    Type: AWS::Serverless::LayerVersion
-    Properties:
-      CompatibleRuntimes:
-        - nodejs18.x
-      CompatibleArchitectures:
-        - x86_64
-      ContentUri: layers/
   LambdaFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
       CodeUri: lambda/
       Handler: index.lambdaHandler
       Runtime: nodejs18.x
-      Environment:
-        LD_LIBRARY_PATH: /opt/lib:/var/lang/lib:/lib64:/usr/lib64:/var/runtime:/var/runtime/lib:/var/task:/var/task/lib
-      Layers: !Ref LayerVersion
       Events:
         Lambda:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
