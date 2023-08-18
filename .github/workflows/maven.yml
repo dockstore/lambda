@@ -37,7 +37,7 @@ jobs:
        run: | 
          sam build --use-container
          sam local invoke WDLParsingFunction -e events/event.json &> output.txt
-         grep "statusCode\":200" output.txt
+         grep "statusCode\": 200" output.txt
      - name: Test Nextflow parsing with SAM CLI build (no invoke)
        working-directory: ./nextflow-parsing
        # SAM build also runs the Java tests
