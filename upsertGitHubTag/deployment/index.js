@@ -3,6 +3,7 @@
 const url = require("url");
 const https = require("https");
 const crypto = require("crypto");
+const uuidv4 = require("uuid");
 const LAMBDA_USER_AGENT = "DockstoreLambda (NodeJs)";
 const DELIVERY_ID_HEADER = "X-GitHub-Delivery";
 
@@ -145,11 +146,13 @@ function processEvent(event, callback) {
 
   var deliveryId;
   if (requestBody[DELIVERY_ID_HEADER]) {
-    deliveryId = requestBody[DELIVERY_ID_HEADER]
+    deliveryId = requestBody[DELIVERY_ID_HEADER];
   } else {
-    // TODO: remove this after 1.15. 
+    // TODO: remove this after 1.15.
     // This was added because there's a small period of time during the 1.15 deploy where the header isn't available
-    console.log("Could not retrieve X-GitHub-Delivery header, generating a random UUID")
+    console.log(
+      "Could not retrieve X-GitHub-Delivery header, generating a random UUID"
+    );
     deliveryId = uuidv4();
   }
 
