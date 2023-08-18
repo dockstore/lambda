@@ -3,7 +3,6 @@
 const url = require("url");
 const https = require("https");
 const crypto = require("crypto");
-const uuidv4 = require("uuid");
 const LAMBDA_USER_AGENT = "DockstoreLambda (NodeJs)";
 const DELIVERY_ID_HEADER = "X-GitHub-Delivery";
 
@@ -153,7 +152,7 @@ function processEvent(event, callback) {
     console.log(
       "Could not retrieve X-GitHub-Delivery header, generating a random UUID"
     );
-    deliveryId = uuidv4();
+    deliveryId = crypto.randomUUID();
   }
 
   console.log("X-GitHub-Delivery: " + deliveryId);
