@@ -16,7 +16,7 @@ Resources:
     Properties:
       CodeUri: deployment/
       Handler: index.handler
-      Runtime: nodejs12.x
+      Runtime: nodejs18.x
       Environment:
         Variables:
           SECRET_TOKEN: !Ref SecretToken
