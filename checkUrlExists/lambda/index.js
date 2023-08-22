@@ -1,7 +1,8 @@
+const Url = require("url");
+const ftp = require("basic-ftp");
+const { http, https } = require("follow-redirects");
 const fs = require("fs");
 const tls = require("tls");
-
-const { curly } = require("node-libcurl");
 
 // important steps to get validation of https (as opposed to http) urls
 // Get root certificates so https will work
@@ -50,10 +51,40 @@ async function checkUrl(url) {
 }
 
 async function run(url) {
-  const curlOpts = {
-    caInfo: certFilePath,
-  };
-  return curly.head(url, curlOpts);
+  const parsedUrl = Url.parse(url);
+  const protocol = parsedUrl.protocol || ""; // Url.parse() lower cases the protocol
+  if ("ftp:" === protocol && "sftp:" == protocol) {
+    const secure = "sftp:" === protocol;
+    const ftpClient = new ftp.Client();
+    try {
+      await ftpClient.access({
+        host: parsedUrl.host,
+        port: parsedUrl.port,
+        secure: secure,
+      });
+      return ftpClient.size(parsedUrl.path);
+    } finally {
+      ftpClient.close();
+    }
+  } else if ("http:" === protocol) {
+    return httpOrHttpsRequest(url, http);
+  } else if ("https:" === protocol) {
+    return httpOrHttpsRequest(url, https);
+  }
+}
+
+function httpOrHttpsRequest(url, httpOrHttps) {
+  return new Promise((resolve, reject) => {
+    const req = httpOrHttps.request(url, { method: "HEAD" });
+    req.on("response", (res) => {
+      if (res.statusCode < 300) {
+        resolve(res.statusCode);
+      }
+      reject(res.statusCode);
+    });
+    req.on("error", (err) => reject(err));
+    req.end();
+  });
 }
 
 function returnResponse(fileFound) {
