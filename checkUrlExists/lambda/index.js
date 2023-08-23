@@ -2,6 +2,12 @@ const Url = require("url");
 const ftp = require("basic-ftp");
 const { http, https } = require("follow-redirects");
 
+// The Node url.parse returns an object where the protocol is lower case and contains the colon at the end
+const SECURE_FTP_PROTOCOL = "sftp:";
+const FTP_PROTOCOL = "ftp:";
+const HTTP_PROTOCOL = "http:";
+const HTTPS_PROTOCOL = "https:";
+
 /**
  * TODO: Change to array of URLs to parse
  * Always returns 200. Body is true if file URL is valid, body is false if file URL is not valid or something has gone wrong
@@ -35,9 +41,9 @@ async function checkUrl(url) {
 
 async function run(url) {
   const parsedUrl = Url.parse(url);
-  const protocol = parsedUrl.protocol || ""; // Url.parse() lower cases the protocol
-  if ("ftp:" === protocol || "sftp:" === protocol) {
-    const secure = "sftp:" === protocol;
+  const protocol = parsedUrl.protocol; // Url.parse() lower cases the protocol
+  if (FTP_PROTOCOL === protocol || SECURE_FTP_PROTOCOL === protocol) {
+    const secure = SECURE_FTP_PROTOCOL === protocol;
     const ftpClient = new ftp.Client();
     try {
       let options = {
@@ -49,23 +55,25 @@ async function run(url) {
       }
       await ftpClient.access(options);
       const size = await ftpClient.size(parsedUrl.path);
-      return size > 0 ? Promise.resolve() : Promise.reject();
+      return size > 0
+        ? Promise.resolve()
+        : Promise.reject("Could not get size for " + url);
     } finally {
       ftpClient.close();
     }
-  } else if ("http:" === protocol) {
+  } else if (HTTP_PROTOCOL === protocol) {
     return httpOrHttpsRequest(url, http);
-  } else if ("https:" === protocol) {
+  } else if (HTTPS_PROTOCOL === protocol) {
     return httpOrHttpsRequest(url, https);
   }
-  return Promise.reject("Unsupported protocol: ", protocol);
+  return Promise.reject("Unsupported protocol: " + protocol);
 }
 
 function httpOrHttpsRequest(url, httpOrHttps) {
   return new Promise((resolve, reject) => {
     const req = httpOrHttps.request(url, {
       method: "HEAD",
-      headers: { "user-agent": "Dockstore/1.0" }, // User-agent must be set for tests to pass
+      headers: { "user-agent": "Dockstore/1.0" }, // User-agent must be set for tests to pass, AWS (WAF?) blocks requests with no user-agent
     });
     req.on("response", (res) => {
       if (res.statusCode < 300) {
