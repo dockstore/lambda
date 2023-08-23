@@ -82,7 +82,7 @@ function httpOrHttpsRequest(url, httpOrHttps) {
   return new Promise((resolve, reject) => {
     const req = httpOrHttps.request(url, {
       method: "HEAD",
-      headers: { "user-agent": "curl/7.87.0" }, // This is unfortunate; the test to fetch from AWS fails without this
+      headers: { "user-agent": "Dockstore/1.0" }, // User-agent must be set for tests to pass
     });
     req.on("response", (res) => {
       if (res.statusCode < 300) {
