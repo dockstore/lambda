@@ -49,7 +49,7 @@ async function run(url) {
       let options = {
         host: parsedUrl.host,
         secure: secure,
-        ...(parsedUrl.port) && { port: parsedUrl.port },
+        ...(parsedUrl.port && { port: parsedUrl.port }),
       };
       await ftpClient.access(options);
       const size = await ftpClient.size(parsedUrl.path);
