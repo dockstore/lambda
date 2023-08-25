@@ -35,6 +35,10 @@ describe("Tests index", function () {
       "ftp://ftp.this.is.fake.or.private.1000genomes.ebi.ac.uk/vol1/ftp/CHANGELOG";
     await setupTest(url, false);
   });
+  it("handles an unknown protocol", async () => {
+    const url = "s3://bucket/objectkey"; // We don't natively support s3 URIs
+    await setupTest(url, false);
+  });
 });
 
 async function setupTest(url, expectedMessage) {
