@@ -74,6 +74,7 @@ function deleteEndpoint(
   repository,
   reference,
   username,
+  installationId,
   deliveryId,
   callback
 ) {
@@ -83,6 +84,7 @@ function deleteEndpoint(
   urlWithParams.searchParams.append("gitReference", reference);
   urlWithParams.searchParams.append("repository", repository);
   urlWithParams.searchParams.append("username", username);
+  urlWithParams.searchParams.append("installationId", installationId);
 
   const options = url.parse(urlWithParams.href);
   options.method = "DELETE";
@@ -219,6 +221,7 @@ function processEvent(event, callback) {
       const repository = body.repository.full_name;
       const gitReference = body.ref;
       const username = body.sender.login;
+      const installationId = body.installation.id;
 
       path += "workflows/github";
 
@@ -227,6 +230,7 @@ function processEvent(event, callback) {
         repository,
         gitReference,
         username,
+        installationId,
         deliveryId,
         (response) => {
           const successMessage =
