@@ -2,6 +2,7 @@
 
 const url = require("url");
 const https = require("https");
+const http = require("http");
 const crypto = require("crypto");
 const LAMBDA_USER_AGENT = "DockstoreLambda (NodeJs)";
 const DELIVERY_ID_HEADER = "X-GitHub-Delivery";
@@ -25,6 +26,10 @@ const verifyGitHub = (req, payload) => {
   );
 };
 
+function getProtocol(url) {
+  return url.protocol === 'https' ? https : http;
+}
+
 // Makes a POST request to the given path
 function postEndpoint(path, postBody, deliveryId, callback) {
   console.log("POST " + path);
@@ -39,7 +44,7 @@ function postEndpoint(path, postBody, deliveryId, callback) {
     "X-GitHub-Delivery": deliveryId,
   };
 
-  const req = https.request(options, (res) => {
+  const req = getProtocol(options).request(options, (res) => {
     var chunks = [];
     var bodyString = "";
 
@@ -94,7 +99,7 @@ function deleteEndpoint(
     "X-GitHub-Delivery": deliveryId,
   };
 
-  const req = https.request(options, (res) => {
+  const req = getProtocol(options).request(options, (res) => {
     var chunks = [];
 
     res.on("data", function (chunk) {
