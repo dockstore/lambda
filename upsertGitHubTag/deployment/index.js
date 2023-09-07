@@ -27,7 +27,7 @@ const verifyGitHub = (req, payload) => {
 };
 
 function getProtocol(url) {
-  return url.protocol === 'https' ? https : http;
+  return url.protocol === "https" ? https : http;
 }
 
 // Makes a POST request to the given path
