@@ -246,6 +246,22 @@ function s3ActivityMessageText(message) {
   return `${userName} generated S3 event ${eventName} from region ${awsRegion} for bucket ${bucketName} in Dockstore ${dockstoreEnvironment}`;
 }
 
+function ecsActivityMessageText(message) {
+  if (message["detail-type"] === "ECS Task State Change") {
+    return ecsTaskStateChangeMessageText(message);
+  } else {
+    return ecsAutoScalingMessageText(message);
+  }
+}
+
+function ecsTaskStateChangeMessageText(message) {
+  const taskArn = message.resources[0];
+  const clusterArn = message.detail.clusterArn;
+  const lastStatus = message.detail.lastStatus;
+  console.log(`Task ${taskArn} in cluster ${clusterArn} is now ${lastStatus}`);
+  return `Task is now ${lastStatus}`;
+}
+
 function ecsAutoScalingMessageText(message) {
   const serviceName = message.detail.requestParameters.service;
   const newDesiredCount = message.detail.requestParameters.desiredCount;
@@ -268,7 +284,7 @@ function messageTextFromMessageObject(message) {
   } else if (message.source === "dockstore.deployer") {
     return dockstoreDeployerMessageText(message);
   } else if (message.source === "aws.ecs") {
-    return ecsAutoScalingMessageText(message);
+    return ecsActivityMessageText(message);
   } else if (message.source === "aws.cloudwatch") {
     return cloudWatchEventBridgeAlarmMessageText(message);
   } else {
