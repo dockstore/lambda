@@ -255,11 +255,18 @@ function ecsActivityMessageText(message) {
 }
 
 function ecsTaskStateChangeMessageText(message) {
-  const taskArn = message.resources[0];
-  const clusterArn = message.detail.clusterArn;
+  const taskArn = message.detail.taskArn;
   const lastStatus = message.detail.lastStatus;
-  console.log(`Task ${taskArn} in cluster ${clusterArn} is now ${lastStatus}`);
-  return `Task is now ${lastStatus}`;
+  let messageText = `Task ${taskArn} is now ${lastStatus}`;
+  ["startedAt", "startedBy", "stoppedAt", "stoppedReason"].forEach(
+    field => {
+      const value = message.detail[field];
+      if (value != undefined) {
+        messageText += `\n${field}: ${value}`;
+      }
+    }
+  );
+  return messageText;
 }
 
 function ecsAutoScalingMessageText(message) {
