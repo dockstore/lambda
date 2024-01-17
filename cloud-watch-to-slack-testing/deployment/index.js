@@ -255,17 +255,19 @@ function ecsActivityMessageText(message) {
 }
 
 function ecsTaskStateChangeMessageText(message) {
-  const taskArn = message.detail.taskArn;
-  const lastStatus = message.detail.lastStatus;
+  const taskArn = message?.detail?.taskArn;
+  const lastStatus = message?.detail?.lastStatus;
   let messageText = `Task ${taskArn} is now ${lastStatus}`;
-  ["startedAt", "startedBy", "stoppedAt", "stoppedReason"].forEach(
-    field => {
-      const value = message.detail[field];
-      if (value != undefined) {
-        messageText += `\n${field}: ${value}`;
+  if (message?.detail != undefined) {
+    ["startedAt", "startedBy", "stoppedAt", "stoppedReason"].forEach(
+      (name) => {
+        const value = message?.detail[name];
+        if (value != undefined) {
+          messageText += `\n${name}: ${value}`;
+        }
       }
-    }
-  );
+    );
+  }
   return messageText;
 }
 
