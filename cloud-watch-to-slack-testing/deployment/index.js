@@ -259,7 +259,7 @@ function ecsTaskStateChangeMessageText(message) {
   const lastStatus = message?.detail?.lastStatus;
   let messageText = `Task ${taskArn} is now ${lastStatus}`;
   if (message?.detail != undefined) {
-    ["startedAt", "startedBy", "stoppedAt", "stoppedReason"].forEach((name) => {
+    ["startedAt", "stoppedAt", "stoppedReason"].forEach((name) => {
       const value = message?.detail[name];
       if (value != undefined) {
         messageText += `\n${name}: ${value}`;
