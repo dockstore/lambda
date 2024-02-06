@@ -19,7 +19,7 @@
 
 const url = require("url");
 const https = require("https");
-const AWS = require("aws-sdk");
+const { EC2Client, DescribeInstancesCommand } = require("@aws-sdk/client-ec2");
 
 // The Slack URL to send the message to
 const hookUrl = process.env.hookUrl;
@@ -40,44 +40,36 @@ function getInstanceNameAndSendMsgToSlack(
   processEventCallback,
   callback
 ) {
-  const ec2 = new AWS.EC2();
-
-  ec2.describeInstances(function (err, result) {
-    if (err) console.log(err);
-    // Log the error message.
-    else {
-      for (var i = 0; i < result.Reservations.length; i++) {
-        var res = result.Reservations[i];
-        var instances = res.Instances;
-
-        // Try to get the user friendly name of the EC2 target instance
-        var instance = instances.find(
-          (instance) => instance.InstanceId === targetInstanceId
-        );
-        var tagInstanceNameKey =
-          instance && instance.Tags.find((tag) => "Name" === tag.Key);
-        if (tagInstanceNameKey) {
-          var tagInstanceName = tagInstanceNameKey.Value || "unknown";
-          return callback(
-            slackChannel,
-            messageText,
-            tagInstanceName,
-            targetInstanceId,
-            processEventCallback
-          );
-        }
-      }
-    }
-    // If there was an error or the user friendly name was not found just send the
-    // message to Slack with a default name for the target
-    return callback(
+  instanceName(targetInstanceId).then((friendlyName) => {
+    callback(
       slackChannel,
       messageText,
-      "unknown",
+      friendlyName,
       targetInstanceId,
       processEventCallback
     );
   });
+}
+
+/**
+ * If the instanceId exists and has a tag whose key is "Name", returns that tag's value, otherwise returns null.
+ * @param instanceId
+ * @returns {Promise<void>}
+ */
+async function instanceName(instanceId) {
+  const client = new EC2Client();
+  const command = new DescribeInstancesCommand({
+    InstanceIds: [instanceId],
+  });
+  try {
+    const result = await client.send(command); // Throws if the instance is not found
+    const instance = result.Reservations[0].Instances; // Safe to assume, as previous line would have thrown
+    const tagInstanceNameKey = instance.Tags.find((tag) => "Name" === tag.Key);
+    return tagInstanceNameKey?.Value || null;
+  } catch (e) {
+    console.error("Error describing instance", e);
+  }
+  return null;
 }
 
 function constructMsgAndSendToSlack(
@@ -88,8 +80,12 @@ function constructMsgAndSendToSlack(
   callback
 ) {
   console.info(`Found instance name:${targetInstanceName}`);
-  messageText =
-    messageText + ` to target: ${targetInstanceName} (${targetInstanceId})`;
+  if (targetInstanceName) {
+    messageText =
+      messageText + ` to target: ${targetInstanceName} (${targetInstanceId})`;
+  } else {
+    messageText = messageText + ` to target: ${targetInstanceId}`;
+  }
 
   sendMessageToSlack(slackChannel, messageText, callback);
 }
@@ -153,7 +149,11 @@ function sendMessageToSlack(slackChannel, messageText, callback) {
 function awsConfigMessageText(message) {
   const alarmName = message.detail.configRuleName;
   const newState = message.detail.newEvaluationResult.complianceType;
-  return `${alarmName} state is now ${newState}`;
+  // If the event has a resource in the details, include that in the message
+  const resource = message.detail.resourceId
+    ? `for ${message.detail.resourceId}`
+    : "";
+  return `${alarmName} state is now ${newState} ${resource}`;
 }
 
 function trustedAdvisorMessageText(message) {
@@ -184,8 +184,18 @@ function ssmOrSigninMessageText(message) {
 
   let messageText = `uninitialized message text`;
   if (message.source === "aws.ssm") {
-    const userName = message.detail.userIdentity.userName;
-    messageText = `${userName} initiated AWS Systems Manager (SSM) event ${eventName}`;
+    let user;
+    if (message.detail.userIdentity.type === "IAMUser") {
+      user = message.detail.userIdentity.userName;
+    } else if (message.detail.userIdentity.type === "AssumedRole") {
+      const accountId = message.detail.userIdentity.accountId;
+      // Don't display account ID
+      user = message.detail.userIdentity.arn.replace(
+        accountId,
+        "X".repeat(accountId.length)
+      );
+    }
+    messageText = `${user} initiated AWS Systems Manager (SSM) event ${eventName}`;
   } else if (message.source === "aws.signin") {
     const userType = message.detail.userIdentity.type;
     messageText = `A user initiated AWS sign-in event ${eventName} as ${userType}`;
@@ -206,6 +216,13 @@ function ssmOrSigninMessageText(message) {
     message.region +
     `.`;
   return messageText + ` Event was initiated from IP ${sourceIPAddress}`;
+}
+
+function cloudWatchEventBridgeAlarmMessageText(message) {
+  const alarmName = message.detail.alarmName;
+  const newState = message.detail.state.value;
+  const newStateReason = message.detail.state.reason;
+  return `${alarmName} state is now ${newState}: ${newStateReason}`;
 }
 
 function alarmMessageText(message) {
@@ -229,7 +246,36 @@ function s3ActivityMessageText(message) {
   return `${userName} generated S3 event ${eventName} from region ${awsRegion} for bucket ${bucketName} in Dockstore ${dockstoreEnvironment}`;
 }
 
-function messageTextFromMessage(message) {
+function ecsActivityMessageText(message) {
+  if (message["detail-type"] === "ECS Task State Change") {
+    return ecsTaskStateChangeMessageText(message);
+  } else {
+    return ecsAutoScalingMessageText(message);
+  }
+}
+
+function ecsTaskStateChangeMessageText(message) {
+  const taskArn = message?.detail?.taskArn;
+  const lastStatus = message?.detail?.lastStatus;
+  let messageText = `Task ${taskArn} is now ${lastStatus}`;
+  ["startedAt", "stoppedAt", "stoppedReason"].forEach((name) => {
+    const value = message?.detail?.[name];
+    if (value != undefined) {
+      messageText += `\n${name}: ${value}`;
+    }
+  });
+  return messageText;
+}
+
+function ecsAutoScalingMessageText(message) {
+  const serviceName = message.detail.requestParameters.service;
+  const newDesiredCount = message.detail.requestParameters.desiredCount;
+  const currentRunningCount =
+    message.detail.responseElements.service.runningCount;
+  return `Auto scaling event triggered for ECS service ${serviceName}. Desired count of tasks updated from ${currentRunningCount} to ${newDesiredCount}`;
+}
+
+function messageTextFromMessageObject(message) {
   if (message.source === "aws.config") {
     return awsConfigMessageText(message);
   } else if (message.source === "aws.trustedadvisor") {
@@ -242,6 +288,10 @@ function messageTextFromMessage(message) {
     return s3ActivityMessageText(message);
   } else if (message.source === "dockstore.deployer") {
     return dockstoreDeployerMessageText(message);
+  } else if (message.source === "aws.ecs") {
+    return ecsActivityMessageText(message);
+  } else if (message.source === "aws.cloudwatch") {
+    return cloudWatchEventBridgeAlarmMessageText(message);
   } else {
     return alarmMessageText(message);
   }
@@ -287,12 +337,20 @@ function setSlackChannelBasedOnSNSTopic(topicArn) {
 
 function processEvent(event, callback) {
   console.log(event);
-  const message = JSON.parse(event.Records[0].Sns.Message);
+  let message;
+  let messageText;
+  try {
+    message = JSON.parse(event.Records[0].Sns.Message);
+    messageText = messageTextFromMessageObject(message);
+  } catch (e) {
+    message = event.Records[0].Sns.Message;
+    messageText = message;
+    console.log("Plain message received: " + messageText);
+  }
   const topicArn = event.Records[0].Sns.TopicArn;
   const slackChannel = setSlackChannelBasedOnSNSTopic(topicArn);
   console.info("Slack channel is " + slackChannel);
 
-  const messageText = messageTextFromMessage(message);
   if (addInstanceDetails(message)) {
     const targetInstanceId = message.detail.requestParameters.target;
     getInstanceNameAndSendMsgToSlack(

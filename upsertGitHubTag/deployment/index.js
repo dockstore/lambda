@@ -2,9 +2,10 @@
 
 const url = require("url");
 const https = require("https");
+const http = require("http");
 const crypto = require("crypto");
-const qs = require("querystring");
 const LAMBDA_USER_AGENT = "DockstoreLambda (NodeJs)";
+const DELIVERY_ID_HEADER = "X-GitHub-Delivery";
 
 // Verification function to check if it is actually GitHub who is POSTing here
 const verifyGitHub = (req, payload) => {
@@ -25,20 +26,25 @@ const verifyGitHub = (req, payload) => {
   );
 };
 
+function getProtocol(url) {
+  return url.protocol === "http:" ? http : https;
+}
+
 // Makes a POST request to the given path
-function postEndpoint(path, postBody, callback) {
+function postEndpoint(path, postBody, deliveryId, callback) {
   console.log("POST " + path);
-  console.log(qs.stringify(postBody));
+  console.log(postBody);
 
   const options = url.parse(path);
   options.method = "POST";
   options.headers = {
-    "Content-Type": "application/x-www-form-urlencoded",
+    "Content-Type": "application/json",
     Authorization: "Bearer " + process.env.DOCKSTORE_TOKEN,
     "User-Agent": LAMBDA_USER_AGENT,
+    "X-GitHub-Delivery": deliveryId,
   };
 
-  const req = https.request(options, (res) => {
+  const req = getProtocol(options).request(options, (res) => {
     var chunks = [];
     var bodyString = "";
 
@@ -63,7 +69,7 @@ function postEndpoint(path, postBody, callback) {
     });
     return res;
   });
-  req.write(qs.stringify(postBody));
+  req.write(JSON.stringify(postBody));
   req.end();
 }
 
@@ -74,6 +80,7 @@ function deleteEndpoint(
   reference,
   username,
   installationId,
+  deliveryId,
   callback
 ) {
   console.log("DELETE " + path);
@@ -89,9 +96,10 @@ function deleteEndpoint(
   options.headers = {
     Authorization: "Bearer " + process.env.DOCKSTORE_TOKEN,
     "User-Agent": LAMBDA_USER_AGENT,
+    "X-GitHub-Delivery": deliveryId,
   };
 
-  const req = https.request(options, (res) => {
+  const req = getProtocol(options).request(options, (res) => {
     var chunks = [];
 
     res.on("data", function (chunk) {
@@ -110,44 +118,17 @@ function deleteEndpoint(
   req.end();
 }
 
-/**
- * Handles github apps payload parsing for the 'installation_repositories' event type and creates a JSON to call the post endpoint.
- * Currently, if the payload's action is not 'added', we return null, as we don't want to call the endpoint.
- *
- * @param body - JSON payload body
- * @returns {null|{repositories: *, installationId: string, username: *}}
- */
-function handleInstallationRepositoriesEvent(body) {
-  // Currently ignoring repository removal events, only calling the endpoint if we are adding a repository.
-  if (body.action === "added") {
-    console.log("Valid installation event");
-    const username = body.sender.login;
-    const installationId = body.installation.id;
-    const repositoriesAdded = body.repositories_added;
-    const repositories = [];
-    repositoriesAdded.forEach((repo) => {
-      repositories.push(repo.full_name);
-    });
-
-    return {
-      installationId: installationId,
-      username: username,
-      repositories: repositories.join(","),
-    };
-  } else {
-    console.log(
-      'installation_repositories event ignored "' + body.action + '" action'
-    );
-    return null;
-  }
-}
-
 // Performs an action based on the event type (action)
 function processEvent(event, callback) {
   // Usually returns array of records, however it is fixed to only return 1 record
   console.log(JSON.stringify(event));
   var loneEvent = event.Records[0];
   var requestBody = JSON.parse(loneEvent.body);
+
+  // Print SQS message ID or null or undefined
+  const messageId = loneEvent.messageId;
+  const messageText = `message ID is: ${messageId}`;
+  console.log(messageText);
 
   // The payload is encoded in base64
   const buff = Buffer.from(requestBody.payload, "base64");
@@ -169,19 +150,39 @@ function processEvent(event, callback) {
 
   var path = process.env.API_URL;
 
-  // Handle installation events
-  var githubEventType = requestBody["X-GitHub-Event"];
-  if (githubEventType === "installation_repositories") {
-    const pushPostBody = handleInstallationRepositoriesEvent(body);
-    path += "workflows/github/install";
+  var deliveryId;
+  if (requestBody[DELIVERY_ID_HEADER]) {
+    deliveryId = requestBody[DELIVERY_ID_HEADER];
+  } else {
+    // TODO: remove this after 1.15.
+    // This was added because there's a small period of time during the 1.15 deploy where the header isn't available
+    console.log(
+      "Could not retrieve X-GitHub-Delivery header, generating a random UUID"
+    );
+    deliveryId = crypto.randomUUID();
+  }
 
-    if (pushPostBody != null) {
-      postEndpoint(path, pushPostBody, (response) => {
+  console.log("X-GitHub-Delivery: " + deliveryId);
+  var githubEventType = requestBody["X-GitHub-Event"];
+  // Handle installation events
+  if (githubEventType === "installation_repositories") {
+    // Currently ignoring repository removal events, only calling the endpoint if we are adding a repository.
+    if (body.action === "added") {
+      console.log("Valid installation event");
+      path += "workflows/github/install";
+      const repositoriesAdded = body.repositories_added;
+      const repositories = repositoriesAdded.map((repo) => repo.full_name);
+
+      postEndpoint(path, body, deliveryId, (response) => {
         const successMessage =
           "The GitHub app was successfully installed on repositories " +
-          pushPostBody.repositories;
+          repositories;
         handleCallback(response, successMessage, callback);
       });
+    } else {
+      console.log(
+        'installation_repositories event ignored "' + body.action + '" action'
+      );
     }
   } else if (githubEventType === "push") {
     /**
@@ -200,26 +201,18 @@ function processEvent(event, callback) {
         statusCode: 200,
         body: "Currently, this lambda does not support this event type from GitHub.",
       });
+      return;
     }
 
     // A push has been made for some repository (ignore pushes that are deletes)
     if (!body.deleted) {
       console.log("Valid push event");
       const repository = body.repository.full_name;
-      const username = body.sender.login;
       const gitReference = body.ref;
-      const installationId = body.installation.id;
-
-      const pushPostBody = {
-        gitReference: gitReference,
-        installationId: installationId,
-        repository: repository,
-        username: username,
-      };
 
       path += "workflows/github/release";
 
-      postEndpoint(path, pushPostBody, (response) => {
+      postEndpoint(path, body, deliveryId, (response) => {
         const successMessage =
           "The associated entries on Dockstore for repository " +
           repository +
@@ -243,6 +236,7 @@ function processEvent(event, callback) {
         gitReference,
         username,
         installationId,
+        deliveryId,
         (response) => {
           const successMessage =
             "The associated versions on Dockstore for repository " +
@@ -264,8 +258,6 @@ function processEvent(event, callback) {
         " from GitHub.",
     });
   }
-
-  callback(null, { statusCode: 200, body: "results" });
 }
 
 // Handle response from Dockstore webservice
@@ -289,10 +281,6 @@ function handleCallback(response, successMessage, callback) {
     });
   }
 }
-
-module.exports = {
-  handleInstallationRepositoriesEvent,
-};
 
 module.exports.handler = (event, context, callback) => {
   processEvent(event, callback);

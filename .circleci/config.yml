@@ -3,7 +3,7 @@ orbs:
   aws-s3: circleci/aws-s3@3.0.0
   node: circleci/node@4.7.0
   sam: circleci/aws-sam-serverless@3.0
-  aws-cli: circleci/aws-cli@3.1.1 # perform openid connect  
+  aws-cli: circleci/aws-cli@3.1.1 # perform openid connect
 jobs:
   build:
     docker:
@@ -20,7 +20,7 @@ jobs:
             - aws-cli/setup:
                 profile-name: WEB IDENTITY PROFILE
                 role-arn: $AWS_ROLE_ARN
-                role-session-name: "CircleCI-${CIRCLE_WORKFLOW_ID}-${CIRCLE_JOB}"          
+                role-session-name: "CircleCI-${CIRCLE_WORKFLOW_ID}-${CIRCLE_JOB}"
             - checkout
             - node/install:
                 install-yarn: false
@@ -32,9 +32,6 @@ jobs:
             - create_zip_upload_to_s3:
                 lambdaFolder: "edge-lambda-for-s3/deployment"
                 s3BucketFolder: "edgeLambdaForS3404s"
-            - create_zip_upload_to_s3:
-                lambdaFolder: "upsertGitHubTag/deployment"
-                s3BucketFolder: "upsertGitHubTag"
             - create_zip_upload_to_s3:
                 lambdaFolder: "webhook-testing/deployment"
                 s3BucketFolder: "webhookTesting"
@@ -62,7 +59,7 @@ jobs:
             - aws-cli/setup:
                 profile-name: WEB IDENTITY PROFILE
                 role-arn: $AWS_ROLE_ARN
-                role-session-name: "CircleCI-${CIRCLE_WORKFLOW_ID}-${CIRCLE_JOB}"          
+                role-session-name: "CircleCI-${CIRCLE_WORKFLOW_ID}-${CIRCLE_JOB}"
             - checkout
             - run:
                 name: Validate index.js

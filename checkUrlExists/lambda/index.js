@@ -1,22 +1,12 @@
-const fs = require("fs");
-const tls = require("tls");
+const Url = require("url");
+const ftp = require("basic-ftp");
+const { http, https } = require("follow-redirects");
 
-const { curly } = require("node-libcurl");
-
-// important steps to get validation of https (as opposed to http) urls
-// Get root certificates so https will work
-//
-// Write the certificates to a file
-// https://stackoverflow.com/questions/63052127/protractor-node-libcurl-failed-ssl-peer-certificate-or-ssh-remote-key-was-not-o
-// When doing sam build the file must be in /tmp because other wise it cannot be read
-// due to ro file system in container
-// https://stackoverflow.com/questions/53810516/getting-error-aws-lambda-erofs-read-only-file-system-open-var-task-assets
-const certFilePath = "/tmp/cacert.pem";
-// https://nodejs.org/api/tls.html#tls_tls_rootcertificates
-// An immutable array of strings representing the root certificates (in PEM format) from the bundled Mozilla CA store as supplied by current Node.js version.
-// The bundled CA store, as supplied by Node.js, is a snapshot of Mozilla CA store that is fixed at release time. It is identical on all supported platforms.
-const tlsData = tls.rootCertificates.join("\n");
-fs.writeFileSync(certFilePath, tlsData);
+// The Node url.parse returns an object where the protocol is lower case and contains the colon at the end
+const SECURE_FTP_PROTOCOL = "sftp:";
+const FTP_PROTOCOL = "ftp:";
+const HTTP_PROTOCOL = "http:";
+const HTTPS_PROTOCOL = "https:";
 
 /**
  * TODO: Change to array of URLs to parse
@@ -50,10 +40,48 @@ async function checkUrl(url) {
 }
 
 async function run(url) {
-  const curlOpts = {
-    caInfo: certFilePath,
-  };
-  return curly.head(url, curlOpts);
+  const parsedUrl = Url.parse(url);
+  const protocol = parsedUrl.protocol; // Url.parse() lower cases the protocol
+  if (FTP_PROTOCOL === protocol || SECURE_FTP_PROTOCOL === protocol) {
+    const secure = SECURE_FTP_PROTOCOL === protocol;
+    const ftpClient = new ftp.Client();
+    try {
+      let options = {
+        host: parsedUrl.host,
+        secure: secure,
+        ...(parsedUrl.port && { port: parsedUrl.port }),
+      };
+      await ftpClient.access(options);
+      const size = await ftpClient.size(parsedUrl.path);
+      return size > 0
+        ? Promise.resolve()
+        : Promise.reject("Could not get size for " + url);
+    } finally {
+      ftpClient.close();
+    }
+  } else if (HTTP_PROTOCOL === protocol) {
+    return httpOrHttpsRequest(url, http);
+  } else if (HTTPS_PROTOCOL === protocol) {
+    return httpOrHttpsRequest(url, https);
+  }
+  return Promise.reject("Unsupported protocol: " + protocol);
+}
+
+function httpOrHttpsRequest(url, httpOrHttps) {
+  return new Promise((resolve, reject) => {
+    const req = httpOrHttps.request(url, {
+      method: "HEAD",
+      headers: { "user-agent": "Dockstore/1.0" }, // User-agent must be set for tests to pass, AWS (WAF?) blocks requests with no user-agent
+    });
+    req.on("response", (res) => {
+      if (res.statusCode < 300) {
+        resolve(res.statusCode);
+      }
+      reject(res.statusCode);
+    });
+    req.on("error", (err) => reject(err));
+    req.end();
+  });
 }
 
 function returnResponse(fileFound) {

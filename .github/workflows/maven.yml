@@ -27,17 +27,12 @@ jobs:
        run: |
          python -m pip install --upgrade pip
          pip install aws-sam-cli
-     - name: Test with SAM CLI
-       working-directory: ./upsertGitHubTag
-       run: | 
-         sam local invoke HelloWorldFunction -e events/event.json -n env.json &> output.txt
-         grep "Valid push event" output.txt
      - name: Test wdl parsing with SAM CLI build and invoke
        working-directory: ./wdl-parsing
        run: | 
          sam build --use-container
          sam local invoke WDLParsingFunction -e events/event.json &> output.txt
-         grep "statusCode\":200" output.txt
+         grep "statusCode\": 200" output.txt
      - name: Test Nextflow parsing with SAM CLI build (no invoke)
        working-directory: ./nextflow-parsing
        # SAM build also runs the Java tests
