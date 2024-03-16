@@ -166,24 +166,15 @@ function processEvent(event, callback) {
   var githubEventType = requestBody["X-GitHub-Event"];
   // Handle installation events
   if (githubEventType === "installation_repositories") {
-    // Currently ignoring repository removal events, only calling the endpoint if we are adding a repository.
-    if (body.action === "added") {
-      console.log("Valid installation event");
-      path += "workflows/github/install";
-      const repositoriesAdded = body.repositories_added;
-      const repositories = repositoriesAdded.map((repo) => repo.full_name);
-
-      postEndpoint(path, body, deliveryId, (response) => {
-        const successMessage =
-          "The GitHub app was successfully installed on repositories " +
-          repositories;
-        handleCallback(response, successMessage, callback);
-      });
-    } else {
-      console.log(
-        'installation_repositories event ignored "' + body.action + '" action'
-      );
-    }
+    // The installation_repositories event contains information about both additions and removals
+    console.log("Valid installation event");
+    path += "workflows/github/install";
+    postEndpoint(path, body, deliveryId, (response) => {
+      const added = body.action !== "removed"
+      repositories = full_names(added ? body.repositories_added ? body.repositories_removed)
+      const successMessage = `The GitHub app was successfully ${added ? "installed" : "uninstalled"} on repositories ${repositories}`
+      handleCallback(response, successMessage, callback);
+    });
   } else if (githubEventType === "push") {
     /**
      * We only handle push events, of which there are many subtypes. Unfortunately, the only way to differentiate between them is to look
