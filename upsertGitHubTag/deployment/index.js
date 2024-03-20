@@ -170,7 +170,7 @@ function processEvent(event, callback) {
     console.log("Valid installation event");
     path += "workflows/github/install";
     postEndpoint(path, body, deliveryId, (response) => {
-      const added = body.action !== "removed"
+      const added = body.action === "added"
       repositories = full_names(added ? body.repositories_added ? body.repositories_removed)
       const successMessage = `The GitHub app was successfully ${added ? "installed" : "uninstalled"} on repositories ${repositories}`
       handleCallback(response, successMessage, callback);
