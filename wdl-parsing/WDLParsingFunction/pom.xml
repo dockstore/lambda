@@ -27,11 +27,6 @@
             <layout>default</layout>
         </repository>
         <repository>
-            <id>artifacts.oicr.on.ca</id>
-            <name>artifacts.oicr.on.ca</name>
-            <url>https://artifacts.oicr.on.ca/artifactory/collab-release</url>
-        </repository>
-        <repository>
             <id>artifactory.broadinstitute.org</id>
             <name>artifactory.broadinstitute.org</name>
             <url>https://broadinstitute.jfrog.io/artifactory/libs-release/</url>
