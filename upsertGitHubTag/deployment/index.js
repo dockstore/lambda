@@ -166,7 +166,7 @@ function processEvent(event, callback) {
   var githubEventType = requestBody["X-GitHub-Event"];
   // Handle installation events
   if (githubEventType === "installation_repositories") {
-    // The installation_repositories event contains information about both additions and removals
+    // The installation_repositories event contains information about both additions and removals.
     console.log("Valid installation event");
     path += "workflows/github/install";
     postEndpoint(path, body, deliveryId, (response) => {
