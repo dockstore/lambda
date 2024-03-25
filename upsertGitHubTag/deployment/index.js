@@ -170,9 +170,13 @@ function processEvent(event, callback) {
     console.log("Valid installation event");
     path += "workflows/github/install";
     postEndpoint(path, body, deliveryId, (response) => {
-      const added = body.action === "added"
-      const repositories = (added ? body.repositories_added : body.repositories_removed).map((repo) => repo.full_name)
-      const successMessage = `The GitHub app was successfully ${added ? "installed" : "uninstalled"} on repositories ${repositories}`
+      const added = body.action === "added";
+      const repositories = (
+        added ? body.repositories_added : body.repositories_removed
+      ).map((repo) => repo.full_name);
+      const successMessage = `The GitHub app was successfully ${
+        added ? "installed" : "uninstalled"
+      } on repositories ${repositories}`;
       handleCallback(response, successMessage, callback);
     });
   } else if (githubEventType === "push") {
