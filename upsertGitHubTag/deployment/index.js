@@ -1,4 +1,6 @@
 "use strict";
+import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {env} from "../../.eslintrc";
 
 const url = require("url");
 const https = require("https");
@@ -257,6 +259,21 @@ function processEvent(event, callback) {
         githubEventType +
         " from GitHub.",
     });
+  }
+
+  // Send payload to s3
+  const client = new S3Client({});
+  const command = new PutObjectCommand({
+    Bucket: process.env.BUCKET_NAME,
+    Key: deliveryId,
+    Body: JSON.stringify(body),
+    ContentType: "application/json"
+  });
+  try {
+    const response = client.send(command);
+    console.log(response);
+  } catch (err) {
+    console.error(err);
   }
 }
 
