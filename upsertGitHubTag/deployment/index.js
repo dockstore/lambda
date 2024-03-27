@@ -1,5 +1,5 @@
 "use strict";
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+const { PutObjectCommand, S3Client } = require("@aws-sdk/client-s3");
 
 const url = require("url");
 const https = require("https");
