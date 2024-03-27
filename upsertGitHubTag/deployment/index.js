@@ -1,6 +1,5 @@
 "use strict";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import {env} from "../../.eslintrc";
 
 const url = require("url");
 const https = require("https");
