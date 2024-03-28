@@ -266,7 +266,7 @@ function processEvent(event, callback) {
     Bucket: process.env.BUCKET_NAME,
     Key: deliveryId,
     Body: JSON.stringify(body),
-    ContentType: "application/json"
+    ContentType: "application/json",
   });
   try {
     const response = client.send(command);
