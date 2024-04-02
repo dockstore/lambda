@@ -259,20 +259,22 @@ function processEvent(event, callback) {
         " from GitHub.",
     });
   }
-
-  // Send payload to s3
-  const client = new S3Client({});
-  const command = new PutObjectCommand({
-    Bucket: process.env.BUCKET_NAME,
-    Key: deliveryId,
-    Body: JSON.stringify(body),
-    ContentType: "application/json",
-  });
-  try {
-    const response = client.send(command);
-    console.log(response);
-  } catch (err) {
-    console.error(err);
+  // If bucket name is not null (had to put this for the integration test)
+  if (process.env.BUCKET_NAME) {
+    // Send payload to s3
+    const client = new S3Client({});
+    const command = new PutObjectCommand({
+      Bucket: process.env.BUCKET_NAME,
+      Key: deliveryId,
+      Body: JSON.stringify(body),
+      ContentType: "application/json",
+    });
+    try {
+      const response = client.send(command);
+      console.log(response);
+    } catch (err) {
+      console.error(err);
+    }
   }
 }
 
