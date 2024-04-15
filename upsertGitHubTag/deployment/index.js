@@ -261,7 +261,7 @@ function processEvent(event, callback) {
     // Send payload to s3
     const uploadDate = new Date();
     const repository = body.repository.full_name;
-    const bucketPath = `${uploadDate.getDay()}-${uploadDate.getMonth()}-${uploadDate.getFullYear()}/${repository}/${deliveryId}` //formats path to DD-MM-YYYY/repository/deliveryid
+    const bucketPath = `${uploadDate.getDay()}-${uploadDate.getMonth()}-${uploadDate.getFullYear()}/${repository}/${deliveryId}`; //formats path to DD-MM-YYYY/repository/deliveryid
 
     const command = new PutObjectCommand({
       Bucket: process.env.BUCKET_NAME,
