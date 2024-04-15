@@ -7,6 +7,7 @@ const http = require("http");
 const crypto = require("crypto");
 const LAMBDA_USER_AGENT = "DockstoreLambda (NodeJs)";
 const DELIVERY_ID_HEADER = "X-GitHub-Delivery";
+const client = new S3Client({});
 
 // Verification function to check if it is actually GitHub who is POSTing here
 const verifyGitHub = (req, payload) => {
@@ -253,22 +254,26 @@ function processEvent(event, callback) {
         githubEventType +
         " from GitHub.",
     });
+    return;
   }
   // If bucket name is not null (had to put this for the integration test)
   if (process.env.BUCKET_NAME) {
     // Send payload to s3
-    const client = new S3Client({});
+    const uploadDate = new Date();
+    const repository = body.repository.full_name;
+    const bucketPath = `${uploadDate.getDay()}-${uploadDate.getMonth()}-${uploadDate.getFullYear()}/${repository}/${deliveryId}` //formats path to DD-MM-YYYY/repository/deliveryid
+
     const command = new PutObjectCommand({
       Bucket: process.env.BUCKET_NAME,
-      Key: deliveryId,
+      Key: bucketPath,
       Body: JSON.stringify(body),
       ContentType: "application/json",
     });
     try {
       const response = client.send(command);
-      console.log(response);
+      console.log("Successfully uploaded payload to bucket", response);
     } catch (err) {
-      console.error(err);
+      console.error("Error uploading payload to bucket", err);
     }
   }
 }
