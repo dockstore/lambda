@@ -261,7 +261,7 @@ function processEvent(event, callback) {
     // Send payload to s3
     const uploadDate = new Date();
     const repository = body.repository.full_name;
-    const bucketPath = `${uploadDate.getDay()}-${uploadDate.getMonth()}-${uploadDate.getFullYear()}/${repository}/${deliveryId}`; //formats path to DD-MM-YYYY/repository/deliveryid
+    const bucketPath = `${uploadDate.getFullYear()}-${uploadDate.getMonth()}-${uploadDate.getDay()}/${repository}/${deliveryId}`; //formats path to YYYY-MM-DD/repository/deliveryid
 
     const command = new PutObjectCommand({
       Bucket: process.env.BUCKET_NAME,
@@ -269,15 +269,18 @@ function processEvent(event, callback) {
       Body: JSON.stringify(body),
       ContentType: "application/json",
     });
-    try {
-      const response = client.send(command);
-      console.log("Successfully uploaded payload to bucket", response);
-    } catch (err) {
-      console.error("Error uploading payload to bucket", err);
-    }
+    logPayloadToS3(command);
   }
 }
 
+function logPayloadToS3(command) {
+  try {
+    const response = client.send(command);
+    console.log(`Successfully uploaded payload to bucket. DeliveryID: ${deliveryId}`, response);
+  } catch (err) {
+    console.error(`Error uploading payload to bucket. DeliveryID: ${deliveryId}`, err);
+  }
+}
 // Handle response from Dockstore webservice
 function handleCallback(response, successMessage, callback) {
   console.log(response);
