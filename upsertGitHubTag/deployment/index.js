@@ -277,15 +277,15 @@ function logPayloadToS3(command, deliveryId) {
   try {
     const response = client.send(command);
     console.log(
-        "Successfully uploaded payload to bucket. DeliveryID: ",
-        deliveryId,
-        response
+      "Successfully uploaded payload to bucket. DeliveryID: ",
+      deliveryId,
+      response
     );
   } catch (err) {
     console.error(
-        "Error uploading payload to bucket. DeliveryID: ",
-        deliveryId,
-        err
+      "Error uploading payload to bucket. DeliveryID: ",
+      deliveryId,
+      err
     );
   }
 }
