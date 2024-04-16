@@ -276,9 +276,9 @@ function processEvent(event, callback) {
 function logPayloadToS3(command, deliveryId) {
   try {
     const response = client.send(command);
-    console.log("Successfully uploaded payload to bucket. DeliveryID: " + deliveryId, response);
+    console.log("Successfully uploaded payload to bucket. DeliveryID: ", deliveryId, response);
   } catch (err) {
-    console.error("Error uploading payload to bucket. DeliveryID: " + deliveryId, err);
+    console.error("Error uploading payload to bucket. DeliveryID: ", deliveryId, err);
   }
 }
 // Handle response from Dockstore webservice
