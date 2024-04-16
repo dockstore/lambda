@@ -269,11 +269,11 @@ function processEvent(event, callback) {
       Body: JSON.stringify(body),
       ContentType: "application/json",
     });
-    logPayloadToS3(command);
+    logPayloadToS3(command, deliveryId);
   }
 }
 
-function logPayloadToS3(command) {
+function logPayloadToS3(command, deliveryId) {
   try {
     const response = client.send(command);
     console.log(`Successfully uploaded payload to bucket. DeliveryID: ${deliveryId}`, response);
