@@ -260,8 +260,7 @@ function processEvent(event, callback) {
   if (process.env.BUCKET_NAME) {
     // Send payload to s3
     const uploadDate = new Date();
-    const repository = body.repository.full_name;
-    const bucketPath = `${uploadDate.getFullYear()}-${uploadDate.getMonth()}-${uploadDate.getDay()}/${repository}/${deliveryId}`; //formats path to YYYY-MM-DD/repository/deliveryid
+    const bucketPath = `${uploadDate.getFullYear()}-${uploadDate.getMonth()}-${uploadDate.getDay()}/${deliveryId}`; //formats path to YYYY-MM-DD/deliveryid
 
     const command = new PutObjectCommand({
       Bucket: process.env.BUCKET_NAME,
@@ -289,6 +288,7 @@ function logPayloadToS3(command, deliveryId) {
     );
   }
 }
+
 // Handle response from Dockstore webservice
 function handleCallback(response, successMessage, callback) {
   console.log(response);
