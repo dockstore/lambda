@@ -170,6 +170,8 @@ function processEvent(event, callback) {
   if (githubEventType === "installation_repositories") {
     // The installation_repositories event contains information about both additions and removals.
     console.log("Valid installation event");
+    logPayloadToS3(deliveryId); //upload event to S3
+
     path += "workflows/github/install";
     postEndpoint(path, body, deliveryId, (response) => {
       const added = body.action === "added";
@@ -204,6 +206,8 @@ function processEvent(event, callback) {
     // A push has been made for some repository (ignore pushes that are deletes)
     if (!body.deleted) {
       console.log("Valid push event");
+      logPayloadToS3(deliveryId); //upload event to S3
+
       const repository = body.repository.full_name;
       const gitReference = body.ref;
 
@@ -256,9 +260,11 @@ function processEvent(event, callback) {
     });
     return;
   }
+}
+
+function logPayloadToS3(deliveryId) {
   // If bucket name is not null (had to put this for the integration test)
   if (process.env.BUCKET_NAME) {
-    // Send payload to s3
     const uploadDate = new Date();
     const bucketPath = `${uploadDate.getFullYear()}-${uploadDate.getMonth()}-${uploadDate.getDay()}/${deliveryId}`; //formats path to YYYY-MM-DD/deliveryid
 
@@ -268,24 +274,21 @@ function processEvent(event, callback) {
       Body: JSON.stringify(body),
       ContentType: "application/json",
     });
-    logPayloadToS3(command, deliveryId);
-  }
-}
+    try {
 
-function logPayloadToS3(command, deliveryId) {
-  try {
-    const response = client.send(command);
-    console.log(
-      "Successfully uploaded payload to bucket. DeliveryID: ",
-      deliveryId,
-      response
-    );
-  } catch (err) {
-    console.error(
-      "Error uploading payload to bucket. DeliveryID: ",
-      deliveryId,
-      err
-    );
+      const response = client.send(command);
+      console.log(
+          "Successfully uploaded payload to bucket. DeliveryID: ",
+          deliveryId,
+          response
+      );
+    } catch (err) {
+      console.error(
+          "Error uploading payload to bucket. DeliveryID: ",
+          deliveryId,
+          err
+      );
+    }
   }
 }
 
