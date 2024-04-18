@@ -170,7 +170,8 @@ function processEvent(event, callback) {
   if (githubEventType === "installation_repositories") {
     // The installation_repositories event contains information about both additions and removals.
     console.log("Valid installation event");
-    logPayloadToS3(deliveryId); //upload event to S3
+
+    logPayloadToS3(body, deliveryId); //upload event to S3
 
     path += "workflows/github/install";
     postEndpoint(path, body, deliveryId, (response) => {
@@ -206,7 +207,7 @@ function processEvent(event, callback) {
     // A push has been made for some repository (ignore pushes that are deletes)
     if (!body.deleted) {
       console.log("Valid push event");
-      logPayloadToS3(deliveryId); //upload event to S3
+      logPayloadToS3(body, deliveryId); //upload event to S3
 
       const repository = body.repository.full_name;
       const gitReference = body.ref;
@@ -262,7 +263,7 @@ function processEvent(event, callback) {
   }
 }
 
-function logPayloadToS3(deliveryId) {
+function logPayloadToS3(body, deliveryId) {
   // If bucket name is not null (had to put this for the integration test)
   if (process.env.BUCKET_NAME) {
     const uploadDate = new Date();
