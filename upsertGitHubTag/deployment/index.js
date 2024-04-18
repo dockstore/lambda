@@ -1,4 +1,5 @@
 "use strict";
+const { PutObjectCommand, S3Client } = require("@aws-sdk/client-s3");
 
 const url = require("url");
 const https = require("https");
@@ -6,6 +7,7 @@ const http = require("http");
 const crypto = require("crypto");
 const LAMBDA_USER_AGENT = "DockstoreLambda (NodeJs)";
 const DELIVERY_ID_HEADER = "X-GitHub-Delivery";
+const client = new S3Client({});
 
 // Verification function to check if it is actually GitHub who is POSTing here
 const verifyGitHub = (req, payload) => {
@@ -168,6 +170,9 @@ function processEvent(event, callback) {
   if (githubEventType === "installation_repositories") {
     // The installation_repositories event contains information about both additions and removals.
     console.log("Valid installation event");
+
+    logPayloadToS3(body, deliveryId); //upload event to S3
+
     path += "workflows/github/install";
     postEndpoint(path, body, deliveryId, (response) => {
       const added = body.action === "added";
@@ -202,6 +207,8 @@ function processEvent(event, callback) {
     // A push has been made for some repository (ignore pushes that are deletes)
     if (!body.deleted) {
       console.log("Valid push event");
+      logPayloadToS3(body, deliveryId); //upload event to S3
+
       const repository = body.repository.full_name;
       const gitReference = body.ref;
 
@@ -252,6 +259,36 @@ function processEvent(event, callback) {
         githubEventType +
         " from GitHub.",
     });
+    return;
+  }
+}
+
+function logPayloadToS3(body, deliveryId) {
+  // If bucket name is not null (had to put this for the integration test)
+  if (process.env.BUCKET_NAME) {
+    const uploadDate = new Date();
+    const bucketPath = `${uploadDate.getFullYear()}-${uploadDate.getMonth()}-${uploadDate.getDay()}/${deliveryId}`; //formats path to YYYY-MM-DD/deliveryid
+
+    const command = new PutObjectCommand({
+      Bucket: process.env.BUCKET_NAME,
+      Key: bucketPath,
+      Body: JSON.stringify(body),
+      ContentType: "application/json",
+    });
+    try {
+      const response = client.send(command);
+      console.log(
+        "Successfully uploaded payload to bucket. DeliveryID: ",
+        deliveryId,
+        response
+      );
+    } catch (err) {
+      console.error(
+        "Error uploading payload to bucket. DeliveryID: ",
+        deliveryId,
+        err
+      );
+    }
   }
 }
 
