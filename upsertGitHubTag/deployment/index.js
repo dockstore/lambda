@@ -268,9 +268,9 @@ function logPayloadToS3(body, deliveryId) {
   if (process.env.BUCKET_NAME) {
     const uploadDate = new Date();
     const bucketPath =
-        `${uploadDate.getFullYear()}` +
-        `-${uploadDate.getMonth() + 1}` +
-        `-${uploadDate.getDate()}/${deliveryId}`; //formats path to YYYY-MM-DD/deliveryid
+      `${uploadDate.getFullYear()}` +
+      `-${uploadDate.getMonth() + 1}` +
+      `-${uploadDate.getDate()}/${deliveryId}`; //formats path to YYYY-MM-DD/deliveryid
 
     const command = new PutObjectCommand({
       Bucket: process.env.BUCKET_NAME,
