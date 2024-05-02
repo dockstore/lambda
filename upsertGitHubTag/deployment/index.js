@@ -270,7 +270,7 @@ function logPayloadToS3(body, deliveryId) {
     const uploadYear = date.getFullYear();
     const uploadMonth = (date.getMonth() + 1 < 10 ? "0" : "") + (date.getMonth() + 1); // ex. get 05 instead of 5 for May
     const uploadDate = (date.getDate() < 10 ? "0" : "") + date.getDate(); // ex. get 05 instead of 5 for the 5th date
-    const bucketPath = `${uploadYear}-${uploadMonth}-${uploadDate.getDate()}/${deliveryId}`;
+    const bucketPath = `${uploadYear}-${uploadMonth}-${uploadDate}/${deliveryId}`;
 
     const command = new PutObjectCommand({
       Bucket: process.env.BUCKET_NAME,
