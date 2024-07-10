@@ -274,7 +274,7 @@ function logPayloadToS3(eventType, body, deliveryId) {
     const uploadHour = date.getHours().toString().padStart(2, "0"); // ex. get 05 instead of 5 for the 5th hour
     const bucketPath = `${uploadYear}-${uploadMonth}-${uploadDate}/${uploadHour}/${deliveryId}`;
 
-    const fullPayload = {}
+    const fullPayload = {};
     fullPayload[eventType] = eventType;
     fullPayload[body] = body;
 
