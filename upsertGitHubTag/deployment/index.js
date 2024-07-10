@@ -275,8 +275,8 @@ function logPayloadToS3(eventType, body, deliveryId) {
     const bucketPath = `${uploadYear}-${uploadMonth}-${uploadDate}/${uploadHour}/${deliveryId}`;
 
     const fullPayload = {};
-    fullPayload[eventType] = eventType;
-    fullPayload[body] = body;
+    fullPayload["eventType"] = eventType;
+    fullPayload["body"] = body;
 
     const command = new PutObjectCommand({
       Bucket: process.env.BUCKET_NAME,
