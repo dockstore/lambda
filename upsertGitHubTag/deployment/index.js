@@ -171,7 +171,7 @@ function processEvent(event, callback) {
     // The installation_repositories event contains information about both additions and removals.
     console.log("Valid installation event");
 
-    logPayloadToS3(body, deliveryId); //upload event to S3
+    logPayloadToS3(githubEventType, body, deliveryId); //upload event to S3
 
     path += "workflows/github/install";
     postEndpoint(path, body, deliveryId, (response) => {
@@ -207,7 +207,7 @@ function processEvent(event, callback) {
     // A push has been made for some repository (ignore pushes that are deletes)
     if (!body.deleted) {
       console.log("Valid push event");
-      logPayloadToS3(body, deliveryId); //upload event to S3
+      logPayloadToS3(githubEventType, body, deliveryId); //upload event to S3
 
       const repository = body.repository.full_name;
       const gitReference = body.ref;
@@ -225,6 +225,7 @@ function processEvent(event, callback) {
       });
     } else {
       console.log("Valid push event (delete)");
+      logPayloadToS3(githubEventType, body, deliveryId); //upload event to S3
       const repository = body.repository.full_name;
       const gitReference = body.ref;
       const username = body.sender.login;
@@ -263,7 +264,7 @@ function processEvent(event, callback) {
   }
 }
 
-function logPayloadToS3(body, deliveryId) {
+function logPayloadToS3(eventType, body, deliveryId) {
   // If bucket name is not null (had to put this for the integration test)
   if (process.env.BUCKET_NAME) {
     const date = new Date();
@@ -273,10 +274,14 @@ function logPayloadToS3(body, deliveryId) {
     const uploadHour = date.getHours().toString().padStart(2, "0"); // ex. get 05 instead of 5 for the 5th hour
     const bucketPath = `${uploadYear}-${uploadMonth}-${uploadDate}/${uploadHour}/${deliveryId}`;
 
+    const fullPayload = {};
+    fullPayload["eventType"] = eventType;
+    fullPayload["body"] = body;
+
     const command = new PutObjectCommand({
       Bucket: process.env.BUCKET_NAME,
       Key: bucketPath,
-      Body: JSON.stringify(body),
+      Body: JSON.stringify(fullPayload),
       ContentType: "application/json",
     });
     try {
