@@ -144,7 +144,7 @@ commands:
           command: bash -i -c 'npm ci'
       - run:
           name: install individual lambda packages
-          command: bash -i -c 'npm --prefix checkUrlExists/lambda install'
+          command: bash -i -c 'npm --prefix checkUrlExists/lambda ci'
       - run:
           name: run unit tests
           command: bash -i -c 'npm run test'
