@@ -134,7 +134,8 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>${jackson-version}</version>
+            <!-- The "jackson-version" version of this artifact doesn't exist, override for dependabot -->
+            <version>2.12.7.1</version>
         </dependency>
         <dependency>
             <groupId>org.openapitools</groupId>
