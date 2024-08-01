@@ -120,6 +120,15 @@ function deleteEndpoint(
   req.end();
 }
 
+function handleReleaseEvent(githubEventType, body, deliveryId, path, callback) {
+  console.log("Valid release event");
+  const fullPath = path + "workflows/github/taggedrelease";
+  logPayloadToS3(githubEventType, body, deliveryId);
+  postEndpoint(fullPath, body, deliveryId, (response) => {
+    handleCallback(response, "", callback);
+  });
+}
+
 // Performs an action based on the event type (action)
 function processEvent(event, callback) {
   // Usually returns array of records, however it is fixed to only return 1 record
@@ -251,6 +260,8 @@ function processEvent(event, callback) {
         }
       );
     }
+  } else if (githubEventType === "release") {
+    handleReleaseEvent(githubEventType, body, deliveryId, path, callback);
   } else {
     console.log("Event " + githubEventType + " is not supported");
     callback(null, {
