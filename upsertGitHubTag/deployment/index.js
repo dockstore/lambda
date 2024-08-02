@@ -260,7 +260,7 @@ function processEvent(event, callback) {
         }
       );
     }
-  } else if (githubEventType === "release") {
+  } else if (githubEventType === "released") {
     handleReleaseEvent(githubEventType, body, deliveryId, path, callback);
   } else {
     console.log("Event " + githubEventType + " is not supported");
