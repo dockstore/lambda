@@ -121,7 +121,7 @@ function deleteEndpoint(
 }
 
 function handleReleaseEvent(githubEventType, body, deliveryId, path, callback) {
-  console.log("Valid release event");
+  console.log("Valid release event ", deliveryId);
   const fullPath = path + "workflows/github/taggedrelease";
   logPayloadToS3(githubEventType, body, deliveryId);
   postEndpoint(fullPath, body, deliveryId, (response) => {
@@ -178,7 +178,7 @@ function processEvent(event, callback) {
   // Handle installation events
   if (githubEventType === "installation_repositories") {
     // The installation_repositories event contains information about both additions and removals.
-    console.log("Valid installation event");
+    console.log("Valid installation event ", deliveryId);
 
     logPayloadToS3(githubEventType, body, deliveryId); //upload event to S3
 
@@ -215,7 +215,7 @@ function processEvent(event, callback) {
 
     // A push has been made for some repository (ignore pushes that are deletes)
     if (!body.deleted) {
-      console.log("Valid push event");
+      console.log("Valid push event ", deliveryId);
       logPayloadToS3(githubEventType, body, deliveryId); //upload event to S3
 
       const repository = body.repository.full_name;
@@ -233,7 +233,7 @@ function processEvent(event, callback) {
         handleCallback(response, successMessage, callback);
       });
     } else {
-      console.log("Valid push event (delete)");
+      console.log("Valid push event (delete) ", deliveryId);
       logPayloadToS3(githubEventType, body, deliveryId); //upload event to S3
       const repository = body.repository.full_name;
       const gitReference = body.ref;
@@ -263,7 +263,7 @@ function processEvent(event, callback) {
   } else if (githubEventType === "release") {
     handleReleaseEvent(githubEventType, body, deliveryId, path, callback);
   } else {
-    console.log("Event " + githubEventType + " is not supported");
+    console.log("Event " + githubEventType + " is not supported", deliveryId);
     callback(null, {
       statusCode: 200,
       body:
