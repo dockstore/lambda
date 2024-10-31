@@ -1,4 +1,5 @@
 "use strict";
+const { PutObjectCommand, S3Client } = require("@aws-sdk/client-s3");
 
 const url = require("url");
 const https = require("https");
@@ -6,6 +7,7 @@ const http = require("http");
 const crypto = require("crypto");
 const LAMBDA_USER_AGENT = "DockstoreLambda (NodeJs)";
 const DELIVERY_ID_HEADER = "X-GitHub-Delivery";
+const client = new S3Client({});
 
 // Verification function to check if it is actually GitHub who is POSTing here
 const verifyGitHub = (req, payload) => {
@@ -118,6 +120,15 @@ function deleteEndpoint(
   req.end();
 }
 
+function handleReleaseEvent(githubEventType, body, deliveryId, path, callback) {
+  console.log("Valid release event ", deliveryId);
+  const fullPath = path + "workflows/github/taggedrelease";
+  logPayloadToS3(githubEventType, body, deliveryId);
+  postEndpoint(fullPath, body, deliveryId, (response) => {
+    handleCallback(response, "", callback);
+  });
+}
+
 // Performs an action based on the event type (action)
 function processEvent(event, callback) {
   // Usually returns array of records, however it is fixed to only return 1 record
@@ -166,24 +177,22 @@ function processEvent(event, callback) {
   var githubEventType = requestBody["X-GitHub-Event"];
   // Handle installation events
   if (githubEventType === "installation_repositories") {
-    // Currently ignoring repository removal events, only calling the endpoint if we are adding a repository.
-    if (body.action === "added") {
-      console.log("Valid installation event");
-      path += "workflows/github/install";
-      const repositoriesAdded = body.repositories_added;
-      const repositories = repositoriesAdded.map((repo) => repo.full_name);
+    // The installation_repositories event contains information about both additions and removals.
+    console.log("Valid installation event ", deliveryId);
 
-      postEndpoint(path, body, deliveryId, (response) => {
-        const successMessage =
-          "The GitHub app was successfully installed on repositories " +
-          repositories;
-        handleCallback(response, successMessage, callback);
-      });
-    } else {
-      console.log(
-        'installation_repositories event ignored "' + body.action + '" action'
-      );
-    }
+    logPayloadToS3(githubEventType, body, deliveryId); //upload event to S3
+
+    path += "workflows/github/install";
+    postEndpoint(path, body, deliveryId, (response) => {
+      const added = body.action === "added";
+      const repositories = (
+        added ? body.repositories_added : body.repositories_removed
+      ).map((repo) => repo.full_name);
+      const successMessage = `The GitHub app was successfully ${
+        added ? "installed" : "uninstalled"
+      } on repositories ${repositories}`;
+      handleCallback(response, successMessage, callback);
+    });
   } else if (githubEventType === "push") {
     /**
      * We only handle push events, of which there are many subtypes. Unfortunately, the only way to differentiate between them is to look
@@ -206,7 +215,9 @@ function processEvent(event, callback) {
 
     // A push has been made for some repository (ignore pushes that are deletes)
     if (!body.deleted) {
-      console.log("Valid push event");
+      console.log("Valid push event ", deliveryId);
+      logPayloadToS3(githubEventType, body, deliveryId); //upload event to S3
+
       const repository = body.repository.full_name;
       const gitReference = body.ref;
 
@@ -222,7 +233,8 @@ function processEvent(event, callback) {
         handleCallback(response, successMessage, callback);
       });
     } else {
-      console.log("Valid push event (delete)");
+      console.log("Valid push event (delete) ", deliveryId);
+      logPayloadToS3(githubEventType, body, deliveryId); //upload event to S3
       const repository = body.repository.full_name;
       const gitReference = body.ref;
       const username = body.sender.login;
@@ -248,8 +260,10 @@ function processEvent(event, callback) {
         }
       );
     }
+  } else if (githubEventType === "release") {
+    handleReleaseEvent(githubEventType, body, deliveryId, path, callback);
   } else {
-    console.log("Event " + githubEventType + " is not supported");
+    console.log("Event " + githubEventType + " is not supported", deliveryId);
     callback(null, {
       statusCode: 200,
       body:
@@ -257,6 +271,44 @@ function processEvent(event, callback) {
         githubEventType +
         " from GitHub.",
     });
+    return;
+  }
+}
+
+function logPayloadToS3(eventType, body, deliveryId) {
+  // If bucket name is not null (had to put this for the integration test)
+  if (process.env.BUCKET_NAME) {
+    const date = new Date();
+    const uploadYear = date.getFullYear();
+    const uploadMonth = (date.getMonth() + 1).toString().padStart(2, "0"); // ex. get 05 instead of 5 for May
+    const uploadDate = date.getDate().toString().padStart(2, "0"); // ex. get 05 instead of 5 for the 5th date
+    const uploadHour = date.getHours().toString().padStart(2, "0"); // ex. get 05 instead of 5 for the 5th hour
+    const bucketPath = `${uploadYear}-${uploadMonth}-${uploadDate}/${uploadHour}/${deliveryId}`;
+
+    const fullPayload = {};
+    fullPayload["eventType"] = eventType;
+    fullPayload["body"] = body;
+
+    const command = new PutObjectCommand({
+      Bucket: process.env.BUCKET_NAME,
+      Key: bucketPath,
+      Body: JSON.stringify(fullPayload),
+      ContentType: "application/json",
+    });
+    try {
+      const response = client.send(command);
+      console.log(
+        "Successfully uploaded payload to bucket. DeliveryID: ",
+        deliveryId,
+        response
+      );
+    } catch (err) {
+      console.error(
+        "Error uploading payload to bucket. DeliveryID: ",
+        deliveryId,
+        err
+      );
+    }
   }
 }
 

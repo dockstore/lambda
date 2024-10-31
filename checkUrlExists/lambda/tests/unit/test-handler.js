@@ -22,7 +22,7 @@ describe("Tests index", function () {
   });
   it("verifies successful response for large file", async () => {
     const url =
-      "https://dcc.icgc.org/api/v1/download?fn=/PCAWG/reference_data/data_for_testing/HCC1143_ds/HCC1143.bam";
+      "https://media.githubusercontent.com/media/bioinformatics-ca/bioinformatics-ca.github.io/master/data_sets/HCC1143.normal.21.19M-20M.bam";
     await setupTest(url, true);
   });
   it("verifies successful response from ftp file", async () => {

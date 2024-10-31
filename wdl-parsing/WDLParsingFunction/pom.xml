@@ -27,11 +27,6 @@
             <layout>default</layout>
         </repository>
         <repository>
-            <id>artifacts.oicr.on.ca</id>
-            <name>artifacts.oicr.on.ca</name>
-            <url>https://artifacts.oicr.on.ca/artifactory/collab-release</url>
-        </repository>
-        <repository>
             <id>artifactory.broadinstitute.org</id>
             <name>artifactory.broadinstitute.org</name>
             <url>https://broadinstitute.jfrog.io/artifactory/libs-release/</url>
@@ -90,7 +85,7 @@
         <dependency>
             <groupId>org.eclipse.jgit</groupId>
             <artifactId>org.eclipse.jgit</artifactId>
-            <version>5.12.0.202106070339-r</version>
+            <version>5.13.3.202401111512-r</version>
         </dependency>
         <dependency>
             <groupId>io.swagger</groupId>
@@ -139,7 +134,8 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>${jackson-version}</version>
+            <!-- The "jackson-version" version of this artifact doesn't exist, override for dependabot -->
+            <version>2.12.7.1</version>
         </dependency>
         <dependency>
             <groupId>org.openapitools</groupId>
