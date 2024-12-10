@@ -261,7 +261,7 @@ function ecsTaskStateChangeMessageText(message) {
   const taskContainers = message?.detail?.containers
     ?.map((container) => container.name)
     .join(", ");
-  messageText += `\nTask containers: ${taskContainers}`;
+  messageText += `\nContainers: ${taskContainers}`;
   ["startedAt", "stoppedAt", "stoppedReason"].forEach((name) => {
     const value = message?.detail?.[name];
     if (value != undefined) {
