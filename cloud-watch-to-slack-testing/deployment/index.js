@@ -260,7 +260,7 @@ function ecsTaskStateChangeMessageText(message) {
   let messageText = `Task ${taskArn} is now ${lastStatus}`;
   const taskContainers = message?.detail?.containers
     ?.map((container) => container.name)
-    .join(", ");
+    ?.join(", ");
   messageText += `\nContainers: ${taskContainers}`;
   ["startedAt", "stoppedAt", "stoppedReason"].forEach((name) => {
     const value = message?.detail?.[name];
