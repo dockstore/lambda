@@ -29,12 +29,6 @@ jobs:
             - create_zip_upload_to_s3:
                 lambdaFolder: "cloud-watch-to-slack-testing/deployment"
                 s3BucketFolder: "cloudWatchToSlackTesting"
-            - create_zip_upload_to_s3:
-                lambdaFolder: "edge-lambda-for-s3/deployment"
-                s3BucketFolder: "edgeLambdaForS3404s"
-            - create_zip_upload_to_s3:
-                lambdaFolder: "webhook-testing/deployment"
-                s3BucketFolder: "webhookTesting"
 
   # Make this a separate job because AWS SAM needs to run in
   # the container specified in the template.yml
