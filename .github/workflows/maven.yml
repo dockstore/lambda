@@ -33,7 +33,7 @@ jobs:
          java-version: '21.0.10+7.0.LTS'
          distribution: 'temurin'         
      - name: Test Java build 
-       working-directory: ./wdl-parsing
+       working-directory: ./wdl-parsing/WDLParsingFunction
        run: mvn clean install
            
      - name: Test wdl parsing with SAM CLI build and invoke
