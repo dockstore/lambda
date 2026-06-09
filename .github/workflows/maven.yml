@@ -42,7 +42,7 @@ jobs:
 
      - name: Test Java build 
        working-directory: ./wdl-parsing/WDLParsingFunction
-       run: mvn clean install
+       run: mvn -B -ntp clean install
            
      - name: Test wdl parsing with SAM CLI build and invoke
        working-directory: ./wdl-parsing
