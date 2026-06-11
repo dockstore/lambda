@@ -7,7 +7,7 @@
   "author": "Dockstore",
   "license": "MIT",
   "dependencies": {
-    "basic-ftp": "^5.0.3",
+    "basic-ftp": "^5.3.1",
     "follow-redirects": "^1.15.6"
   },
   "scripts": {
