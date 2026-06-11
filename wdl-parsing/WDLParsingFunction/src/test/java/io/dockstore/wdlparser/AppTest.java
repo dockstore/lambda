@@ -65,9 +65,9 @@ public class AppTest {
   @Test
   public void successfulResponseOfComplexWorkflow() throws IOException {
     LanguageParsingRequest request = new LanguageParsingRequest();
-    request.setBranch("dockstore-test");
-    request.setUri("https://github.com/dockstore-testing/gatk-sv-clinical.git");
-    request.setDescriptorRelativePathInGit("GATKSVPipelineClinical.wdl");
+    request.setBranch("v1.1");
+    request.setUri("https://github.com/dockstore-testing/gatk-sv.git");
+    request.setDescriptorRelativePathInGit("wdl/GATKSVPipelineSingleSample.wdl");
     App app = new App();
     APIGatewayProxyRequestEvent requestEvent = new APIGatewayProxyRequestEvent();
     ObjectMapper objectMapper = new ObjectMapper();
@@ -87,9 +87,9 @@ public class AppTest {
     assertTrue(response.getClonedRepositoryAbsolutePath().contains("/tmp"));
     assertNotNull(response.getSecondaryFilePaths());
     assertFalse(
-        response.getSecondaryFilePaths().contains("GATKSVPipelineClinical.wdl"),
+        response.getSecondaryFilePaths().contains("wdl/GATKSVPipelineSingleSample.wdl"),
         "Main descriptor isn't a secondary file path");
-    final long expectedNumberOfFiles = 76;
+    final long expectedNumberOfFiles = 95;
     assertEquals(expectedNumberOfFiles, response.getSecondaryFilePaths().size());
     System.out.println(response.getClonedRepositoryAbsolutePath());
   }
