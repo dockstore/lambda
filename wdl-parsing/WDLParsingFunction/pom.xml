@@ -7,10 +7,8 @@
     <packaging>jar</packaging>
     <name>WDL parser created for SAM CLI.</name>
     <properties>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
         <jersey-version>2.34</jersey-version>
-        <jackson-version>2.12.3</jackson-version>
+        <jackson-version>2.22.0</jackson-version>
         <junit-version>5.7.2</junit-version>
         <maven-plugin-version>3.0.0-M5</maven-plugin-version>
     </properties>
@@ -48,6 +46,17 @@
             <url>https://artifacts.oicr.on.ca/artifactory/collab-release</url>
         </repository>
     </repositories>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.fasterxml.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>${jackson-version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     <dependencies>
         <dependency>
             <groupId>com.amazonaws</groupId>
@@ -132,13 +141,10 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-annotations</artifactId>
-            <version>${jackson-version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <!-- The "jackson-version" version of this artifact doesn't exist, override for dependabot -->
-            <version>2.12.7.1</version>
         </dependency>
         <dependency>
             <groupId>org.openapitools</groupId>
@@ -148,7 +154,6 @@
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
-            <version>${jackson-version}</version>
         </dependency>
         <dependency>
             <groupId>org.glassfish.jersey.core</groupId>
@@ -211,7 +216,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
-                <version>3.1.2</version>
+                <version>3.11.0</version>
                 <configuration>
                     <failOnWarning>true</failOnWarning>
                     <outputXML>true</outputXML>
