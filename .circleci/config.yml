@@ -62,7 +62,7 @@ jobs:
 
   js_tests:
     docker:
-      - image: cimg/base:stable
+      - image: cimg/base:current
     steps:
       - checkout
       - install_container_dependencies
