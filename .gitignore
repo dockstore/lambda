@@ -22,3 +22,6 @@ git-secrets.sh
 *.iml
 dependency-reduced-pom.xml
 target
+
+# Test results (JUnit XML)
+test-results/
