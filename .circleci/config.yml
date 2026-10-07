@@ -7,7 +7,7 @@ orbs:
 jobs:
   build:
     docker:
-      - image: cimg/python:3.7
+      - image: cimg/python:3.12
     parameters:
       aws_bucket:
         type: string
@@ -62,7 +62,7 @@ jobs:
 
   js_tests:
     docker:
-      - image: circleci/buildpack-deps:18.04-browsers
+      - image: cimg/base:stable
     steps:
       - checkout
       - install_container_dependencies
@@ -110,7 +110,7 @@ commands:
     steps:
       - run:
           name: install npm packages
-          command: npm install
+          command: npm ci --ignore-scripts
       - run:
           name: install and check for secrets
           command: npm run install-git-secrets
