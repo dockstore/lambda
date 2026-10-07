@@ -8,12 +8,12 @@ jobs:
   linterWithESLint:
      runs-on: ubuntu-latest
      steps:
-     - uses: actions/checkout@v2
+     - uses: actions/checkout@v6
      - name: Use Node.js
-       uses: actions/setup-node@v1
+       uses: actions/setup-node@v7
        with:
          node-version: 12.x
-     - run: npm install
+     - run: npm ci --ignore-scripts
      - run: npm run lint
   testWithSAMCLI:
      runs-on: ubuntu-latest
@@ -25,8 +25,7 @@ jobs:
          python-version: "3.12"
      - name: Install dependencies
        run: |
-         python -m pip install --upgrade pip
-         pip install aws-sam-cli
+         pip install --only-binary :all: aws-sam-cli==1.167.0
      - name: Set up JDK
        uses: actions/setup-java@v5
        with:
@@ -61,8 +60,8 @@ jobs:
      - name: Test CWL packing with pytest
        working-directory: ./cwlpack
        run: |
-         pip install -r tests/requirements.txt --user
-         pip install -r cwl_pack_function/requirements.txt --user
+         pip install --only-binary :all: -r tests/requirements.txt --user
+         pip install --only-binary :all: -r cwl_pack_function/requirements.txt --user
          python -m pytest tests/unit -v
          pylint cwl_pack_function
          pylint tests
