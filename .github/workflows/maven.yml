@@ -6,7 +6,7 @@ name: Node.js CI with SAM
 on: [push, pull_request]
 jobs:
   linterWithESLint:
-     runs-on: ubuntu-latest
+     runs-on: ubuntu-26.04
      steps:
      - uses: actions/checkout@v6
      - name: Use Node.js
@@ -16,11 +16,11 @@ jobs:
      - run: npm ci --ignore-scripts
      - run: npm run lint
   testWithSAMCLI:
-     runs-on: ubuntu-latest
+     runs-on: ubuntu-26.04
      steps:
      - uses: actions/checkout@v6
      - name: Set up Python
-       uses: actions/setup-python@v5
+       uses: actions/setup-python@v6
        with:
          python-version: "3.12"
      - name: Install dependencies
