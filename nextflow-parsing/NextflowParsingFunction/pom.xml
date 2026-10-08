@@ -162,8 +162,9 @@
       <plugin>
         <artifactId>maven-checkstyle-plugin</artifactId>
         <configuration>
-          <configLocation>checkstyle.xml</configLocation>
-          <suppressionsLocation>checkstyle-suppressions.xml</suppressionsLocation>
+          <!-- Dockstore's checkstyle config, pinned to the 1.20.0 release of dockstore/dockstore -->
+          <configLocation>https://raw.githubusercontent.com/dockstore/dockstore/1.20.0/checkstyle.xml</configLocation>
+          <suppressionsLocation>https://raw.githubusercontent.com/dockstore/dockstore/1.20.0/checkstyle-suppressions.xml</suppressionsLocation>
           <includeResources>true</includeResources>
           <includeTestResources>true</includeTestResources>
           <includeTestSourceDirectory>true</includeTestSourceDirectory>
