@@ -13,4 +13,9 @@
     <Match>
         <Source name="ApiClient.java"/>
     </Match>
+    <!-- NextflowHandler is a simple bean; newer SpotBugs flags its getters/setters -->
+    <Match>
+        <Class name="io.dockstore.nextflowparsing.NextflowHandler"/>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+    </Match>
 </FindBugsFilter>
