@@ -7,7 +7,7 @@ orbs:
 jobs:
   build:
     docker:
-      - image: cimg/python:3.7
+      - image: cimg/python:3.12
     parameters:
       aws_bucket:
         type: string
@@ -62,7 +62,7 @@ jobs:
 
   js_tests:
     docker:
-      - image: circleci/buildpack-deps:18.04-browsers
+      - image: cimg/base:2026.10-26.04
     steps:
       - checkout
       - install_container_dependencies
@@ -110,7 +110,7 @@ commands:
     steps:
       - run:
           name: install npm packages
-          command: npm install
+          command: npm ci --ignore-scripts
       - run:
           name: install and check for secrets
           command: npm run install-git-secrets
@@ -120,7 +120,10 @@ commands:
     steps:
       - run:
           name: lint
-          command: npm run lint
+          command: npm run lint -- -f junit -o test-results/eslint/eslint.xml
+      - store_test_results:
+          path: test-results
+          when: always
 
   install_container_dependencies:
     steps:
@@ -142,6 +145,9 @@ commands:
       - run:
           name: run unit tests
           command: bash -i -c 'npm run test'
+      - store_test_results:
+          path: test-results
+          when: always
 
 workflows:
   version: 2
