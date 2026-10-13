@@ -11,7 +11,7 @@ A monorepo of small, independent AWS Lambda functions used by Dockstore ("backup
 | `checkUrlExists/` | Node 22 (`lambda/index.js`) | Checks a URL (http/https/ftp/sftp) is reachable; always returns 200, body is true/false |
 | `cwlpack/` | Python 3.12 (`cwl_pack_function/app.py`) | Clones a git repo with pygit2 and packs a CWL descriptor with sbpack |
 | `wdl-parsing/` | Java 21 (`WDLParsingFunction`, Maven) | Parses WDL descriptors |
-| `nextflow-parsing/` | Java 11 template (`NextflowParsingFunction`, Maven) | Parses Nextflow descriptors |
+| `nextflow-parsing/` | Java 21 (`NextflowParsingFunction`, Maven) | Parses Nextflow descriptors |
 | `cloud-watch-to-slack-testing/`, `upsertGitHubTag/` | Node (`deployment/index.js`) | Not SAM; zipped and uploaded to S3 by CircleCI. `upsertGitHubTag` relays API Gateway -> SQS -> Lambda -> Dockstore webservice |
 
 ## Commands
@@ -59,7 +59,10 @@ When creating a PR, always create it in draft mode. A human developer must be th
 review/move it out of draft state — Claude Code should not do this itself.
 
 Always check with the user before pushing changes to GitHub, even to a branch/PR already being worked on in
-the conversation — a push can kick off a long CI build or interrupt one that's already running.
+the conversation — a push can kick off a long CI build or interrupt one that's already running. Before asking,
+show the user what would be pushed (e.g. `git log` and `git diff` against the remote branch) so they can review
+it first. An earlier "push" request does not cover later commits, and a force-push (e.g. after a rebase)
+always needs explicit approval.
 
 When a GitHub MCP server or `gh` is available, diff the current work against `develop` (or whatever branch the
 PR targets) and try to minimize stylistic or otherwise-minor changes that inflate the diff and make it harder

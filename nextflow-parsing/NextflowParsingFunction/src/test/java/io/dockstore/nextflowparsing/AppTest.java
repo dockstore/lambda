@@ -25,44 +25,45 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dockstore.openapi.client.model.LanguageParsingRequest;
 import io.dockstore.openapi.client.model.LanguageParsingResponse;
+import jakarta.ws.rs.core.MediaType;
 import java.net.HttpURLConnection;
-import javax.ws.rs.core.MediaType;
 import org.junit.jupiter.api.Test;
 
 public class AppTest {
 
-  @Test
-  public void successfulResponse() throws Exception {
-    LanguageParsingRequest request = new LanguageParsingRequest();
-    request.setBranch("2.3");
-    // Archived repository with tag that is unlikely to change
-    request.setUri("https://github.com/SciLifeLab/Sarek.git");
-    request.setDescriptorRelativePathInGit("nextflow.config");
-    App app = new App();
-    APIGatewayProxyRequestEvent requestEvent = new APIGatewayProxyRequestEvent();
-    ObjectMapper objectMapper = new ObjectMapper();
-    requestEvent.setBody(objectMapper.writeValueAsString(request));
-    APIGatewayProxyResponseEvent result = app.handleRequest(requestEvent, null);
-    System.out.println(result.getBody());
-    assertEquals(HttpURLConnection.HTTP_OK, result.getStatusCode().intValue());
-    assertEquals(MediaType.APPLICATION_JSON, result.getHeaders().get("Content-Type"));
-    String content = result.getBody();
-    assertNotNull(content);
-    LanguageParsingResponse response =
-        objectMapper.readValue(content, LanguageParsingResponse.class);
-    assertNotNull(response.getVersionTypeValidation());
-    assertNotNull(response.getVersionTypeValidation().isValid());
-    assertTrue(response.getVersionTypeValidation().isValid());
-    assertNotNull(response.getClonedRepositoryAbsolutePath());
-    assertTrue(response.getClonedRepositoryAbsolutePath().contains("clonedRepository"));
-    assertNotNull(response.getSecondaryFilePaths());
-    final int knownSecondaryFilesCount = 23;
-    assertEquals(
-        knownSecondaryFilesCount,
-        response.getSecondaryFilePaths().size(),
-        "Should be 4 bin files, 16 config files, 2 lib files, and main.nf");
-    assertEquals("Sarek - Workflow For Somatic And Germline Variations", response.getDescription());
-    System.out.println(response.getClonedRepositoryAbsolutePath());
-    assertEquals("Szilvester Juhos, Maxime Garcia", response.getAuthor());
-  }
+    @Test
+    public void successfulResponse() throws Exception {
+        LanguageParsingRequest request = new LanguageParsingRequest();
+        request.setBranch("2.3");
+        // Archived repository with tag that is unlikely to change
+        request.setUri("https://github.com/SciLifeLab/Sarek.git");
+        request.setDescriptorRelativePathInGit("nextflow.config");
+        App app = new App();
+        APIGatewayProxyRequestEvent requestEvent = new APIGatewayProxyRequestEvent();
+        ObjectMapper objectMapper = new ObjectMapper();
+        requestEvent.setBody(objectMapper.writeValueAsString(request));
+        APIGatewayProxyResponseEvent result = app.handleRequest(requestEvent, null);
+        System.out.println(result.getBody());
+        assertEquals(HttpURLConnection.HTTP_OK, result.getStatusCode().intValue());
+        assertEquals(MediaType.APPLICATION_JSON, result.getHeaders().get("Content-Type"));
+        String content = result.getBody();
+        assertNotNull(content);
+        LanguageParsingResponse response =
+                objectMapper.readValue(content, LanguageParsingResponse.class);
+        assertNotNull(response.getVersionTypeValidation());
+        assertNotNull(response.getVersionTypeValidation().isValid());
+        assertTrue(response.getVersionTypeValidation().isValid());
+        assertNotNull(response.getClonedRepositoryAbsolutePath());
+        assertTrue(response.getClonedRepositoryAbsolutePath().contains("clonedRepository"));
+        assertNotNull(response.getSecondaryFilePaths());
+        final int knownSecondaryFilesCount = 23;
+        assertEquals(
+                knownSecondaryFilesCount,
+                response.getSecondaryFilePaths().size(),
+                "Should be 4 bin files, 16 config files, 2 lib files, and main.nf");
+        assertEquals(
+                "Sarek - Workflow For Somatic And Germline Variations", response.getDescription());
+        System.out.println(response.getClonedRepositoryAbsolutePath());
+        assertEquals("Szilvester Juhos, Maxime Garcia", response.getAuthor());
+    }
 }

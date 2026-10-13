@@ -1,0 +1,5 @@
+{
+  "httpMethod": "POST",
+  "path": "/parse",
+  "body": "{\"uri\":\"https://github.com/SciLifeLab/Sarek.git\",\"branch\":\"2.3\",\"descriptorRelativePathInGit\":\"nextflow.config\"}"
+}
